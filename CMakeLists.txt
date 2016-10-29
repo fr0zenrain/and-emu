@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.3)
 project(emulator)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -lunicorn")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -m32 -std=c++11 -lunicorn")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -m32 -DCAPSTONE_HAS_ARM")
 
 
 include_directories(include)
@@ -16,5 +17,8 @@ set(SOURCEFILES
         emulator/engine.cpp
         )
 
+add_subdirectory(capstone)
+
 add_executable(emulator ${SOURCEFILES})
+target_link_libraries(emulator capstone)
 

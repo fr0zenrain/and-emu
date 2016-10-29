@@ -1,9 +1,10 @@
 #include "stdlib.h"
 #include "linker.h"
+#include "type.h"
 #ifndef WINCE
 #include "errno.h"
 #endif
-
+#include "../include/unicorn/unicorn.h"
 #ifdef _MSC_VER
 #include "win.h"
 #ifndef WINCE
@@ -17,6 +18,16 @@ int errno =0;
 #include <sys/syscall.h>
 #include <sys/resource.h>
 #endif
+
+extern uc_engine* g_uc;
+uc_err err;
+typedef struct _vmem{
+	unsigned int addr;
+	unsigned int size;
+}vmem;
+
+unsigned int mem_start_addr = 0x40000000;
+vmem mem_block[256] ={0};
 
 #ifdef _MSC_VER
 
@@ -68,6 +79,23 @@ static uint32_t __map_mmap_prot_file(const int prot)
 
 #endif
 
+int get_mmap_addr(int size)
+{
+	int i ;
+	for(i = 0; i < 256;i++)
+	{
+		if(mem_block[i].addr==0)
+		{
+			mem_block[i].addr= mem_start_addr;
+			mem_block[i].size = PAGE_ALIGN(size);
+			mem_start_addr += PAGE_ALIGN(size);
+			break;
+		}
+	}
+	
+	return mem_block[i].addr;
+}
+
 void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
 {
 #ifdef _MSC_VER
@@ -97,39 +125,46 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
 		(DWORD)maxSize : (DWORD)(maxSize & 0xFFFFFFFFL);
 	const DWORD dwMaxSizeHigh = (sizeof(off_t) <= sizeof(DWORD)) ?
 		(DWORD)0 : (DWORD)((maxSize >> 32) & 0xFFFFFFFFL);
-	
-	if((int)fd == -1 || (flags & MAP_FIXED))
-	{
-		if(fd == -1 && prot == 0)
-			map = VirtualAlloc(0,length,MEM_COMMIT,PAGE_READWRITE);
-		else
-		{
-			if(start == 0)
-			{
-				map = VirtualAlloc(0,length,MEM_COMMIT,PAGE_READWRITE);
-			}
-		}
+	  int mem_addr;
+    if((int)fd == -1 )
+    {
+        if(prot == PROT_NONE)
+            //map = VirtualAlloc(0,length,MEM_COMMIT,PAGE_READWRITE);
+        {
+            mem_addr = get_mmap_addr(length);
+            err = uc_mem_map(g_uc, mem_addr, PAGE_ALIGN(length), UC_PROT_ALL);
+            return  (void*)mem_addr;
+        }
 
-		errno = __map_mman_error(GetLastError(), -1);
-		if( map || start)
-		{
-			if(map == MAP_FAILED && start)
-			{
-				if(fd != -1)
-				{
-					lseek(fd,offset,SEEK_SET);
-					read(fd,start,length);
-				}
-				return start;
-			}
-			else
-			{
-				if(fd != -1)
-					read(fd,map,length);
-			}
-		}
-		return map;
-	}
+        if(start ==0)
+        {
+              if(flags&MAP_ANONYMOUS) {
+                return start;
+            }
+
+        }
+    }
+    else
+    {
+        if(fd && flags &MAP_FIXED)
+        {
+            void* buf=malloc(length);
+            if(buf)
+            {
+                lseek(fd,offset,SEEK_SET);
+                read(fd,buf,length);
+                err = uc_mem_write(g_uc,(uint64_t)start,buf,length);
+                free(buf);
+            }
+            else{
+                printf("alloc error\n");
+                //abort(0);
+                return 0;
+            }
+            return start;
+        }
+
+    }
 #ifndef WINCE
 	h = ((flags & MAP_ANONYMOUS) == 0) ? (HANDLE)_get_osfhandle(fd) : (HANDLE)INVALID_HANDLE_VALUE;
 #endif
@@ -159,7 +194,46 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
 
 	return map;
 #else
-	return mmap(start,length,prot,flags,fd,offset);
+    int mem_addr;
+    if((int)fd == -1 )
+    {
+        if(prot == PROT_NONE)
+            //map = VirtualAlloc(0,length,MEM_COMMIT,PAGE_READWRITE);
+        {
+            mem_addr = get_mmap_addr(length);
+            err = uc_mem_map(g_uc, mem_addr, PAGE_ALIGN(length), UC_PROT_ALL);
+            return  (void*)mem_addr;
+        }
+        else
+        {
+            if(flags&MAP_ANONYMOUS) {
+                return start;
+            }
+
+        }
+    }
+    else
+    {
+        if(fd && flags &MAP_FIXED)
+        {
+            void* buf=malloc(length);
+            if(buf)
+            {
+                lseek(fd,offset,SEEK_SET);
+                read(fd,buf,length);
+                err = uc_mem_write(g_uc,(uint64_t)start,buf,length);
+                free(buf);
+            }
+            else{
+                printf("alloc error\n");
+                //abort(0);
+                return 0;
+            }
+            return start;
+        }
+
+    }
+    return mmap(start,length,prot,flags,fd,offset);
 #endif
 }
 

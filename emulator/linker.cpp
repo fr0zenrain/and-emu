@@ -19,6 +19,8 @@
 #include "linker_phdr.h"
 #include "linker.h"
 
+
+extern uc_engine* g_uc;
 /* Assume average path length of 64 and max 8 paths */
 #define LDPATH_BUFSIZE 512
 #define LDPATH_MAX 8
@@ -149,6 +151,7 @@ static bool ensure_free_list_non_empty() {
 	}
 
 	// Add the pool to our list of pools.
+	//uc_err err = uc_mem_write(g_uc,(uint64_t)pool,&gSoInfoPools,4);
 	pool->next = gSoInfoPools;
 	gSoInfoPools = pool;
 
@@ -156,6 +159,10 @@ static bool ensure_free_list_non_empty() {
 	gSoInfoFreeList = &pool->info[0];
 	soinfo* next = NULL;
 	for (int i = SOINFO_PER_POOL - 1; i >= 0; --i) {
+		soinfo* s=&pool->info[i];
+		int addr = (int)s+offsetof(soinfo,next);
+		//err=uc_mem_write(g_uc,(uint64_t)addr,&next,4);
+		//err=uc_mem_read(g_uc,(uint64_t)&pool->info[i],&next,4);
 		pool->info[i].next = next;
 		next = &pool->info[i];
 	}
@@ -184,10 +191,19 @@ soinfo* soinfo_alloc(const char* name) {
 
 	// Take the head element off the free list.
 	soinfo* si = gSoInfoFreeList;
+	/*int addr = (int)gSoInfoFreeList+offsetof(soinfo,next);
+	int value = 0;
+	uc_err err = uc_mem_read(g_uc,(uint64_t)addr,&value,4);
+	err = uc_mem_write(g_uc,(uint64_t)gSoInfoFreeList,&value,4);*/
 	gSoInfoFreeList = gSoInfoFreeList->next;
 
 	// Initialize the new element.
+	/*soinfo s;
+	memset(&s, 0, sizeof(soinfo));
+	err = uc_mem_write(g_uc,(uint64_t)si,&s,sizeof(soinfo));*/
 	memset(si, 0, sizeof(soinfo));
+	/*addr = (int)si+offsetof(soinfo,name);
+	err = uc_mem_write(g_uc,(uint64_t)addr,&s,128);*/
 	s_strlcpy(si->name, name, sizeof(si->name));
 	sonext->next = si;
 	sonext = si;
@@ -278,19 +294,44 @@ dl_iterate_phdr(int (*cb)(dl_phdr_info *info, size_t size, void *data),
 
 #endif
 
-static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,
-		const char* name) {
-	Elf32_Sym* symtab = si->symtab;
-	const char* strtab = si->strtab;
+static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name) 
+{
+	if(si->base)	
+	{
+		for (unsigned n = si->tmp_bucket[hash % si->nbucket]; n != 0; n =
+				si->tmp_chain[n]) {
+			Elf32_Sym* s = si->tmp_symtab + n;
+			if (strcmp((char*)si->tmp_strtab + s->st_name, name))
+				continue;
 
-	for (unsigned n = si->bucket[hash % si->nbucket]; n != 0; n =
-			si->chain[n]) {
-		Elf32_Sym* s = symtab + n;
-		if (strcmp(strtab + s->st_name, name))
-			continue;
+			/* only concern ourselves with global and weak symbol definitions */
+			switch (ELF32_ST_BIND(s->st_info)) {
+			case STB_GLOBAL:
+			case STB_WEAK:
+				if (s->st_shndx == SHN_UNDEF) {
+					continue;
+				}
 
-		/* only concern ourselves with global and weak symbol definitions */
-		switch (ELF32_ST_BIND(s->st_info)) {
+				debug_printf("FOUND %s in %s (%08x) %d\n", name, si->name,
+						s->st_value, s->st_size);
+
+				return s;
+			}
+		}
+	}
+	else
+	{
+		Elf32_Sym* symtab = si->symtab;
+		const char* strtab = si->strtab;
+
+		for (unsigned n = si->bucket[hash % si->nbucket]; n != 0; n =
+		si->chain[n]) {
+			Elf32_Sym* s = symtab + n;
+			if (strcmp(strtab + s->st_name, name))
+				continue;
+
+			/* only concern ourselves with global and weak symbol definitions */
+			switch (ELF32_ST_BIND(s->st_info)) {
 		case STB_GLOBAL:
 		case STB_WEAK:
 			if (s->st_shndx == SHN_UNDEF) {
@@ -298,9 +339,11 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,
 			}
 
 			debug_printf("FOUND %s in %s (%08x) %d\n", name, si->name,
-					s->st_value, s->st_size);
+				s->st_value, s->st_size);
 			return s;
+			}
 		}
+
 	}
 
 	return NULL;
@@ -411,10 +454,12 @@ static Elf32_Sym* soinfo_do_lookup(soinfo* si, const char* name, soinfo** lsi,
 		}
 	}
 
-	done: if (s != NULL) {
-		debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
+	done:
+	if (s != NULL) 
+	{
+		/*debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
 				si->name, name, s->st_value, (*lsi)->name, (*lsi)->base,
-				(*lsi)->load_bias);
+				(*lsi)->load_bias);*/
 		return s;
 	}
 
@@ -514,8 +559,11 @@ static int open_library_on_path(const char* name, const char* const paths[]) {
 			}
 
 		}
-
+#ifdef _MSC_VER
 		int n = _snprintf(buf, sizeof(buf), "%s/%s", paths[i], name);
+#else
+		int n = snprintf(buf, sizeof(buf), "%s/%s", paths[i], name);
+#endif
 		if (n < 0 || n >= static_cast<int>(sizeof(buf))) {
 			debug_printf("Warning: ignoring very long library path: %s/%s\n",
 					paths[i], name);
@@ -712,14 +760,19 @@ int do_dlclose(soinfo* si) {
  * ideal. They should probably be either uint32_t, Elf32_Addr, or unsigned
  * long.
  */
-static int soinfo_relocate(soinfo* si, Elf32_Rel* rel, unsigned count,
+static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		soinfo* needed[]) {
-	Elf32_Sym* symtab = si->symtab;
-	const char* strtab = si->strtab;
+	uc_err err;
 	Elf32_Sym* s;
-	Elf32_Rel* start = rel;
+	Elf32_Rel* start = rel_addr;
+	Elf32_Rel* trel = (Elf32_Rel*)malloc(count*sizeof(Elf32_Rel));
+	Elf32_Sym* symtab = si->tmp_symtab;
+	const char* strtab = si->tmp_strtab;
 	soinfo* lsi;
+	
+	err = uc_mem_read(g_uc,(uint64_t)rel_addr,trel,count*sizeof(Elf32_Rel));
 
+	Elf32_Rel* rel = trel;
 	for (size_t idx = 0; idx < count; ++idx, ++rel) {
 		unsigned type = ELF32_R_TYPE(rel->r_info);
 		unsigned sym = ELF32_R_SYM(rel->r_info);
@@ -744,6 +797,9 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel, unsigned count,
 					debug_printf(
 							"cannot locate symbol \"%s\" referenced by \"%s\"...\n",
 							sym_name, si->name);
+					//free(rel);
+					//free(symtab);
+					//free((void*)strtab);
 					return -1;
 				}
 
@@ -820,19 +876,22 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel, unsigned count,
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO JMP_SLOT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
 		case R_ARM_GLOB_DAT:
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO GLOB_DAT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
 		case R_ARM_ABS32:
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO ABS %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
+		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
 		break;
 		case R_ARM_REL32:
 		count_relocation(kRelocRelative);
@@ -881,7 +940,10 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel, unsigned count,
 		}
 		debug_printf( "RELO RELATIVE %08x <- +%08x\n", reloc,
 				si->base);
-		*reinterpret_cast<Elf32_Addr*>(reloc) += si->base;
+		uc_mem_read(g_uc,reloc,&sym_addr,4);
+		sym_addr +=si->base;
+		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//*reinterpret_cast<Elf32_Addr*>(reloc) += si->base;
 		break;
 
 #if defined(ANDROID_X86_LINKER)
@@ -953,11 +1015,14 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel, unsigned count,
 		return -1;
 		}
 	}
+
+	free(trel);
+
 	return 0;
 }
 
-void soinfo::CallArray(const char* array_name,
-		linker_function_t* functions, size_t count, bool reverse) {
+void soinfo::CallArray(const char* array_name,linker_function_t* functions, size_t count, bool reverse) 
+{
 	if (functions == NULL) {
 		return;
 	}
@@ -972,7 +1037,8 @@ void soinfo::CallArray(const char* array_name,
 	for (int i = begin; i != end; i += step) {
 		debug_printf( "[ %s[%d] == %p ]\n", array_name, i,
 				functions[i]);
-		CallFunction("function", functions[i]);
+		
+		CallFunction("function",functions[i]);
 	}
 
 	debug_printf("[ Done calling %s for '%s' ]\n", array_name, name);
@@ -1030,11 +1096,11 @@ void soinfo::CallConstructors() {
 	}
 
 	if (dynamic != NULL) {
-		for (Elf32_Dyn* d = dynamic; d->d_tag != DT_NULL; ++d) {
+		for (Elf32_Dyn* d = tmp_dynamic; d->d_tag != DT_NULL; ++d) {
 			if (d->d_tag == DT_NEEDED) {
-				const char* library_name = strtab + d->d_un.d_val;
-				debug_printf("\"%s\": calling constructors in DT_NEEDED \"%s\"\n", name, library_name);
-				find_loaded_library(library_name)->CallConstructors();
+				const char* library_name = tmp_strtab + d->d_un.d_val;
+				//debug_printf("\"%s\": calling constructors in DT_NEEDED \"%s\"\n", name, library_name);
+				//find_loaded_library(library_name)->CallConstructors();
 			}
 		}
 	}
@@ -1043,7 +1109,10 @@ void soinfo::CallConstructors() {
 
 	// DT_INIT should be called before DT_INIT_ARRAY if both are present.
 	CallFunction("DT_INIT", init_func);
-	CallArray("DT_INIT_ARRAY", init_array, init_array_count, false);
+	linker_function_t* f = (linker_function_t*)malloc(init_array_count*4);
+	uc_mem_read(g_uc,(uint64_t)init_array,f,init_array_count*4);
+	CallArray("DT_INIT_ARRAY", f, init_array_count, false);
+	free(f);
 }
 
 void soinfo::CallDestructors() {
@@ -1054,6 +1123,23 @@ void soinfo::CallDestructors() {
 
 	// DT_FINI should be called after DT_FINI_ARRAY if both are present.
 	CallFunction("DT_FINI", fini_func);
+}
+
+int get_strtab_size(soinfo* si)
+{
+	int size = 0;
+	int index ;
+	si->tmp_symtab = (Elf32_Sym*)malloc(si->nchain*sizeof(Elf32_Sym));
+	uc_err err = uc_mem_read(g_uc,(uint64_t)si->symtab,si->tmp_symtab,si->nchain*sizeof(Elf32_Sym));
+	for(int i = 0; i < si->nchain ; i++)
+	{
+		if(si->tmp_symtab[i].st_name > si->strtab_size)
+		{
+			size = si->tmp_symtab[i].st_name;
+			index = i;
+		}
+	}
+	return size; 
 }
 
 bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
@@ -1073,7 +1159,9 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	/* Extract dynamic section */
 	size_t dynamic_count;
 	Elf32_Word dynamic_flags;
-	phdr_table_get_dynamic_section(phdr, phnum, base, &si->dynamic,
+	Elf32_Phdr* phdr1 = (Elf32_Phdr*)malloc(0x1000-0x34);
+	uc_mem_read(g_uc,base+0x34,phdr1,0x1000-0x34);
+	phdr_table_get_dynamic_section(phdr1, phnum, base, &si->dynamic,
 			&dynamic_count, &dynamic_flags, reader);
 	if (si->dynamic == NULL) {
 		if (!relocating_linker) {
@@ -1087,22 +1175,30 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	}
 
 #ifdef ANDROID_ARM_LINKER
-	(void) phdr_table_get_arm_exidx(phdr, phnum, base,
+	(void) phdr_table_get_arm_exidx(phdr1, phnum, base,
 			&si->ARM_exidx, (size_t*)&si->ARM_exidx_count,reader);
 #endif
 
+	free(phdr1);
+
 	// Extract useful information from dynamic section.
 	uint32_t needed_count = 0;
-	for (Elf32_Dyn* d = si->dynamic; d->d_tag != DT_NULL; ++d) {
+	uint64_t addr = (uint64_t)si->dynamic;
+	si->tmp_dynamic = (Elf32_Dyn*)malloc(dynamic_count*sizeof(Elf32_Dyn));
+	uc_err err=uc_mem_read(g_uc,addr,si->tmp_dynamic,dynamic_count*sizeof(Elf32_Dyn));
+
+	for (Elf32_Dyn* d = si->tmp_dynamic; d->d_tag != DT_NULL; ++d) {
 		debug_printf("d = %p, d[0](tag) = 0x%08x d[1](val) = 0x%08x\n", d, d->d_tag,
 				d->d_un.d_val);
 		switch (d->d_tag) {
 		case DT_HASH:
-			si->nbucket = ((unsigned *) (base + d->d_un.d_ptr))[0];
-			si->nchain = ((unsigned *) (base + d->d_un.d_ptr))[1];
-			si->bucket = (unsigned *) (base + d->d_un.d_ptr + 8);
-			si->chain =
-					(unsigned *) (base + d->d_un.d_ptr + 8 + si->nbucket * 4);
+			addr = base + d->d_un.d_ptr;
+			unsigned int buf[16];
+			uc_mem_read(g_uc,(uint64_t)addr,buf,16);
+			si->nbucket = buf[0];
+			si->nchain = buf[1];
+			si->bucket = (unsigned*)((int)base + d->d_un.d_ptr + 8);
+			si->chain = (unsigned*)(base +d->d_un.d_ptr + 8 + si->nbucket * 4);
 			break;
 		case DT_STRTAB:
 			si->strtab = (const char *) (base + d->d_un.d_ptr);
@@ -1206,6 +1302,14 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 #endif
 		}
 	}
+	si->strtab_size = get_strtab_size(si);
+
+	si->tmp_strtab = (char*)malloc(si->strtab_size+10);
+	si->tmp_bucket = (unsigned int*)malloc(si->nbucket*4);
+	si->tmp_chain = (unsigned int*)malloc(si->nchain*4);
+	err = uc_mem_read(g_uc,(uint64_t)si->strtab,(void*)si->tmp_strtab,si->strtab_size);
+	err = uc_mem_read(g_uc,(uint64_t)si->bucket,si->tmp_bucket,si->nbucket*4);
+	err = uc_mem_read(g_uc,(uint64_t)si->chain,si->tmp_chain,si->nchain*4);
 
 	debug_printf("si->base = 0x%08x, si->strtab = %p, si->symtab = %p,si->bucket = %p,si->chain = %p\n",
 			si->base, si->strtab, si->symtab, si->bucket, si->chain);
@@ -1250,9 +1354,11 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	soinfo** needed = (soinfo**)malloc((1 + needed_count) * sizeof(soinfo*));
 	soinfo** pneeded = needed;
 
-	for (Elf32_Dyn* d = si->dynamic; d->d_tag != DT_NULL; ++d) {
+	for (Elf32_Dyn* d = si->tmp_dynamic; d->d_tag != DT_NULL; ++d) {
 		if (d->d_tag == DT_NEEDED) {
-			const char* library_name = si->strtab + d->d_un.d_val;
+			char library_name[32]={0};
+			const char* lib_name = si->strtab + d->d_un.d_val;
+			uc_mem_read(g_uc,(uint64_t)lib_name,library_name,32);
 			debug_printf( "%s needs %s\n", si->name, library_name);
 			soinfo* lsi = find_library(library_name);
 			if (lsi == NULL) {

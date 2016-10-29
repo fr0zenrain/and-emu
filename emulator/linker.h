@@ -202,6 +202,13 @@ public:
 
 	bool has_text_relocations;
 	bool has_DT_SYMBOLIC;
+	size_t strtab_size;
+	Elf32_Dyn* tmp_dynamic;
+	Elf32_Phdr* tmp_phdr;
+	Elf32_Sym* tmp_symtab;
+	char* tmp_strtab;
+	unsigned int* tmp_bucket;
+	unsigned int* tmp_chain;
 
 	void CallConstructors();
 	void CallDestructors();

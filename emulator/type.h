@@ -100,7 +100,7 @@ struct msghdr {
 	unsigned msg_flags;				//0x18
 };
 
-struct stat {
+struct mstat {
 	int         st_mode;    // file type & mode(permissions)
 	ino_t          st_ino;     // i-node number(serial number)
 	dev_t          st_dev;     // device number(filesystem)

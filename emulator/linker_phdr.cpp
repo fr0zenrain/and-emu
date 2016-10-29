@@ -3,6 +3,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "win.h"
+#include "stdlib.h"
 
 #ifndef WINCE
 #include <errno.h>
@@ -13,8 +14,8 @@
 #else
 #include <sys/mman.h>
 #endif
-
-
+#include "../include/unicorn/unicorn.h"
+extern uc_engine* g_uc;
 /**
  TECHNICAL NOTE ON ELF LOADING.
 
@@ -222,6 +223,7 @@ bool ElfReader::ReadProgramHeader() {
 	phdr_table_ =
 			reinterpret_cast<Elf32_Phdr*>(reinterpret_cast<char*>(mmap_result)
 					+ page_offset);
+
 	return true;
 }
 
@@ -239,6 +241,7 @@ size_t phdr_table_get_load_size(const Elf32_Phdr* phdr_table, size_t phdr_count,
 		Elf32_Addr* out_min_vaddr, Elf32_Addr* out_max_vaddr) {
 	Elf32_Addr min_vaddr = 0xFFFFFFFFU;
 	Elf32_Addr max_vaddr = 0x00000000U;
+
 
 	bool found_pt_load = false;
 	for (size_t i = 0; i < phdr_count; ++i) {
@@ -270,6 +273,7 @@ size_t phdr_table_get_load_size(const Elf32_Phdr* phdr_table, size_t phdr_count,
 	if (out_max_vaddr != NULL) {
 		*out_max_vaddr = max_vaddr;
 	}
+
 	return max_vaddr - min_vaddr;
 }
 
@@ -278,6 +282,7 @@ size_t phdr_table_get_load_size(const Elf32_Phdr* phdr_table, size_t phdr_count,
 // private anonymous mmap() with PROT_NONE.
 bool ElfReader::ReserveAddressSpace() {
 	Elf32_Addr min_vaddr;
+
 	load_size_ = phdr_table_get_load_size(phdr_table_, phdr_num_, &min_vaddr);
 	if (load_size_ == 0) {
 		debug_printf("\"%s\" has no loadable segments", name_);
@@ -307,6 +312,7 @@ bool ElfReader::ReserveAddressSpace() {
 // reserve the address space range for the library.
 // TODO: assert assumption.
 bool ElfReader::LoadSegments() {
+
 	for (size_t i = 0; i < phdr_num_; ++i) {
 		const Elf32_Phdr* phdr = &phdr_table_[i];
 
@@ -342,9 +348,10 @@ bool ElfReader::LoadSegments() {
 
 		// if the segment is writable, and does not end on a page boundary,
 		// zero-fill it until the page limit.
-		if ((phdr->p_flags & PF_W) != 0 && PAGE_OFFSET(seg_file_end) > 0) {
-			memset((void*) seg_file_end, 0,
-					PAGE_SIZE - PAGE_OFFSET(seg_file_end));
+		if ((phdr->p_flags & PF_W) != 0 && PAGE_OFFSET(seg_file_end) > 0) 
+		{
+			//memset((void*) seg_file_end, 0,PAGE_SIZE - PAGE_OFFSET(seg_file_end));
+			//uc_mem_write(g_uc,seg_file_end,0,0);
 		}
 
 		seg_file_end = PAGE_END(seg_file_end);
@@ -438,10 +445,10 @@ int phdr_table_unprotect_segments(const Elf32_Phdr* phdr_table, int phdr_count,
  */
 static int _phdr_table_set_gnu_relro_prot(const Elf32_Phdr* phdr_table,
 		int phdr_count, Elf32_Addr load_bias, int prot_flags) {
-	const Elf32_Phdr* phdr = phdr_table;
-	const Elf32_Phdr* phdr_limit = phdr + phdr_count;
-
-	for (phdr = phdr_table; phdr < phdr_limit; phdr++) {
+	 Elf32_Phdr* tphdr = (Elf32_Phdr*)malloc(0x1000);
+	 Elf32_Phdr* phdr_limit = tphdr + phdr_count;
+	uc_mem_read(g_uc,(uint64_t)phdr_table,(void*)tphdr,0x1000);
+	for (Elf32_Phdr* phdr = tphdr; phdr < phdr_limit; phdr++) {
 		if (phdr->p_type != PT_GNU_RELRO)
 			continue;
 
@@ -466,12 +473,14 @@ static int _phdr_table_set_gnu_relro_prot(const Elf32_Phdr* phdr_table,
 		Elf32_Addr seg_page_end = PAGE_END(phdr->p_vaddr + phdr->p_memsz)
 				+ load_bias;
 
-		int ret = s_mprotect((void*) seg_page_start,
+		/*int ret = s_mprotect((void*) seg_page_start,
 				seg_page_end - seg_page_start, prot_flags);
 		if (ret < 0) {
 			return -1;
-		}
+		}*/
 	}
+
+	free(tphdr);
 	return 0;
 }
 

@@ -41,6 +41,7 @@ public:
 
 	void* phdr_mmap_;
 	Elf32_Phdr* phdr_table_;
+	Elf32_Phdr* tmp_phdr;
 	Elf32_Addr phdr_size_;
 
 	// First page of reserved address space.

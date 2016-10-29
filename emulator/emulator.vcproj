@@ -41,10 +41,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../recompiler;&quot;../recompiler/target-arm&quot;;../recompiler/tcg;../pxwc;../recompiler/fpu;../"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NEED_CPU_H;__i386__;TARGET_ARM"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;CAPSTONE_HAS_ARM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -62,6 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../capstone"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -243,6 +244,134 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="capstone"
+			>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMAddressingModes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMBaseInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMDisassembler.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMDisassembler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMGenAsmWriter.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMGenDisassemblerTables.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMGenInstrInfo.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMGenRegisterInfo.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMGenSubtargetInfo.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMInstPrinter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMInstPrinter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMMapping.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMMapping.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\arch\ARM\ARMModule.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\cs.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\cs_priv.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\LEB128.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MathExtras.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCDisassembler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCFixedLenDisassembler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCInst.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCInst.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCInstrDesc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCInstrDesc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCRegisterInfo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\MCRegisterInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\myinttypes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\SStream.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\SStream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\utils.c"
+				>
+			</File>
+			<File
+				RelativePath="..\capstone\utils.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
