@@ -133,6 +133,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
         {
             mem_addr = get_mmap_addr(length);
             err = uc_mem_map(g_uc, mem_addr, PAGE_ALIGN(length), UC_PROT_ALL);
+            if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
             return  (void*)mem_addr;
         }
 
@@ -154,6 +155,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
                 lseek(fd,offset,SEEK_SET);
                 read(fd,buf,length);
                 err = uc_mem_write(g_uc,(uint64_t)start,buf,length);
+                if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
                 free(buf);
             }
             else{
@@ -202,6 +204,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
         {
             mem_addr = get_mmap_addr(length);
             err = uc_mem_map(g_uc, mem_addr, PAGE_ALIGN(length), UC_PROT_ALL);
+            if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
             return  (void*)mem_addr;
         }
         else
@@ -222,6 +225,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
                 lseek(fd,offset,SEEK_SET);
                 read(fd,buf,length);
                 err = uc_mem_write(g_uc,(uint64_t)start,buf,length);
+                if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
                 free(buf);
             }
             else{

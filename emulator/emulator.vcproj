@@ -40,8 +40,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../recompiler;&quot;../recompiler/target-arm&quot;;../recompiler/tcg;../pxwc;../recompiler/fpu;../"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;CAPSTONE_HAS_ARM"
+				AdditionalIncludeDirectories="../capstone/include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;CAPSTONE_HAS_ARM;CAPSTONE_USE_SYS_DYN_MEM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -176,6 +176,10 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\crc32.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\dlfcn.cpp"
 				>
@@ -370,6 +374,18 @@
 			</File>
 			<File
 				RelativePath="..\capstone\utils.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="runtime"
+			>
+			<File
+				RelativePath=".\runtime\libc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\runtime\runtime.h"
 				>
 			</File>
 		</Filter>

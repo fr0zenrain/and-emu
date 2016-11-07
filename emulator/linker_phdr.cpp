@@ -351,7 +351,7 @@ bool ElfReader::LoadSegments() {
 		if ((phdr->p_flags & PF_W) != 0 && PAGE_OFFSET(seg_file_end) > 0) 
 		{
 			//memset((void*) seg_file_end, 0,PAGE_SIZE - PAGE_OFFSET(seg_file_end));
-			//uc_mem_write(g_uc,seg_file_end,0,0);
+			//uc_mem_write(g_uc,seg_file_end,0,PAGE_OFFSET(seg_file_end));
 		}
 
 		seg_file_end = PAGE_END(seg_file_end);

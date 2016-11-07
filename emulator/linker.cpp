@@ -19,8 +19,8 @@
 #include "linker_phdr.h"
 #include "linker.h"
 
-
 extern uc_engine* g_uc;
+
 /* Assume average path length of 64 and max 8 paths */
 #define LDPATH_BUFSIZE 512
 #define LDPATH_MAX 8
@@ -296,6 +296,11 @@ dl_iterate_phdr(int (*cb)(dl_phdr_info *info, size_t size, void *data),
 
 static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name) 
 {
+	if(si->emu)
+	{
+		return ((libc*)si->runtime)->get_symbols(name,hash);
+	}
+
 	if(si->base)	
 	{
 		for (unsigned n = si->tmp_bucket[hash % si->nbucket]; n != 0; n =
@@ -876,21 +881,29 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO JMP_SLOT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&sym_addr,4);
+		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
 		case R_ARM_GLOB_DAT:
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO GLOB_DAT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&svc,4);
+		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
 		case R_ARM_ABS32:
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO ABS %08x <- %08x %s\n", reloc, sym_addr, sym_name);
-		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&svc,4);
+		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
 		break;
 		case R_ARM_REL32:
@@ -940,9 +953,12 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		}
 		debug_printf( "RELO RELATIVE %08x <- +%08x\n", reloc,
 				si->base);
-		uc_mem_read(g_uc,reloc,&sym_addr,4);
+		err=uc_mem_read(g_uc,reloc,&sym_addr,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		sym_addr +=si->base;
-		uc_mem_write(g_uc,reloc,&sym_addr,4);
+		//uc_mem_write(g_uc,reloc,&sym_addr,4);
+		err=uc_mem_write(g_uc,reloc,&sym_addr,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) += si->base;
 		break;
 
@@ -1131,6 +1147,7 @@ int get_strtab_size(soinfo* si)
 	int index ;
 	si->tmp_symtab = (Elf32_Sym*)malloc(si->nchain*sizeof(Elf32_Sym));
 	uc_err err = uc_mem_read(g_uc,(uint64_t)si->symtab,si->tmp_symtab,si->nchain*sizeof(Elf32_Sym));
+	if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 	for(int i = 0; i < si->nchain ; i++)
 	{
 		if(si->tmp_symtab[i].st_name > si->strtab_size)
@@ -1186,7 +1203,7 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	uint64_t addr = (uint64_t)si->dynamic;
 	si->tmp_dynamic = (Elf32_Dyn*)malloc(dynamic_count*sizeof(Elf32_Dyn));
 	uc_err err=uc_mem_read(g_uc,addr,si->tmp_dynamic,dynamic_count*sizeof(Elf32_Dyn));
-
+    if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 	for (Elf32_Dyn* d = si->tmp_dynamic; d->d_tag != DT_NULL; ++d) {
 		debug_printf("d = %p, d[0](tag) = 0x%08x d[1](val) = 0x%08x\n", d, d->d_tag,
 				d->d_un.d_val);
@@ -1308,11 +1325,14 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	si->tmp_bucket = (unsigned int*)malloc(si->nbucket*4);
 	si->tmp_chain = (unsigned int*)malloc(si->nchain*4);
 	err = uc_mem_read(g_uc,(uint64_t)si->strtab,(void*)si->tmp_strtab,si->strtab_size);
+    if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 	err = uc_mem_read(g_uc,(uint64_t)si->bucket,si->tmp_bucket,si->nbucket*4);
+    if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 	err = uc_mem_read(g_uc,(uint64_t)si->chain,si->tmp_chain,si->nchain*4);
+    if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 
-	debug_printf("si->base = 0x%08x, si->strtab = %p, si->symtab = %p,si->bucket = %p,si->chain = %p\n",
-			si->base, si->strtab, si->symtab, si->bucket, si->chain);
+	//debug_printf("si->base = 0x%08x, si->strtab = %p, si->symtab = %p,si->bucket = %p,si->chain = %p\n",
+	//		si->base, si->strtab, si->symtab, si->bucket, si->chain);
 
 	// Sanity checks.
 	if (relocating_linker && needed_count != 0) {
