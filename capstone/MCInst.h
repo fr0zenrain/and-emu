@@ -19,8 +19,9 @@
 #ifndef CS_MCINST_H
 #define CS_MCINST_H
 
+#if !defined(_MSC_VER) || !defined(_KERNEL_MODE)
 #include <stdint.h>
-
+#endif
 #include "include/capstone.h"
 
 typedef struct MCInst MCInst;
@@ -54,8 +55,6 @@ bool MCOperand_isImm(const MCOperand *op);
 bool MCOperand_isFPImm(const MCOperand *op);
 
 bool MCOperand_isInst(const MCOperand *op);
-
-void MCInst_clear(MCInst *m);
 
 /// getReg - Returns the register number.
 unsigned MCOperand_getReg(const MCOperand *op);

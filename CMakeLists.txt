@@ -15,6 +15,9 @@ set(SOURCEFILES
         emulator/linker_phdr.cpp
         emulator/memory.cpp
         emulator/engine.cpp
+        emulator/crc32.cpp
+        emulator/runtime/libc.cpp
+
         )
 
 add_subdirectory(capstone)

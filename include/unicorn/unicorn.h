@@ -19,7 +19,7 @@ extern "C" {
 
 #include "platform.h"
 
-struct uc_struct;
+
 typedef struct uc_struct uc_engine;
 
 typedef size_t uc_hook;
@@ -101,6 +101,7 @@ typedef enum uc_mode {
     UC_MODE_MIPS32 = UC_MODE_32,    // Mips32 ISA (Mips)
     UC_MODE_MIPS64 = UC_MODE_64,    // Mips64 ISA (Mips)
 } uc_mode;
+
 
 // All type of errors encountered by Unicorn API.
 // These are values returned by uc_errno()
@@ -193,6 +194,12 @@ typedef enum uc_hook_type {
 #define UC_HOOK_MEM_FETCH_INVALID (UC_HOOK_MEM_FETCH_PROT + UC_HOOK_MEM_FETCH_UNMAPPED)
 // hook type for all events of illegal memory access
 #define UC_HOOK_MEM_INVALID (UC_HOOK_MEM_UNMAPPED + UC_HOOK_MEM_PROT)
+
+struct uc_struct
+{
+	uc_arch arch;
+	uc_mode mode;
+};
 
 // Callback function for hooking memory (UC_MEM_READ, UC_MEM_WRITE & UC_MEM_FETCH)
 // @type: this memory is being READ, or WRITE

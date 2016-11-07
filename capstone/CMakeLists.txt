@@ -1,4 +1,6 @@
 
+include_directories(include)
+
 set(SOURCEFILES
         arch/ARM/ARMDisassembler.c
         arch/ARM/ARMInstPrinter.c
