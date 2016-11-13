@@ -33,7 +33,11 @@ void* libc::s_malloc(void*)
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
 	if(libc::v_lr &1)
 		libc::v_lr-=1;
+#ifdef _MSC_VER
     printf("malloc(0x%x) ->0x%x\n",v_r0,addr);
+#else
+    printf(RED "malloc(0x%x) ->0x%x\n" RESET,v_r0,addr);
+#endif
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
 	//uc_reg_write(g_uc,UC_ARM_REG_CPSR,&libc::v_spsr);
 	return addr;
@@ -51,7 +55,6 @@ void* libc::s_memset(void*)
 	if(libc::v_lr &1)
 		libc::v_lr-=1;
 
-	printf("malloc(0x%x) ->0x%x\n",v_r0,addr);
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
 
 	return 0;
@@ -68,8 +71,12 @@ void* libc::s__aeabi_memset(void*)
 
 	if(libc::v_lr &1)
 		libc::v_lr-=1;
+#ifdef _MSC_VER
+    printf("s__aeabi_memset(0x%x,0x%x,0x%x)\n",v_r0,v_r1,v_r2);
+#else
+    printf(RED "s__aeabi_memset(0x%x,0x%x,0x%x)\n" RESET,v_r0,v_r1,v_r2);
+#endif
 
-	printf("s__aeabi_memset(0x%x,0x%x,0x%x)\n",v_r0,v_r1,v_r2);
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
 
 	return 0;
@@ -193,7 +200,7 @@ int libc::dispatch()
         s->func(s);
 		SetConsoleTextAttribute(h, Info.wAttributes );
 #else
-		s->func(s)
+		s->func(s);
 #endif
     }
 
