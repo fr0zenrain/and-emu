@@ -327,7 +327,7 @@ static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *use
 
 static int hook_mem_access(uc_engine *uc, uc_mem_type type, uint64_t addr, int size, int64_t value, void *user_data)
 {
-	//printf(">>> Tracing mem at 0x%llx, instruction size = 0x%x\n", address, size);
+	//printf(">>> Tracing mem at 0x%llx, instruction size = 0x%x\n", addr, size);
 	return 1;
 }
 
@@ -373,22 +373,21 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	err=uc_reg_write(uc, UC_ARM_REG_R5, &r5);
 
 	err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
-	err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
+
 	err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
-	err=uc_reg_write(uc, UC_ARM_REG_CPSR, &cpsr);
+	//err=uc_reg_write(uc, UC_ARM_REG_CPSR, &cpsr);
 	if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
-	err=uc_reg_write(uc, UC_ARM_REG_SPSR, &cpsr);
-	if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
+	//err=uc_reg_write(uc, UC_ARM_REG_SPSR, &cpsr);
 
 	// tracing all basic blocks with customized callback
-	err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, JNI_OnLoad);
+	err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, 0);
 
 	// tracing one instruction at ADDRESS with customized callback
-	err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1, 1);
+	err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1, 0);
 
-	err=uc_hook_add(uc, &trace3, UC_HOOK_INSN, (void*)hook_instr, NULL, JNI_OnLoad, JNI_OnLoad);
+	err=uc_hook_add(uc, &trace3, UC_HOOK_INSN, (void*)hook_instr, NULL, JNI_OnLoad, 0);
 
-	err=uc_hook_add(uc, &trace4, UC_HOOK_INTR, (void*)hook_inter, NULL, JNI_OnLoad, JNI_OnLoad);
+	err=uc_hook_add(uc, &trace4, UC_HOOK_INTR, (void*)hook_inter, NULL, JNI_OnLoad, 0);
 
 	err=uc_hook_add(uc, &trace5, UC_HOOK_MEM_UNMAPPED|UC_HOOK_MEM_FETCH_INVALID, (void*)hook_unmap, NULL, JNI_OnLoad, 0);
 
@@ -460,8 +459,9 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libjiagu.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	
-	start_vm(g_uc,si,(void*)((int)si->base+0x772c));
-	//start_vm(g_uc,si,(void*)((int)JNI_OnLoad-1));
+	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));
+	start_vm(g_uc,si,(void*)((int)JNI_OnLoad-1));
+	//start_vm(g_uc,si,(void*)0x4004bb10);
 
 	return 0;
 }

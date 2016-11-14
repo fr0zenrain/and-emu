@@ -13,19 +13,21 @@
 
 #define FUNCTION_VIRTUAL_ADDRESS  0x10000000
 
+typedef void* (*f)(void*);
+
 typedef struct _symbols{
 	unsigned int hash;
 	const char * name;
 	void* func;
 	unsigned int model;
+	int number;
 	unsigned int vaddr;
 }symbols;
 
 typedef struct _symbols_map{
 	unsigned int vaddr;
-    void* (*func)(void*);
+    f func;
 }symbols_map;
-
 
 struct soinfo;
 
@@ -53,12 +55,16 @@ private:
 	static int v_r0;
 	static int v_r1;
 	static int v_r2;
+	static int v_r6;
+	static int v_r7;
 	static int v_cpsr;
 	static int v_spsr;
 public:
 	static void* s_malloc(void*);
 	static void* s_memset(void*);
 	static void* s__aeabi_memset(void*);
+	static void* sys_mmap(int type);
+	static void* sys_cacheflush(int type);
 };
 
 
