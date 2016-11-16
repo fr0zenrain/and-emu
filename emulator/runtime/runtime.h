@@ -33,6 +33,21 @@ typedef struct _symbols_map{
 
 struct soinfo;
 
+///////////////////////////////////////////////
+
+struct s_timeval {
+#ifdef _MSC_VER
+	unsigned __int64  tv_sec;     /* seconds */
+#else
+	long long      tv_sec;     /* seconds */
+#endif
+	int tv_usec;    /* microseconds */
+};
+
+struct s_timezone {
+	int tz_minuteswest;     /* minutes west of Greenwich */
+	int tz_dsttime;         /* type of DST correction */
+};
 
 
 class libc
@@ -67,10 +82,16 @@ private:
 	static unsigned int v_spsr;
 public:
 	static void* s_malloc(void*);
+	static void* s_free(void*);
 	static void* s_memset(void*);
+	static void* s__system_property_get(void*);
+	static void* s_gettimeofday(void*);
+	static void* s_strdup(void*);
 	static void* s__aeabi_memset(void*);
+	static void* s__aeabi_memcpy(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
+	static void* sys_dlopen(void*);
 
 public:
 	static unsigned int get_r0(){return v_r0;}
@@ -90,5 +111,6 @@ public:
 };
 
 
+int get_prop(char* name,char* value);
 
 #endif

@@ -388,6 +388,10 @@
 				RelativePath=".\runtime\runtime.h"
 				>
 			</File>
+			<File
+				RelativePath=".\runtime\system.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="jvm"

@@ -8,6 +8,7 @@
 
 #ifdef _MSC_VER
 #include "windows.h"
+#include "time.h"
 #else
 #include <sys/mman.h>
 #endif
@@ -55,6 +56,22 @@ void* libc::s_malloc(void*)
 	return addr;
 }
 
+void* libc::s_free(void*)
+{
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+	
+	if(v_r0)
+		uc_mem_unmap(g_uc,v_r0,0x1000);
+#ifdef _MSC_VER
+	printf("free(0x%x)\n",v_r0);
+#else
+	printf(RED "free(0x%x)\n" RESET,v_r0);
+#endif
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	return 0;
+}
+
 void* libc::s_memset(void*)
 {
 	int addr = v_r0;
@@ -89,6 +106,31 @@ void* libc::s__aeabi_memset(void*)
     printf(RED "s__aeabi_memset(0x%x,0x%x,0x%x)\n" RESET,v_r0,v_r1,v_r2);
 #endif
 
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+	return 0;
+}
+
+void* libc::s__aeabi_memcpy(void*)
+{
+	void* ptr = malloc(v_r2);
+	if(ptr)
+	{
+		uc_mem_read(g_uc,v_r1,ptr,v_r2);
+		uc_mem_write(g_uc,v_r0,ptr,v_r2);
+		free(ptr);
+	}
+
+	
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+#ifdef _MSC_VER
+	printf("s__aeabi_memcpy(0x%x,0x%x,0x%x)\n",v_r0,v_r1,v_r2);
+#else
+	printf(RED "s__aeabi_memcpy(0x%x,0x%x,0x%x)\n" RESET,v_r0,v_r1,v_r2);
+#endif
+
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&v_r2);
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
 
 	return 0;
@@ -130,6 +172,118 @@ void* libc::sys_cacheflush(int type)
 	return 0;
 }
 
+void* libc::sys_dlopen(void*)
+{
+	int value = 0;
+	char buf[256] ={0};
+
+	if(v_r0)
+	{
+		uc_mem_read(g_uc,v_r0,buf,256);
+		value = (int)s_dlopen(buf,0);
+	}
+	
+#ifdef _MSC_VER
+	printf("dlopen (%s,0x%x)-> 0x%x\n",buf,v_r1,value);
+#else
+	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,v_r0,v_r1,value);
+#endif
+
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+	return 0;
+}
+
+void* libc::s__system_property_get(void*)
+{
+	int ret = 0;
+	char name[32] ={0};
+	char value[92] ={0};
+
+	if(v_r0 && v_r1)
+	{
+		uc_mem_read(g_uc,v_r0,name,32);
+		ret = get_prop(name,value);
+		if(ret)
+		{
+			uc_mem_write(g_uc,v_r1,value,32);
+		}
+	}
+#ifdef _MSC_VER
+	printf("__system_property_get (%s,%s)\n",name,value);
+#else
+	printf(RED "__system_property_get(%s,%s)\n" RESET,name,value);
+#endif
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
+
+	return 0;
+}
+
+void* libc::s_gettimeofday(void*)
+{
+	struct s_timeval tv;
+	int value = 0;
+
+	if(v_r0)
+	{
+		tv.tv_sec = time(0);
+		tv.tv_usec = 960256;
+
+		uc_mem_write(g_uc,v_r0,&tv,sizeof(s_timeval));
+	}
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+#ifdef _MSC_VER
+	printf("gettimeofday (%x,0x%x)-> 0x%x\n",v_r0,v_r1,value);
+#else
+	printf(RED "gettimeofday(%x,0x%x)-> 0x%x\n" RESET,v_r0,v_r1,value);
+#endif
+
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+	return 0;
+}
+
+void* libc::s_strdup(void*)
+{
+	uc_err err;
+	char buf[256] ={0};
+	int value = 0;
+
+	if(v_r0)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,v_r0+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
+	}
+
+#ifdef _MSC_VER
+	printf("strdup (%s)-> 0x%x\n",buf,value);
+#else
+	printf(RED "strdup(%s)-> 0x%x\n" RESET,v_r0,value);
+#endif
+
+
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+	return 0;
+}
 
 int hash_compare(const void *a,const void *b) 
 { 
@@ -148,10 +302,16 @@ symbols g_syms[] =
 	{0x46c5242d,"__cxa_finalize",0},
 	{0x4b3bddf7,"__cxa_exit",0},
 	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
+	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
 	{0x8463960a,"memset",(void*)libc::s_memset,1},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
 	{0x84e4836b,"mmap",(void*)libc::sys_mmap,1,0xc0},
 	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,1,0xf0002},
+	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,1},
+	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,1},
+	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,1},
+	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,1},
+	{0xbc836fa7,"strdup",(void*)libc::s_strdup,1},
 };
 
 
@@ -226,7 +386,8 @@ Elf32_Sym* libc::get_symbols(const char* name,unsigned int hash)
 
 int libc::dispatch()
 {
-	int addr = 0;
+	unsigned int addr = 0;
+
 	uc_err err=uc_reg_read(g_uc, UC_ARM_REG_PC, &v_pc);
 	err=uc_reg_read(g_uc, UC_ARM_REG_CPSR, &v_cpsr);
 	err=uc_reg_read(g_uc, UC_ARM_REG_SPSR, &v_spsr);
@@ -242,7 +403,12 @@ int libc::dispatch()
 	err=uc_reg_read(g_uc, UC_ARM_REG_R7, &v_r7);
 	err=uc_reg_read(g_uc, UC_ARM_REG_R8, &v_r8);
 
-	printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2,v_cpsr);
+	if(v_lr&1)
+		addr = v_pc -1;
+	else
+		addr = v_pc -4;
+
+	printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_cpsr);
 
 	if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
 	{
@@ -263,11 +429,41 @@ int libc::dispatch()
 	}
     else if((v_pc & 0xffffff00) == JVM_INVOKE_ADDRESS)
     {
-		g_invoke_func[v_r7].f();
+		//restore r7
+		int index = v_r7;
+		err=uc_mem_read(g_uc, v_sp, &v_r7,4);
+		err=uc_reg_write(g_uc, UC_ARM_REG_R7, &v_r7);
+		v_sp += 4;
+		err=uc_reg_write(g_uc, UC_ARM_REG_SP, &v_sp);
+#ifdef _MSC_VER
+		CONSOLE_SCREEN_BUFFER_INFO Info;
+		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); 
+		GetConsoleScreenBufferInfo(h, &Info);
+		SetConsoleTextAttribute(h, FOREGROUND_RED);
+		g_invoke_func[index].f();
+		SetConsoleTextAttribute(h, Info.wAttributes );
+#else
+		g_invoke_func[index].f();
+#endif
     }
 	else if((v_pc & 0xffffff00) == JVM_INTERFACE_ADDRESS)
 	{
-		g_native_func[v_r7].f();
+		//restore r7
+		int index = v_r7;
+		err=uc_mem_read(g_uc, v_sp, &v_r7,4);
+		err=uc_reg_write(g_uc, UC_ARM_REG_R7, &v_r7);
+		v_sp += 4;
+		err=uc_reg_write(g_uc, UC_ARM_REG_SP, &v_sp);
+#ifdef _MSC_VER
+		CONSOLE_SCREEN_BUFFER_INFO Info;
+		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); 
+		GetConsoleScreenBufferInfo(h, &Info);
+		SetConsoleTextAttribute(h, FOREGROUND_RED);
+		g_native_func[index].f();
+		SetConsoleTextAttribute(h, Info.wAttributes );
+#else
+		g_native_func[index].f();
+#endif
 	}
 	else
 	{	
@@ -279,12 +475,6 @@ int libc::dispatch()
 		}
 		
 	}
-
-
-	if(v_lr&1)
-		addr = v_pc -1;
-	else
-		addr = v_pc -4;
 
 	return 0;
 }

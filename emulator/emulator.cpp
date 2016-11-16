@@ -280,9 +280,9 @@ static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user
 		if(count)
 		{
 			int offset = (int)insn->address-si->base;
-			if(offset == 0x9292)
+			if(offset == 0xA330)
 			{
-				printf("ss\n");
+				printf("");
 			}
 			
 			if(insn->size == 2)
@@ -471,13 +471,15 @@ int load_library()
 	void* h2 = s_dlopen("libstdc++.so",0);
 	void* h3 = s_dlopen("liblog.so",0);
 	void* h4 = s_dlopen("libz.so",0);
-	
+	//void* h5 = s_dlopen("libdvm.so",0);
+
 	return 0;
 }
 
 int init_env_func(uc_engine* uc, void* invoke, void* addr)
 {
 	unsigned int thumb_addr = 0;
+	unsigned int svc_thumb = 0xdf00df00;
 	uc_err err = uc_mem_map(uc,JVM_INVOKE_ADDRESS,0x1000,UC_PROT_ALL);
 	if(err != UC_ERR_OK)
 	{
@@ -486,12 +488,14 @@ int init_env_func(uc_engine* uc, void* invoke, void* addr)
 	unsigned int func = JVM_INVOKE_ADDRESS;
 	for(int i = 0; i < 8 ; i++)
 	{
-		unsigned int order = i| 0x2700;
-		order |= 0xdf000000;
+		unsigned int bak =  i| 0x2700;
+		bak <<= 16;
+		bak |= 0xb480;
 		thumb_addr = func | 1;//add thumb tag
 		err = uc_mem_write(uc,(int)invoke+i*4,&thumb_addr,4);
-		err = uc_mem_write(uc,(int)func,&order,4);
-		func += 4;
+		err = uc_mem_write(uc,(int)func,&bak,4);
+		err = uc_mem_write(uc,(int)func+4,&svc_thumb,4);
+		func += 8;
 	}
 
 	err = uc_mem_map(uc,JVM_INTERFACE_ADDRESS,0x1000,UC_PROT_ALL);
@@ -501,14 +505,16 @@ int init_env_func(uc_engine* uc, void* invoke, void* addr)
 	}
 
 	func = JVM_INTERFACE_ADDRESS;
-	for(int i = 0; i < 0x1000/4 ; i++)
+	for(int i = 0; i < 0x1000/8 ; i++)
 	{
-		unsigned int order = i| 0x2700;
-        order |= 0xdf000000;
+		unsigned int bak =  i| 0x2700;
+		bak <<= 16;
+		bak |= 0xb480;
 		thumb_addr = func | 1;//add thumb tag
 		err = uc_mem_write(uc,(int)addr+i*4,&thumb_addr,4);
-		err = uc_mem_write(uc,(int)func,&order,4);
-		func += 4;
+		err = uc_mem_write(uc,(int)func,&bak,4);
+		err = uc_mem_write(uc,(int)func+4,&svc_thumb,4);
+		func += 8;
 	}
 	
 	return 1;
@@ -580,8 +586,8 @@ int main(int argc, char* argv[])
 {
 	init_emulator();
 
-	soinfo* si = load_android_so("libsgmainso-6.0.71.so");
-    //soinfo* si = load_android_so("x.so");
+	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
+    soinfo* si = load_android_so("libutil.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	
 	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));
