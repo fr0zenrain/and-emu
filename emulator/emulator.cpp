@@ -6,15 +6,35 @@
 #include "string.h"
 #include "dlfcn.h"
 #include "linker.h"
+#include "engine.h"
+#include "jvm/jvm.h"
 #include "runtime/runtime.h"
+
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
 
 #pragma comment(lib,"unicorn_staload.lib")
 //#pragma comment(lib,"capstone.lib")
 uc_engine* g_uc;
+extern unsigned int g_JNIEnv_addr;
 
 static void hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
+	int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+	uc_err err=uc_reg_read(g_uc, UC_ARM_REG_PC, &pc);
+	err=uc_reg_read(g_uc, UC_ARM_REG_LR, &lr);
+	err=uc_reg_read(g_uc, UC_ARM_REG_SP, &sp);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R0, &r0);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R1, &r1);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R2, &r2);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R3, &r3);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R4, &r4);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R5, &r5);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R6, &r6);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R7, &r7);
 	printf(">>> Tracing unmap at 0x%llx, block size = 0x%x\n", address, size);
+	printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
 }
 
 
@@ -230,12 +250,22 @@ static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user
 			_exit(-1);
 		}        
 	}
-
+	
 	if(*(unsigned int*)buf == 0)
 	{
 		uc_emu_stop(uc);
 		return ;
 	}
+
+    int r0,r1,r2,r3,r4,r5,r6,r7;
+	uc_reg_read(g_uc, UC_ARM_REG_R0, &r0);
+	uc_reg_read(g_uc, UC_ARM_REG_R1, &r1);
+	uc_reg_read(g_uc, UC_ARM_REG_R2, &r2);
+	uc_reg_read(g_uc, UC_ARM_REG_R3, &r3);
+	uc_reg_read(g_uc, UC_ARM_REG_R4, &r4);
+	uc_reg_read(g_uc, UC_ARM_REG_R5, &r5);
+	uc_reg_read(g_uc, UC_ARM_REG_R6, &r6);
+	uc_reg_read(g_uc, UC_ARM_REG_R7, &r7);
 
 	csh handle;
 	cs_insn *insn;
@@ -250,6 +280,10 @@ static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user
 		if(count)
 		{
 			int offset = (int)insn->address-si->base;
+			if(offset == 0x9292)
+			{
+				printf("ss\n");
+			}
 			
 			if(insn->size == 2)
 				printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,(int)address-si->base,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
@@ -351,12 +385,7 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	int cpsr=0x800d0030;
 
 	uc_err err;
-	uint64_t sp = 0xbef00000;
-	err=uc_mem_map(uc,sp-0x300000,8*1024*1024,UC_PROT_READ|UC_PROT_WRITE);
-	if(err != UC_ERR_OK)
-    {
-        printf("Failed on uc_mem_map() with error returned: %u\n", err);
-    }
+	
 	int r0=0;
 	int r1=0;
 	int r2=0;
@@ -365,14 +394,11 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	int r5=0;
 	int r6=0;
 
-	err=uc_reg_write(uc, UC_ARM_REG_R0, &r0);
 	err=uc_reg_write(uc, UC_ARM_REG_R1, &r1);
 	err=uc_reg_write(uc, UC_ARM_REG_R2, &r2);
 	err=uc_reg_write(uc, UC_ARM_REG_R3, &r3);
 	err=uc_reg_write(uc, UC_ARM_REG_R4, &r4);
 	err=uc_reg_write(uc, UC_ARM_REG_R5, &r5);
-
-	err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
 
 	err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 	//err=uc_reg_write(uc, UC_ARM_REG_CPSR, &cpsr);
@@ -383,7 +409,7 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, 0);
 
 	// tracing one instruction at ADDRESS with customized callback
-	err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1, 0);
+	err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1, 1);
 
 	err=uc_hook_add(uc, &trace3, UC_HOOK_INSN, (void*)hook_instr, NULL, JNI_OnLoad, 0);
 
@@ -418,6 +444,25 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	return 1;
 }
 
+int init_stack(uc_engine* uc)
+{
+	int stack_base = 0xbeb00000;
+	int sp = 0xbef00000;
+	//0xbeb00000--0xbef00000
+	uc_err err = uc_mem_map(uc,stack_base,sp - stack_base,UC_PROT_READ|UC_PROT_WRITE);
+	if(err != UC_ERR_OK)
+	{
+		printf("Failed on uc_mem_map() with error returned: %u\n", err);
+		return 0;
+	}
+	
+	err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
+	
+	printf("mmap stack ,base %x size %dM\n",stack_base,(sp - stack_base)/(1024*1024));
+
+	return 1;
+}
+
 int load_library()
 {
 	libc* c = new libc();
@@ -428,6 +473,84 @@ int load_library()
 	void* h4 = s_dlopen("libz.so",0);
 	
 	return 0;
+}
+
+int init_env_func(uc_engine* uc, void* invoke, void* addr)
+{
+	unsigned int thumb_addr = 0;
+	uc_err err = uc_mem_map(uc,JVM_INVOKE_ADDRESS,0x1000,UC_PROT_ALL);
+	if(err != UC_ERR_OK)
+	{
+		return 0;
+	}
+	unsigned int func = JVM_INVOKE_ADDRESS;
+	for(int i = 0; i < 8 ; i++)
+	{
+		unsigned int order = i| 0x2700;
+		order |= 0xdf000000;
+		thumb_addr = func | 1;//add thumb tag
+		err = uc_mem_write(uc,(int)invoke+i*4,&thumb_addr,4);
+		err = uc_mem_write(uc,(int)func,&order,4);
+		func += 4;
+	}
+
+	err = uc_mem_map(uc,JVM_INTERFACE_ADDRESS,0x1000,UC_PROT_ALL);
+	if(err != UC_ERR_OK)
+	{
+		return 0;
+	}
+
+	func = JVM_INTERFACE_ADDRESS;
+	for(int i = 0; i < 0x1000/4 ; i++)
+	{
+		unsigned int order = i| 0x2700;
+        order |= 0xdf000000;
+		thumb_addr = func | 1;//add thumb tag
+		err = uc_mem_write(uc,(int)addr+i*4,&thumb_addr,4);
+		err = uc_mem_write(uc,(int)func,&order,4);
+		func += 4;
+	}
+	
+	return 1;
+}
+
+int init_jvm(uc_engine* uc)
+{
+	//alloc javavm
+	JNIEnvExt* jvm= (JNIEnvExt*)s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+	if(jvm == 0)
+	{
+		return 0;
+	}
+	void* invoke_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+	if(invoke_interface == 0)
+	{
+		return 0;
+	}
+  
+	unsigned int addr = (int)jvm + offsetof(JavaVMExt,funcTable);
+	uc_mem_write(uc,addr,&invoke_interface,4);
+	//jnienv
+	void* env = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+	if(env == 0)
+	{
+		return 0;
+	}
+
+    void* native_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+    if(native_interface == 0)
+	{
+		return 0;
+	}
+  
+	addr = (int)env + offsetof(JNIEnvExt,funcTable);
+	uc_mem_write(uc,addr,&native_interface,4);
+	init_env_func(uc,invoke_interface,native_interface);
+	uc_reg_write(uc, UC_ARM_REG_R0, &jvm);
+	uc_reg_write(uc, UC_ARM_REG_R1, &env);
+	g_JNIEnv_addr = (unsigned int)env;
+
+	return 1;
 }
 
 uc_engine* init_emulator()
@@ -447,6 +570,8 @@ uc_engine* init_emulator()
 		return 0;
 	}
 
+	init_stack(uc);
+	init_jvm(uc);
 	load_library();
     return uc;
 }
@@ -456,12 +581,13 @@ int main(int argc, char* argv[])
 	init_emulator();
 
 	soinfo* si = load_android_so("libsgmainso-6.0.71.so");
-    //soinfo* si = load_android_so("libjiagu.so");
+    //soinfo* si = load_android_so("x.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	
 	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));
 	start_vm(g_uc,si,(void*)((int)JNI_OnLoad-1));
 	//start_vm(g_uc,si,(void*)0x4004bb10);
+	//start_vm(g_uc,si,(void*)0x4004721c);
 
 	return 0;
 }

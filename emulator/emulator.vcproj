@@ -389,6 +389,22 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="jvm"
+			>
+			<File
+				RelativePath=".\jvm\jni.h"
+				>
+			</File>
+			<File
+				RelativePath=".\jvm\jvm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\jvm\jvm.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
 			>

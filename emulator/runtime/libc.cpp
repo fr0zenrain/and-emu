@@ -1,4 +1,4 @@
-
+#include "../jvm/jvm.h"
 #include "runtime.h"
 #include "string.h"
 #include "stdlib.h"
@@ -14,19 +14,27 @@
 
 symbols_map* g_symbol_map = 0;
 std::map<int,void*> g_svc_map;
-extern uc_engine* g_uc;
-soinfo* libc::si =0;
-int libc::v_pc =0;
-int libc::v_lr =0;
-int libc::v_sp =0;
-int libc::v_cpsr =0;
-int libc::v_spsr =0;
 
-int libc::v_r0 =0;
-int libc::v_r1 =0;
-int libc::v_r2 =0;
-int libc::v_r6 =0;
-int libc::v_r7 =0;
+extern uc_engine* g_uc;
+extern func_info g_invoke_func[];
+extern func_info g_native_func[];
+
+soinfo* libc::si =0;
+unsigned int libc::v_pc =0;
+unsigned int libc::v_lr =0;
+unsigned int libc::v_sp =0;
+unsigned int libc::v_cpsr =0;
+unsigned int libc::v_spsr =0;
+
+unsigned int libc::v_r0 =0;
+unsigned int libc::v_r1 =0;
+unsigned int libc::v_r2 =0;
+unsigned int libc::v_r3 =0;
+unsigned int libc::v_r4 =0;
+unsigned int libc::v_r5 =0;
+unsigned int libc::v_r6 =0;
+unsigned int libc::v_r7 =0;
+unsigned int libc::v_r8 =0;
 
 int libc::sym_cnt =0;
 Elf32_Sym libc::sym ;
@@ -227,13 +235,12 @@ int libc::dispatch()
 	err=uc_reg_read(g_uc, UC_ARM_REG_R0, &v_r0);
 	err=uc_reg_read(g_uc, UC_ARM_REG_R1, &v_r1);
 	err=uc_reg_read(g_uc, UC_ARM_REG_R2, &v_r2);
-	err=uc_reg_read(g_uc, UC_ARM_REG_R6, &v_r2);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R3, &v_r3);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R4, &v_r4);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R5, &v_r5);
+	err=uc_reg_read(g_uc, UC_ARM_REG_R6, &v_r6);
 	err=uc_reg_read(g_uc, UC_ARM_REG_R7, &v_r7);
-
-	if(v_lr&1)
-		addr = v_pc -1;
-	else
-		addr = v_pc -4;
+	err=uc_reg_read(g_uc, UC_ARM_REG_R8, &v_r8);
 
 	printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2,v_cpsr);
 
@@ -254,6 +261,14 @@ int libc::dispatch()
 #endif
 		}
 	}
+    else if((v_pc & 0xffffff00) == JVM_INVOKE_ADDRESS)
+    {
+		g_invoke_func[v_r7].f();
+    }
+	else if((v_pc & 0xffffff00) == JVM_INTERFACE_ADDRESS)
+	{
+		g_native_func[v_r7].f();
+	}
 	else
 	{	
 		std::map<int,void*>::iterator iter = g_svc_map.find(v_r7);
@@ -264,6 +279,12 @@ int libc::dispatch()
 		}
 		
 	}
+
+
+	if(v_lr&1)
+		addr = v_pc -1;
+	else
+		addr = v_pc -4;
 
 	return 0;
 }
