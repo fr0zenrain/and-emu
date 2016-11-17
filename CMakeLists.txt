@@ -6,6 +6,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -m32 -DCAPSTONE_HAS_ARM -DCAPSTONE_USE_SY
 
 
 include_directories(include)
+include_directories(capstone)
 
 
 set(SOURCEFILES
@@ -17,7 +18,9 @@ set(SOURCEFILES
         emulator/engine.cpp
         emulator/crc32.cpp
         emulator/runtime/libc.cpp
-
+        emulator/runtime/malloc.cpp
+        emulator/runtime/system.cpp
+        emulator/jvm/jvm.cpp
         )
 
 add_subdirectory(capstone)

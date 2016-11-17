@@ -1,6 +1,8 @@
 #ifndef __RUNTIME_H__
 #define __RUNTIME_H__
 #include "../linker.h"
+#include <stdlib.h>
+#include "../../include/unicorn/unicorn.h"
 
 #define RED   "\x1B[31m"
 #define GRN   "\x1B[32m"
@@ -14,6 +16,7 @@
 #define FUNCTION_VIRTUAL_ADDRESS  0x10000000
 #define JVM_INVOKE_ADDRESS  0x20000000
 #define JVM_INTERFACE_ADDRESS  0x20001000
+#define EMULATOR_PAUSE_ADDRESS  0x80000000
 
 typedef void* (*f)(void*);
 
@@ -80,6 +83,11 @@ private:
 	static unsigned int v_r8;
 	static unsigned int v_cpsr;
 	static unsigned int v_spsr;
+
+public:
+	static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+	static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+	static void start_emulator(unsigned int pc, soinfo * si);
 public:
 	static void* s_malloc(void*);
 	static void* s_free(void*);
@@ -87,11 +95,16 @@ public:
 	static void* s__system_property_get(void*);
 	static void* s_gettimeofday(void*);
 	static void* s_strdup(void*);
+	static void* s_strlen(void*);
+	static void* s_strncmp(void*);
+	static void* s_open(void*);
+	static void* s_read(void*);
 	static void* s__aeabi_memset(void*);
 	static void* s__aeabi_memcpy(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);
+	static void* sys_mprotect(void*);
 
 public:
 	static unsigned int get_r0(){return v_r0;}
@@ -112,5 +125,7 @@ public:
 
 
 int get_prop(char* name,char* value);
+extern "C" void* sys_malloc(size_t size);
+extern "C" void sys_free(void* ptr);
 
 #endif

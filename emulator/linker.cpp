@@ -1070,11 +1070,12 @@ void soinfo::CallFunction(const char* function_name,
 
 	debug_printf("[ Calling %s @ %p for '%s' ]\n", function_name,
 			function, name);
-#ifdef __arm__
-	function();
-#endif
-	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,
-			function, name);
+
+
+    unsigned int pc = (int)function - ((int)function & 0x1);
+    //libc::start_emulator(pc,this);
+
+	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 
 	// The function may have called dlopen(3) or dlclose(3), so we need to ensure our data structures
 	// are still writable. This happens with our debug malloc (see http://b/7941716).

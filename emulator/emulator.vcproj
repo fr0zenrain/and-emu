@@ -385,6 +385,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\runtime\malloc.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\runtime\runtime.h"
 				>
 			</File>

@@ -125,7 +125,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
 		(DWORD)maxSize : (DWORD)(maxSize & 0xFFFFFFFFL);
 	const DWORD dwMaxSizeHigh = (sizeof(off_t) <= sizeof(DWORD)) ?
 		(DWORD)0 : (DWORD)((maxSize >> 32) & 0xFFFFFFFFL);
-	  int mem_addr;
+	unsigned  int mem_addr;
     if((int)fd == -1 )
     {
         if(prot == PROT_NONE)
@@ -196,7 +196,7 @@ void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset)
 
 	return map;
 #else
-    int mem_addr;
+    unsigned int mem_addr;
     if((int)fd == -1 )
     {
         if(prot == PROT_NONE)

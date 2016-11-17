@@ -284,12 +284,12 @@ static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user
 			{
 				printf("");
 			}
-			
+/*
 			if(insn->size == 2)
 				printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,(int)address-si->base,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
 			else
 				printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,(int)address-si->base,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
-
+*/
 
 	/*		if(insn->size == 4)
 			{
@@ -353,7 +353,7 @@ static void hook_instr(uc_engine *uc, uint64_t address, uint32_t size, void *use
 
 static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-	printf(">>> Tracing inter at 0x%llx, instruction size = 0x%x\n", address, size);
+	//printf(">>> Tracing inter at 0x%llx, instruction size = 0x%x\n", address, size);
 
 	libc::dispatch();
 
@@ -385,20 +385,8 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	int cpsr=0x800d0030;
 
 	uc_err err;
-	
-	int r0=0;
-	int r1=0;
-	int r2=0;
-	int r3=0;
-	int r4=0;
-	int r5=0;
-	int r6=0;
 
-	err=uc_reg_write(uc, UC_ARM_REG_R1, &r1);
-	err=uc_reg_write(uc, UC_ARM_REG_R2, &r2);
-	err=uc_reg_write(uc, UC_ARM_REG_R3, &r3);
-	err=uc_reg_write(uc, UC_ARM_REG_R4, &r4);
-	err=uc_reg_write(uc, UC_ARM_REG_R5, &r5);
+	err=uc_reg_write(g_uc, UC_ARM_REG_PC, &pc);
 
 	err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 	//err=uc_reg_write(uc, UC_ARM_REG_CPSR, &cpsr);
@@ -406,20 +394,17 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	//err=uc_reg_write(uc, UC_ARM_REG_SPSR, &cpsr);
 
 	// tracing all basic blocks with customized callback
-	err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, 0);
+	//err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, 0);
 
 	// tracing one instruction at ADDRESS with customized callback
-	err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1, 1);
+	//err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1,1);
+	//err=uc_hook_add(uc, &trace4, UC_HOOK_INTR, (void*)hook_inter, NULL, JNI_OnLoad, 0);
 
-	err=uc_hook_add(uc, &trace3, UC_HOOK_INSN, (void*)hook_instr, NULL, JNI_OnLoad, 0);
-
-	err=uc_hook_add(uc, &trace4, UC_HOOK_INTR, (void*)hook_inter, NULL, JNI_OnLoad, 0);
-
-	err=uc_hook_add(uc, &trace5, UC_HOOK_MEM_UNMAPPED|UC_HOOK_MEM_FETCH_INVALID, (void*)hook_unmap, NULL, JNI_OnLoad, 0);
+	/*err=uc_hook_add(uc, &trace5, UC_HOOK_MEM_UNMAPPED|UC_HOOK_MEM_FETCH_INVALID, (void*)hook_unmap, NULL, JNI_OnLoad, 0);
 
 	err=uc_hook_add(uc, &trace6, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, (void*)hook_mem_access, NULL, JNI_OnLoad, 0);
 
-    err=uc_hook_add(uc, &trace7, UC_HOOK_MEM_INVALID, (void*)hook_mem_access, NULL, JNI_OnLoad, 0);
+    err=uc_hook_add(uc, &trace7, UC_HOOK_MEM_INVALID, (void*)hook_mem_access, NULL, JNI_OnLoad, 0);*/
 
     /*if(si->init_func)
 	{
@@ -432,7 +417,7 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 */
 	if(JNI_OnLoad)
 	{
-		err = uc_emu_start(uc, (uint64_t)JNI_OnLoad, (uint64_t)JNI_OnLoad+0xffffffff, 0, 0);
+		err = uc_emu_start(uc, (uint64_t)JNI_OnLoad, (uint64_t)JNI_OnLoad+0xffffff, 0, 0);
 		if (err) {
 			printf("Failed on uc_emu_start() with error returned: %u\n", err);
 			return 0;
@@ -446,8 +431,8 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 
 int init_stack(uc_engine* uc)
 {
-	int stack_base = 0xbeb00000;
-	int sp = 0xbef00000;
+	unsigned int stack_base = 0xbeb00000;
+	unsigned int sp = 0xbef00000;
 	//0xbeb00000--0xbef00000
 	uc_err err = uc_mem_map(uc,stack_base,sp - stack_base,UC_PROT_READ|UC_PROT_WRITE);
 	if(err != UC_ERR_OK)
@@ -455,8 +440,13 @@ int init_stack(uc_engine* uc)
 		printf("Failed on uc_mem_map() with error returned: %u\n", err);
 		return 0;
 	}
-	
+
 	err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
+    if(err != UC_ERR_OK)
+    {
+        printf("Failed on uc_mem_map() with error returned: %u\n", err);
+        return 0;
+    }
 	
 	printf("mmap stack ,base %x size %dM\n",stack_base,(sp - stack_base)/(1024*1024));
 
@@ -473,7 +463,7 @@ int load_library()
 	void* h4 = s_dlopen("libz.so",0);
 	//void* h5 = s_dlopen("libdvm.so",0);
 
-	return 0;
+	return 1;
 }
 
 int init_env_func(uc_engine* uc, void* invoke, void* addr)
@@ -559,6 +549,17 @@ int init_jvm(uc_engine* uc)
 	return 1;
 }
 
+int init_ret_stub(uc_engine* uc)
+{
+	unsigned int svc_thumb = 0xdf00df00;
+
+	uc_err  err=uc_mem_map(uc,EMULATOR_PAUSE_ADDRESS,0x1000,UC_PROT_ALL);
+
+	err = uc_mem_write(uc,(uint64_t)EMULATOR_PAUSE_ADDRESS,&svc_thumb,4);
+
+	return 1;
+}
+
 uc_engine* init_emulator()
 {
 	uc_engine* uc;
@@ -579,6 +580,8 @@ uc_engine* init_emulator()
 	init_stack(uc);
 	init_jvm(uc);
 	load_library();
+	init_ret_stub(uc);
+
     return uc;
 }
 
@@ -587,13 +590,16 @@ int main(int argc, char* argv[])
 	init_emulator();
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
-    soinfo* si = load_android_so("libutil.so");
+	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
+    soinfo* si = load_android_so("x.so");
+	//soinfo* si = load_android_so("libjiagu.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
-	
+	//uc_emu_stop(g_uc);
 	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));
-	start_vm(g_uc,si,(void*)((int)JNI_OnLoad-1));
-	//start_vm(g_uc,si,(void*)0x4004bb10);
+	//start_vm(g_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
+	//start_vm(g_uc,si,(void*)0x4004fb10);
 	//start_vm(g_uc,si,(void*)0x4004721c);
+    libc::start_emulator((unsigned int)JNI_OnLoad-1,si);
 
 	return 0;
 }
