@@ -1,6 +1,7 @@
 #include "jvm.h"
 #include "../runtime/runtime.h"
 #include "../../include/unicorn/unicorn.h"
+#include "jni.h"
 
 extern uc_engine* g_uc;
 unsigned int g_JNIEnv_addr = 0;
@@ -53,7 +54,7 @@ int FindClass()
 	uc_err err;
 	char buffer[256] ={0};
 	unsigned int env = libc::get_r0();
-	int name_addr = libc::get_r1();
+	unsigned int name_addr = libc::get_r1();
 	
 	if(name_addr)
 	{
@@ -4245,19 +4246,53 @@ int SetDoubleArrayRegion()
 int RegisterNatives() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
+	char name[256]={0};
+    char sig[256]={0};
+    int count = libc::get_r3();
 	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = libc::get_lr();
+
+	JNINativeMethod* methodptr = (JNINativeMethod* )malloc(count*sizeof(JNINativeMethod));
+    JNINativeMethod* method = methodptr;
+
+    uc_err err = uc_mem_read(g_uc,libc::get_r2(),method,count*sizeof(JNINativeMethod));
+
+    for(int i = 0 ; i < count ;i++) {
+
+        if(method->name)
+        {
+            for(int i = 0; i < 256; i++)
+            {
+                err = uc_mem_read(g_uc,(uint64_t)method->name+i,&name[i],1);
+                if(name[i] == 0)
+                    break;
+            }
+        }
+
+        if(method->signature)
+        {
+            for(int i = 0; i < 256; i++)
+            {
+                err = uc_mem_read(g_uc,(uint64_t)method->signature+i,&sig[i],1);
+                if(name[i] == 0)
+                    break;
+            }
+        }
 
 #ifdef _MSC_VER
-	printf("RegisterNatives(\"%s\")\n",buffer);
+        printf("RegisterNatives(\"%s\",\"%s\",%x) ->0x%x\n",name,sig,method->fnPtr,ret);
 #else
-	printf(RED "RegisterNatives(\"%s\") ->0x%\n" RESET, buffer,ret); 
-#endif 
+        printf(RED "RegisterNatives(\"%s\",\"%s\",%x) ->0x%\n" RESET, name,sig,method->fnPtr, ret);
+#endif
+        method++;
+    }
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+    free(methodptr);
+
+    if(lr &1)
+        lr -= 1;
+
+    uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 

@@ -2,6 +2,7 @@
 #include "runtime.h"
 #include "string.h"
 #include "stdlib.h"
+#include "../type.h"
 #include <map>
 #include "../engine.h"
 #include "../crc32.h"
@@ -10,8 +11,10 @@
 #ifdef _MSC_VER
 #include "windows.h"
 #include "time.h"
+#include "io.h"
 #else
 #include <sys/mman.h>
+#include <fcntl.h>
 #endif
 
 symbols_map* g_symbol_map = 0;
@@ -194,18 +197,19 @@ void* libc::sys_cacheflush(int type)
 void* libc::sys_dlopen(void*)
 {
 	int value = 0;
+	soinfo* si = 0;
 	char buf[256] ={0};
 
 	if(v_r0)
 	{
 		uc_mem_read(g_uc,v_r0,buf,256);
-		value = (int)s_dlopen(buf,0);
+		si = (soinfo*)s_dlopen(buf,0);
 	}
 	
 #ifdef _MSC_VER
 	printf("dlopen (%s,0x%x)-> 0x%x\n",buf,v_r1,value);
 #else
-	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,v_r0,v_r1,value);
+	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,v_r1,value);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -299,9 +303,9 @@ void* libc::s_strdup(void*)
 		libc::v_lr-=1;
 
 #ifdef _MSC_VER
-	printf("strdup (%s)-> 0x%x\n",buf,value);
+	printf("strdup (\"%s\")-> 0x%x\n",buf,value);
 #else
-	printf(RED "strdup(%s)-> 0x%x\n" RESET,buf,value);
+	printf(RED "strdup(\"%s\")-> 0x%x\n" RESET,buf,value);
 #endif
 	
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
@@ -330,9 +334,9 @@ void* libc::s_strlen(void*)
 		libc::v_lr-=1;
 
 #ifdef _MSC_VER
-	printf("strlen (%s)-> 0x%x\n",buf,i);
+	printf("strlen (\"%s\")-> 0x%x\n",buf,i);
 #else
-	printf(RED "strlen(%s)-> 0x%x\n" RESET,buf,i);
+	printf(RED "strlen(\"%s\")-> 0x%x\n" RESET,buf,i);
 #endif
 	
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
@@ -405,10 +409,12 @@ void* libc::s_open(void*)
 		libc::v_lr-=1;
 
 #ifdef _MSC_VER
-	printf("open (%s)-> 0x%x\n",buf,value);
+	printf("open (\"%s\")-> 0x%x\n",buf,value);
 #else
-	printf(RED "open(%s)-> 0x%x\n" RESET,buf,value);
+	printf(RED "open(\"%s\")-> 0x%x\n" RESET,buf,value);
 #endif
+
+    value = open("maps.txt",O_RDONLY);
 	
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -419,16 +425,22 @@ void* libc::s_open(void*)
 void* libc::s_read(void*)
 {
 	uc_err err;
-	char buf[256] ={0};
+	char buf[4096] ={0};
 	int value = 0;
 
-	if(libc::v_lr &1)
-		libc::v_lr-=1;
+    if(v_r1)
+    {
+        read(v_r0,buf,v_r2);
+        err = uc_mem_write(g_uc,v_r1,buf,v_r2);
+    }
+
+    if(libc::v_lr &1)
+        libc::v_lr-=1;
 
 #ifdef _MSC_VER
-	printf("read (%s)-> 0x%x\n",buf,value);
+	printf("read (%x,%x,%x)-> 0x%x\n",v_r0,v_r1,v_r2,v_r2);
 #else
-	printf(RED "read(%s)-> 0x%x\n" RESET,buf,value);
+	printf(RED "read(%x,%x,%x)-> 0x%x\n" RESET,v_r0,v_r1,v_r2,v_r2);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
@@ -441,19 +453,270 @@ void* libc::sys_mprotect(void*)
 {
 	uc_err err;
 	int value = 0;
-
-	if(libc::v_lr &1)
-		libc::v_lr-=1;
+	
 #ifdef _MSC_VER
 	printf("mprotect (%x,%x,%x)-> 0x%x\n",v_r0,v_r1,v_r2,value);
 #else
 	printf(RED "mprotect(%x,%x,%x)-> 0x%x\n" RESET,v_r0,v_r1,v_r2,value);
 #endif
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
 	return 0;
+}
+
+void* libc::s_sscanf(void*)
+{
+	uc_err err ;
+	char buf[256] ={0};
+	char format[256] ={0};
+	unsigned int stack[10] ={0};
+	char arg0[256]={0};
+	char arg1[256]={0};
+	char arg2[256]={0};
+	char arg3[256]={0};
+	char arg4[256]={0};
+	char arg5[256]={0};
+	char arg6[256]={0};
+	char arg7[256]={0};
+
+	int value = 0;
+
+	if(v_r0)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,v_r0+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
+	}
+
+	if(v_r1)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,v_r1+i,&format[i],1);
+			if(format[i] == 0)
+				break;
+		}
+	}
+
+#ifdef _MSC_VER
+	printf("sscanf (\"%s\",\"%s\",...)-> 0x%x\n",buf,format,value);
+#else
+	printf(RED "sscanf(\"%s\",\"%s\",...)-> 0x%x\n" RESET,buf,format,value);
+#endif
+
+	for(int i = 0; i < 8; i++)
+	{
+		err = uc_mem_read(g_uc,v_sp+i*4,&stack[i],4);
+		if(err != UC_ERR_OK)
+			break;
+	}
+
+	value = sscanf(buf,format,arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+	err = uc_mem_write(g_uc,v_r2,arg0,strlen(arg0));
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+	return 0;
+}
+
+void* libc::s_strchr(void*)
+{
+	uc_err err ;
+	char buf[256] ={0};
+	char ch = (char)v_r1;
+	unsigned int value = 0;
+
+	if(v_r0)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,v_r0+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
+	}
+
+	char* ptr = strchr(buf,ch);
+	if(ptr)
+	{
+		value = (unsigned int)ptr - (int)buf + v_r0;
+	}
+
+#ifdef _MSC_VER
+	printf("strchr (\"%s\",\"%c\")-> 0x%x\n",buf,ch,value);
+#else
+	printf(RED "strchr(\"%s\",\"%c\")-> 0x%x\n" RESET,buf,ch,value);
+#endif
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+	return 0;
+}
+
+void* libc::s_strtoul(void*)
+{
+	uc_err err;
+	char buf[256]={0};
+
+	if(v_r0)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,v_r0+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
+	}
+
+	const char *nptr = buf;
+	char* tp = &buf[256];
+	char **endptr = &tp;
+	register int base = v_r2;
+	register const char *s = nptr;
+	register unsigned long acc;
+	register int c;
+	register unsigned long cutoff;
+	register int neg = 0, any, cutlim;
+
+
+	do {
+		c = *s++;
+	} while (isspace(c));
+	if (c == '-') {
+		neg = 1;
+		c = *s++;
+	} else if (c == '+')
+		c = *s++;
+	if ((base == 0 || base == 16) &&
+	    c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	} else if ((base == 0 || base == 2) &&
+	    c == '0' && (*s == 'b' || *s == 'B')) {
+		c = s[1];
+		s += 2;
+		base = 2;
+	}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
+	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
+	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
+	for (acc = 0, any = 0;; c = *s++) {
+		if (isdigit(c))
+			c -= '0';
+		else if (isalpha(c))
+			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else
+			break;
+		if (c >= base)
+			break;
+		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
+			any = -1;
+		else {
+			any = 1;
+			acc *= base;
+			acc += c;
+		}
+	}
+	if (any < 0) {
+		acc = ULONG_MAX;
+//		errno = ERANGE;
+	} else if (neg)
+		acc = -acc;
+	if (endptr != 0)
+		*endptr = (char *)(any ? s - 1 : nptr);
+
+#ifdef _MSC_VER
+	printf("strtoul (\"%s\",0x%x,0x%x)-> 0x%x\n",buf,v_r1,v_r2,acc);
+#else
+	printf(RED "strtoul(\"%s\",0x%x)-> 0x%x\n" RESET,buf,v_r1,v_r2,acc);
+#endif
+
+	if(libc::v_lr &1)
+		libc::v_lr-=1;
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&acc);
+	return 0;
+}
+
+void* libc::s_bsd_signal(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("bsd_signal(0x%x,0x%x)-> 0x%x\n",v_r0,v_r1, value);
+#else
+    printf(RED "bsd_signal(0x%x,0x%x)-> 0x%x\n" RESET,v_r0,v_r1,value);
+#endif
+
+    if(libc::v_lr &1)
+        libc::v_lr-=1;
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_raise(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("raise(0x%x)-> 0x%x\n",v_r0,  value);
+#else
+    printf(RED "raise(0x%x)-> 0x%x\n" RESET,v_r0, value);
+#endif
+
+    if(libc::v_lr &1)
+        libc::v_lr-=1;
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_getpid(void*)
+{
+    uc_err err;
+    int value = 1234;
+
+#ifdef _MSC_VER
+    printf("getpid()-> 0x%x\n",  value);
+#else
+    printf(RED "getpid()-> 0x%x\n" RESET, value);
+#endif
+
+    if(libc::v_lr &1)
+        libc::v_lr-=1;
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&libc::v_lr);
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
 }
 
 int hash_compare(const void *a,const void *b) 
@@ -474,7 +737,7 @@ symbols g_syms[] =
 	{0x4b3bddf7,"__cxa_exit",0},
 	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
 	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
-	{0x8463960a,"memset",(void*)libc::s_memset,1},
+	{0x8463960a,"memset",(void*)libc::s_memset,0},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
 	{0x84e4836b,"mmap",(void*)libc::sys_mmap,1,0xc0},
 	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,1,0xf0002},
@@ -488,6 +751,13 @@ symbols g_syms[] =
 	{0xa47083a4,"open",(void*)libc::s_open,1,0x5},
 	{0x98574167,"read",(void*)libc::s_read,1},
 	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,1,0x7d},
+	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
+	{0xa8ae7412,"strchr",(void*)libc::s_strchr,1,},
+	{0xe2d7f2a6,"strtoul",(void*)libc::s_strtoul,1,},
+	{0xd141afd3,"memcpy",(void*)libc::s__aeabi_memcpy,0,},
+    {0xbb444062,"bsd_signal",(void*)libc::s_bsd_signal,0,},
+    {0xb8669b99,"raise",(void*)libc::s_raise,1,},
+    {0xbbad4c48,"getpid",(void*)libc::s_getpid,0,},
 };
 
 
@@ -582,7 +852,7 @@ int libc::dispatch()
 	if(v_lr&1)
 		addr = v_pc -1;
 	else
-		addr = v_pc -4;
+		addr = v_pc - 4;
 
 	printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_cpsr);
 
@@ -622,7 +892,7 @@ int libc::dispatch()
 		g_invoke_func[index].f();
 #endif
     }
-	else if((v_pc & 0xffffff00) == JVM_INTERFACE_ADDRESS)
+	else if((v_pc & 0xfffff000) == JVM_INTERFACE_ADDRESS)
 	{
 		//restore r7
 		int index = v_r7;
@@ -684,14 +954,14 @@ void libc::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_
 
 	csh handle;
 	cs_insn *insn;
-
-	cs_err err = cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &handle);
+    cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
+	cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
 	if(err == CS_ERR_OK)
 	{
 		cs_option(handle, CS_OPT_SYNTAX, 0);
 		cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-		int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+		/*int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
 		if(count)
 		{
 			int offset = (int)insn->address-si->base;
@@ -699,7 +969,7 @@ void libc::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_
 				printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
 			else
 				printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
-		}
+		}*/
 	}
 }
 

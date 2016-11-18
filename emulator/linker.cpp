@@ -1072,8 +1072,9 @@ void soinfo::CallFunction(const char* function_name,
 			function, name);
 
 
-    unsigned int pc = (int)function - ((int)function & 0x1);
-    //libc::start_emulator(pc,this);
+    unsigned int pc = (int)function;
+    pc = pc&1?pc-1:pc;
+    libc::start_emulator(pc,this);
 
 	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 

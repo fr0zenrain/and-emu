@@ -26,7 +26,7 @@ typedef struct _vmem{
 	unsigned int size;
 }vmem;
 
-unsigned int mem_start_addr = 0x40000000;
+unsigned int mem_start_addr = EMULATOR_MEMORY_START;
 vmem mem_block[256] ={0};
 
 #ifdef _MSC_VER

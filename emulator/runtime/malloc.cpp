@@ -4651,15 +4651,100 @@ void* dlmalloc(size_t bytes) {
           b = smallbin_at(gm, i);
           p = b->fd;
           assert(chunksize(p) == small_index2size(i));
-          unlink_first_small_chunk(gm, b, p, i);
+          //unlink_first_small_chunk(gm, b, p, i);
+		  //unlink_first_small_chunk(M, B, P, I);
+
+		  mchunkptr F;
+		  unsigned int addr;
+		  uc_err err;
+		  unsigned int value = 0;
+		  if((unsigned int)p > EMULATOR_MEMORY_START)
+		  {
+			  addr = (unsigned int)p + offsetof(malloc_chunk, fd);
+			  err = uc_mem_read(g_uc,addr,&value,4);  
+			  F = (mchunkptr)value;
+		  }
+		  else
+		  {
+			  F = p->fd;
+		  }
+		  
+		  assert(p != b);
+		  assert(p != F);
+		  assert(chunksize(p) == small_index2size(I));
+		  if((unsigned int)F > EMULATOR_MEMORY_START)
+		  {
+			  addr = (int)F  + offsetof(malloc_chunk,bk);
+			  err = uc_mem_read(g_uc,addr,&value,4);
+		  }
+		  else
+		  {
+			  value = (unsigned int)F->bk;
+		  }
+		  if (b == F) 
+		  {
+			  clear_smallmap(gm, i);
+		  }
+		  /*else if ((char*)(F) >= (gm)->least_addr && F->bk == p) 
+		  {
+			  F->bk = b;
+			  b->fd = F;
+		  }
+		  else 
+		  {
+			CORRUPTION_ERROR_ACTION(gm);
+		  }*/
+		  else if (value == (unsigned int)p) 
+		  {
+			  if((unsigned int)F > EMULATOR_MEMORY_START )
+			  {
+				  addr = (int)F  + offsetof(malloc_chunk,bk);
+				  value = (unsigned int)p;
+				  err = uc_mem_write(g_uc,addr,&value,4);
+			  }
+			  else
+			  {
+				  F->bk = b;
+			  }
+
+			  if((unsigned int)b > EMULATOR_MEMORY_START)
+			  {
+				  addr = (int)b  + offsetof(malloc_chunk,fd);
+				  value = (unsigned int)p;
+				  err = uc_mem_write(g_uc,addr,&value,4);
+			  }
+			  else
+			  { 
+				  b->fd = F;
+			  }
+		  }
+		  else 
+		  {
+			CORRUPTION_ERROR_ACTION(gm);
+		  }
+
           rsize = small_index2size(i) - nb;
           /* Fit here cannot be remainderless if 4byte sizes */
           if (SIZE_T_SIZE != 4 && rsize < MIN_CHUNK_SIZE)
             set_inuse_and_pinuse(gm, p, small_index2size(i));
-          else {
-            set_size_and_pinuse_of_inuse_chunk(gm, p, nb);
+          else 
+		  {
+            //set_size_and_pinuse_of_inuse_chunk(gm, p, nb);
+
+			  addr = (unsigned int)p  + offsetof(malloc_chunk,head);
+			  value = (nb|PINUSE_BIT|CINUSE_BIT);
+			  err = uc_mem_write(g_uc,addr,&value,4);
+
             r = chunk_plus_offset(p, nb);
-            set_size_and_pinuse_of_free_chunk(r, rsize);
+            //set_size_and_pinuse_of_free_chunk(r, rsize);
+			addr = (unsigned int)r  + offsetof(malloc_chunk,head);
+			value = (rsize|PINUSE_BIT);
+			err = uc_mem_write(g_uc,addr,&value,4);
+
+			addr = (unsigned int)r + rsize + offsetof(malloc_chunk,prev_foot);
+			value = rsize;
+			err = uc_mem_write(g_uc,addr,&value,4);
+
             replace_dv(gm, r, rsize);
           }
           mem = chunk2mem(p);
@@ -4696,7 +4781,18 @@ void* dlmalloc(size_t bytes) {
         size_t dvs = gm->dvsize;
         gm->dvsize = 0;
         gm->dv = 0;
-        set_inuse_and_pinuse(gm, p, dvs);
+        //set_inuse_and_pinuse(gm, p, dvs);
+		unsigned int value;
+		unsigned int addr = (unsigned int)p  + offsetof(malloc_chunk,head);
+		uc_err err = uc_mem_read(g_uc,addr,&value,4);
+		value |= (dvs|PINUSE_BIT|CINUSE_BIT);
+		err = uc_mem_write(g_uc,addr,&value,4);
+
+		 addr = (unsigned int)p +dvs + offsetof(malloc_chunk,head);
+		 err = uc_mem_read(g_uc,addr,&value,4);
+		value |= PINUSE_BIT;
+		err = uc_mem_write(g_uc,addr,&value,4);
+
       }
       mem = chunk2mem(p);
       check_malloced_chunk(gm, mem, nb);
@@ -4805,14 +4901,47 @@ void dlfree(void* mem) {
 					  //assert(chunksize(next) == small_index2size(I));
 					  if (F ==  ((sbinptr)((void*)&((fm)->smallbins[(I)<<1]))) || ((char*)F >= fm->least_addr && F->bk == p)) 
 					  { 
+						  int check = 0;
+						  if((unsigned int)B > EMULATOR_MEMORY_START)
+						  {
+							  addr = (int)B  + offsetof(malloc_chunk,fd);
+							  err = uc_mem_read(g_uc,addr,&value,4);
+							  check = value == (unsigned int)p;
+						  }
+						  else
+						  {
+							  check = B->fd == p;
+						  }
 						  if (B == F) 
 						  {
 							  clear_smallmap(fm, I);
 						  }
-						  else if (RTCHECK(B == smallbin_at(fm,I) || (ok_address(fm, B) && B->fd == p))) 
+						  else if (B == smallbin_at(fm,I) || (((char*)(B) >= (fm)->least_addr) && check)) 
 						  {
-							  F->bk = B;
-							  B->fd = F;
+							  //F->bk = B;
+							  //B->fd = F;
+							  unsigned int value1 = 0;
+							  if((unsigned int)F > EMULATOR_MEMORY_START )
+							  {
+								  addr = (int)F  + offsetof(malloc_chunk,bk);
+								  value1 = (unsigned int)p;
+								  err = uc_mem_write(g_uc,addr,&value1,4);
+							  }
+							  else
+							  {
+								  F->bk = B;
+							  }
+
+							  if((unsigned int)B > EMULATOR_MEMORY_START)
+							  {
+								  addr = (int)B  + offsetof(malloc_chunk,fd);
+								  value1 = (unsigned int)p;
+								  err = uc_mem_write(g_uc,addr,&value1,4);
+							  }
+							  else
+							  { 
+								  B->fd = F;
+							  }
 						  }
 						  else 
 						  {
@@ -4891,7 +5020,23 @@ void dlfree(void* mem) {
 				  //assert(next != B);
 				  //assert(next != F);
 				  //assert(chunksize(next) == small_index2size(I));
-				  if (F ==  ((sbinptr)((void*)&((fm)->smallbins[(I)<<1]))) || ((char*)F >= fm->least_addr && F->bk == next)) 
+				  int check = 0;
+				  if((unsigned int)F > EMULATOR_MEMORY_START)
+				  {
+					  addr = (int)F  + offsetof(malloc_chunk,bk);
+					  err = uc_mem_read(g_uc,addr,&value,4);
+					  check = value == (unsigned int)next;
+				  }
+				  else
+				  {
+					  check = F->bk == next;
+				  }
+				  if (B == F) 
+				  {
+					  clear_smallmap(fm, I);
+				  }
+
+				  if (F ==  ((sbinptr)((void*)&((fm)->smallbins[(I)<<1]))) || ((char*)F >= fm->least_addr && check)) 
 				  { 
 					  if (B == F) 
 					  {
@@ -4899,8 +5044,30 @@ void dlfree(void* mem) {
 					  }
 					  else if (RTCHECK(B == smallbin_at(fm,I) || (ok_address(fm, B) && B->fd == next))) 
 					  {
-						  F->bk = B;
-						  B->fd = F;
+						  //F->bk = B;
+						  //B->fd = F;
+						  unsigned int value1 = 0;
+						  if((unsigned int)F > EMULATOR_MEMORY_START )
+						  {
+							  addr = (int)F  + offsetof(malloc_chunk,bk);
+							  value1 = (unsigned int)p;
+							  err = uc_mem_write(g_uc,addr,&value1,4);
+						  }
+						  else
+						  {
+							  F->bk = B;
+						  }
+
+						  if((unsigned int)B > EMULATOR_MEMORY_START)
+						  {
+							  addr = (int)B  + offsetof(malloc_chunk,fd);
+							  value1 = (unsigned int)p;
+							  err = uc_mem_write(g_uc,addr,&value1,4);
+						  }
+						  else
+						  { 
+							  B->fd = F;
+						  }
 					  }
 					  else 
 					  {
@@ -4967,11 +5134,30 @@ void dlfree(void* mem) {
 			  {
 			  CORRUPTION_ERROR_ACTION(fm);
 			  }
-			  B->fd = p;
-			  F->bk = p;
+			  if((unsigned int)B > EMULATOR_MEMORY_START )
+			  {
+				  addr = (int)B  + offsetof(malloc_chunk,fd);
+				  value1 = (unsigned int)p;
+				  err = uc_mem_write(g_uc,addr,&value1,4);
+			  }
+			  else
+			  {
+				    B->fd = p;
+			  }
+
+			  if((unsigned int)F > EMULATOR_MEMORY_START)
+			  {
+				  addr = (int)F  + offsetof(malloc_chunk,bk);
+				  value1 = (unsigned int)p;
+				  err = uc_mem_write(g_uc,addr,&value1,4);
+			  }
+			  else
+			  { 
+				  F->bk = p;
+			  }
 			  addr = (int)p  + offsetof(malloc_chunk,fd);
 			  value1 = (unsigned int)F;
-			  uc_err err = uc_mem_write(g_uc,addr,&value1,4);
+			  err = uc_mem_write(g_uc,addr,&value1,4);
 			  addr = (int)p  + offsetof(malloc_chunk,bk);
 			  value1 = (unsigned int)B;
 			  err = uc_mem_write(g_uc,addr,&value1,4);

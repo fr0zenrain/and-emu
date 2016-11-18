@@ -17,6 +17,7 @@
 #define JVM_INVOKE_ADDRESS  0x20000000
 #define JVM_INTERFACE_ADDRESS  0x20001000
 #define EMULATOR_PAUSE_ADDRESS  0x80000000
+#define EMULATOR_MEMORY_START 0x40000000
 
 typedef void* (*f)(void*);
 
@@ -88,6 +89,7 @@ public:
 	static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 	static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 	static void start_emulator(unsigned int pc, soinfo * si);
+	static void build_proc_self_maps();
 public:
 	static void* s_malloc(void*);
 	static void* s_free(void*);
@@ -99,8 +101,14 @@ public:
 	static void* s_strncmp(void*);
 	static void* s_open(void*);
 	static void* s_read(void*);
+	static void* s_sscanf(void*);
+	static void* s_strchr(void*);
+	static void* s_strtoul(void*);
 	static void* s__aeabi_memset(void*);
 	static void* s__aeabi_memcpy(void*);
+	static void* s_bsd_signal(void*);
+	static void* s_raise(void*);
+    static void* s_getpid(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);

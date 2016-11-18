@@ -269,8 +269,8 @@ static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user
 
 	csh handle;
 	cs_insn *insn;
-	
-	cs_err err = cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &handle);
+    cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
+	cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
 	if(err == CS_ERR_OK)
 	{
 		cs_option(handle, CS_OPT_SYNTAX, 0);
@@ -380,7 +380,7 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	uc_hook trace5,trace6;
     uc_hook trace7;
 
-	uintptr_t lr = 0x40000000;
+	uintptr_t lr = EMULATOR_MEMORY_START;
 	uintptr_t pc = (uintptr_t)JNI_OnLoad;     // R2 register
 	int cpsr=0x800d0030;
 
@@ -488,7 +488,7 @@ int init_env_func(uc_engine* uc, void* invoke, void* addr)
 		func += 8;
 	}
 
-	err = uc_mem_map(uc,JVM_INTERFACE_ADDRESS,0x1000,UC_PROT_ALL);
+	err = uc_mem_map(uc,JVM_INTERFACE_ADDRESS,0x8000,UC_PROT_ALL);
 	if(err != UC_ERR_OK)
 	{
 		return 0;
@@ -591,7 +591,7 @@ int main(int argc, char* argv[])
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    soinfo* si = load_android_so("x.so");
+    soinfo* si = load_android_so("libutil.so");
 	//soinfo* si = load_android_so("libjiagu.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	//uc_emu_stop(g_uc);
