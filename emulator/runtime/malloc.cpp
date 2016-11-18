@@ -663,7 +663,7 @@ extern uc_engine* g_uc;
 #if ONLY_MSPACES
 #define HAVE_MORECORE 0
 #else   /* ONLY_MSPACES */
-#define HAVE_MORECORE 1
+#define HAVE_MORECORE 0
 #endif  /* ONLY_MSPACES */
 #endif  /* HAVE_MORECORE */
 #if !HAVE_MORECORE
@@ -1651,7 +1651,7 @@ unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 #endif /* MAP_ANON */
 #ifdef MAP_ANONYMOUS
 #define MMAP_FLAGS           (MAP_PRIVATE|MAP_ANONYMOUS)
-#define MMAP_DEFAULT(s)       mmap(0, (s), MMAP_PROT, MMAP_FLAGS, -1, 0)
+#define MMAP_DEFAULT(s)       s_mmap(0, (s), PROT_NONE, 0, -1, 0)
 #else /* MAP_ANONYMOUS */
 /*
    Nearly all versions of mmap support MAP_ANONYMOUS, so the following
@@ -1661,8 +1661,8 @@ unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 static int dev_zero_fd = -1; /* Cached file descriptor for /dev/zero. */
 #define MMAP_DEFAULT(s) ((dev_zero_fd < 0) ? \
            (dev_zero_fd = open("/dev/zero", O_RDWR), \
-            mmap(0, (s), MMAP_PROT, MMAP_FLAGS, dev_zero_fd, 0)) : \
-            mmap(0, (s), MMAP_PROT, MMAP_FLAGS, dev_zero_fd, 0))
+            s_mmap(0, (s), PROT_NONE, 0, dev_zero_fd, 0)) : \
+            s_mmap(0, (s), PROT_NONE, 0, dev_zero_fd, 0))
 #endif /* MAP_ANONYMOUS */
 
 #define DIRECT_MMAP_DEFAULT(s) MMAP_DEFAULT(s)
