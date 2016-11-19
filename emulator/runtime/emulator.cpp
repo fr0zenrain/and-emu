@@ -59,20 +59,20 @@ int hash_compare(const void *a,const void *b)
         return 0;
 }
 
-emulator* emulator::get_emulator()
+emulator* emulator::get_emulator(uc_mode mode)
 {
     if(instance == 0)
     {
-        return new emulator();
+        instance = new emulator(mode);
     }
 
     return instance;
 }
 
-emulator::emulator()
+emulator::emulator(uc_mode mode)
 {
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
-    uc_err  err = uc_open(UC_ARCH_ARM, UC_MODE_THUMB, &uc);
+    uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
     int mem_size = 4*1024*1024;
     g_uc = uc;
@@ -322,6 +322,7 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     uc_hook trace1,trace2;
 
     uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
+    lr |= 1;
     err=uc_reg_write(g_uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_write(g_uc, UC_ARM_REG_LR, &lr);
 

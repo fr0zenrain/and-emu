@@ -18,8 +18,6 @@
 
 
 extern uc_engine* g_uc;
-
-
 soinfo* libc::si =0;
 
 
@@ -368,7 +366,7 @@ void* libc::s_strncmp(void*)
 #ifdef _MSC_VER
 	printf("strncmp(%s,%s,0x%x)-> 0x%x\n",buf,buf1,size,value);
 #else
-	printf(RED "strlen(%s,%s,0x%x)-> 0x%x\n" RESET,buf,buf1,size,value);
+	printf(RED "strncmp(%s,%s,0x%x)-> 0x%x\n" RESET,buf,buf1,size,value);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -481,6 +479,26 @@ void* libc::s_read(void*)
 	return 0;
 }
 
+void* libc::s_close(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int fd = emulator::get_r0();
+
+    close(fd);
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("close(%x)-> 0x%x\n",fd,value);
+#else
+    printf(RED "close(%x)-> 0x%x\n" RESET,fd,value);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+    return 0;
+}
+
 void* libc::sys_mprotect(void*)
 {
 	uc_err err;
@@ -526,8 +544,11 @@ void* libc::s_sscanf(void*)
 		for(int i = 0; i < 256; i++)
 		{
 			err = uc_mem_read(g_uc,addr+i,&buf[i],1);
-			if(buf[i] == 0)
-				break;
+			if(buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n')
+            {
+                buf[i] = 0;
+                break;
+            }
 		}
 	}
 
@@ -762,6 +783,7 @@ symbols g_syms[] =
 	{0x4273782f,"strncmp",(void*)libc::s_strncmp,1},
 	{0xa47083a4,"open",(void*)libc::s_open,1,0x5},
 	{0x98574167,"read",(void*)libc::s_read,1},
+    {0x130181c4,"close",(void*)libc::s_close,1},
 	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,1,0x7d},
 	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
 	{0xa8ae7412,"strchr",(void*)libc::s_strchr,1,},

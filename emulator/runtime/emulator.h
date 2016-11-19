@@ -18,21 +18,21 @@
 #define FUNCTION_VIRTUAL_ADDRESS  0x10000000
 #define JVM_INVOKE_ADDRESS  0x20000000
 #define JVM_INTERFACE_ADDRESS  0x20001000
-#define EMULATOR_PAUSE_ADDRESS  0x80000000
 #define EMULATOR_MEMORY_START 0x40000000
+#define EMULATOR_PAUSE_ADDRESS  0x80000000
 
 struct soinfo;
 
 class emulator{
 
 public:
-    emulator();
+    emulator(uc_mode mode);
     ~emulator();
 
     static int init_symbols();
     static Elf32_Sym* get_symbols(const char* name,unsigned int hash);
     static int dispatch();
-    static emulator* get_emulator();
+    static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);
 
 private:
     static Elf32_Sym sym;
@@ -72,7 +72,7 @@ public:
 public:
     static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
     static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
-    static void start_emulator(unsigned int pc, soinfo * si);
+    void start_emulator(unsigned int pc, soinfo * si);
     static void build_proc_self_maps();
 
 private:

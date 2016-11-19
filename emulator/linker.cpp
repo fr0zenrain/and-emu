@@ -1074,8 +1074,8 @@ void soinfo::CallFunction(const char* function_name,
 
     unsigned int pc = (int)function;
     pc = pc&1?pc-1:pc;
-    //emulator::get_emulator()->start_emulator(pc,this);
-    emulator::start_emulator(pc,this);
+    emulator::update_cpu_model();
+    emulator::get_emulator()->start_emulator(pc,this);
 
 	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 

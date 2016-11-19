@@ -431,12 +431,12 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 
 int main(int argc, char* argv[])
 {
-	emulator* emu = new emulator();
+	emulator* emu = emulator::get_emulator(UC_MODE_THUMB);
 
-	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
+	soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    soinfo* si = load_android_so("libjiagu.so");
-	//soinfo* si = load_android_so("libjiagu.so");
+    //soinfo* si = load_android_so("libdata.so");
+	//soinfo* si = load_android_so("libbaiduprotect.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	//uc_emu_stop(g_uc);
 	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));

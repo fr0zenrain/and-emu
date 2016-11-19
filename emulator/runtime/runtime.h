@@ -66,6 +66,7 @@ public:
     static void* s_strcmp(void*);
 	static void* s_open(void*);
 	static void* s_read(void*);
+	static void* s_close(void*);
 	static void* s_sscanf(void*);
 	static void* s_strchr(void*);
 	static void* s_strtoul(void*);

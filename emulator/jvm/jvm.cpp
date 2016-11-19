@@ -22,17 +22,14 @@ int GetEnv()
 		uc_mem_write(g_uc,env_ptr,&g_JNIEnv_addr,4);
 	}
 
-	unsigned int lr = emulator::get_lr();
-	if(lr &1)
-		lr -= 1;
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetEnv() ->0x%x\n",env);
+	printf("GetEnv()\n");
 #else
-	printf(RED "GetEnv() ->0x%x\n" RESET,env);
+	printf(RED "GetEnv()\n" RESET);
 #endif
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
 
 	return JNI_OK;
@@ -66,9 +63,7 @@ int FindClass()
 		}
 	}
 
-	unsigned int lr = emulator::get_lr();
-	if(lr &1)
-		lr -= 1;
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("FindClass(\"%s\")\n",buffer);
@@ -76,7 +71,6 @@ int FindClass()
 	printf(RED "FindClass(\"%s\") ->0x%\n" RESET, buffer);
 #endif
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
 
 	return JNI_OK;
