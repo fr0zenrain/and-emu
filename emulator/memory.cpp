@@ -4,6 +4,8 @@
 #ifndef WINCE
 #include "errno.h"
 #endif
+
+#include "runtime/emulator.h"
 #include "../include/unicorn/unicorn.h"
 #ifdef _MSC_VER
 #include "win.h"

@@ -10,7 +10,7 @@ include_directories(capstone)
 
 
 set(SOURCEFILES
-        emulator/emulator.cpp
+        emulator/main.cpp
         emulator/dlfcn.cpp
         emulator/linker.cpp
         emulator/linker_phdr.cpp
@@ -18,6 +18,7 @@ set(SOURCEFILES
         emulator/engine.cpp
         emulator/crc32.cpp
         emulator/runtime/libc.cpp
+        emulator/runtime/emulator.cpp
         emulator/runtime/malloc.cpp
         emulator/runtime/system.cpp
         emulator/jvm/jvm.cpp

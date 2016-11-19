@@ -185,10 +185,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\emulator.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\engine.cpp"
 				>
 			</File>
@@ -202,6 +198,10 @@
 			</File>
 			<File
 				RelativePath=".\linker_phdr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
@@ -380,6 +380,10 @@
 		<Filter
 			Name="runtime"
 			>
+			<File
+				RelativePath=".\runtime\emulator.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\runtime\libc.cpp"
 				>

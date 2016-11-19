@@ -8,8 +8,8 @@
 #include "linker.h"
 #include "engine.h"
 #include "jvm/jvm.h"
+#include "runtime/emulator.h"
 #include "runtime/runtime.h"
-
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
@@ -355,7 +355,7 @@ static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *use
 {
 	//printf(">>> Tracing inter at 0x%llx, instruction size = 0x%x\n", address, size);
 
-	libc::dispatch();
+	emulator::dispatch();
 
 }
 
@@ -429,169 +429,13 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	return 1;
 }
 
-int init_stack(uc_engine* uc)
-{
-	unsigned int stack_base = 0xbeb00000;
-	unsigned int sp = 0xbef00000;
-	//0xbeb00000--0xbef00000
-	uc_err err = uc_mem_map(uc,stack_base,sp - stack_base,UC_PROT_READ|UC_PROT_WRITE);
-	if(err != UC_ERR_OK)
-	{
-		printf("Failed on uc_mem_map() with error returned: %u\n", err);
-		return 0;
-	}
-
-	err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
-    if(err != UC_ERR_OK)
-    {
-        printf("Failed on uc_mem_map() with error returned: %u\n", err);
-        return 0;
-    }
-	
-	printf("mmap stack ,base %x size %dM\n",stack_base,(sp - stack_base)/(1024*1024));
-
-	return 1;
-}
-
-int load_library()
-{
-	libc* c = new libc();
-	c->init();
-	void* h1 = s_dlopen("libm.so",0);
-	void* h2 = s_dlopen("libstdc++.so",0);
-	void* h3 = s_dlopen("liblog.so",0);
-	void* h4 = s_dlopen("libz.so",0);
-	//void* h5 = s_dlopen("libdvm.so",0);
-
-	return 1;
-}
-
-int init_env_func(uc_engine* uc, void* invoke, void* addr)
-{
-	unsigned int thumb_addr = 0;
-	unsigned int svc_thumb = 0xdf00df00;
-	uc_err err = uc_mem_map(uc,JVM_INVOKE_ADDRESS,0x1000,UC_PROT_ALL);
-	if(err != UC_ERR_OK)
-	{
-		return 0;
-	}
-	unsigned int func = JVM_INVOKE_ADDRESS;
-	for(int i = 0; i < 8 ; i++)
-	{
-		unsigned int bak =  i| 0x2700;
-		bak <<= 16;
-		bak |= 0xb480;
-		thumb_addr = func | 1;//add thumb tag
-		err = uc_mem_write(uc,(int)invoke+i*4,&thumb_addr,4);
-		err = uc_mem_write(uc,(int)func,&bak,4);
-		err = uc_mem_write(uc,(int)func+4,&svc_thumb,4);
-		func += 8;
-	}
-
-	err = uc_mem_map(uc,JVM_INTERFACE_ADDRESS,0x8000,UC_PROT_ALL);
-	if(err != UC_ERR_OK)
-	{
-		return 0;
-	}
-
-	func = JVM_INTERFACE_ADDRESS;
-	for(int i = 0; i < 0x1000/8 ; i++)
-	{
-		unsigned int bak =  i| 0x2700;
-		bak <<= 16;
-		bak |= 0xb480;
-		thumb_addr = func | 1;//add thumb tag
-		err = uc_mem_write(uc,(int)addr+i*4,&thumb_addr,4);
-		err = uc_mem_write(uc,(int)func,&bak,4);
-		err = uc_mem_write(uc,(int)func+4,&svc_thumb,4);
-		func += 8;
-	}
-	
-	return 1;
-}
-
-int init_jvm(uc_engine* uc)
-{
-	//alloc javavm
-	JNIEnvExt* jvm= (JNIEnvExt*)s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
-	if(jvm == 0)
-	{
-		return 0;
-	}
-	void* invoke_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
-	if(invoke_interface == 0)
-	{
-		return 0;
-	}
-  
-	unsigned int addr = (int)jvm + offsetof(JavaVMExt,funcTable);
-	uc_mem_write(uc,addr,&invoke_interface,4);
-	//jnienv
-	void* env = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
-	if(env == 0)
-	{
-		return 0;
-	}
-
-    void* native_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
-    if(native_interface == 0)
-	{
-		return 0;
-	}
-  
-	addr = (int)env + offsetof(JNIEnvExt,funcTable);
-	uc_mem_write(uc,addr,&native_interface,4);
-	init_env_func(uc,invoke_interface,native_interface);
-	uc_reg_write(uc, UC_ARM_REG_R0, &jvm);
-	uc_reg_write(uc, UC_ARM_REG_R1, &env);
-	g_JNIEnv_addr = (unsigned int)env;
-
-	return 1;
-}
-
-int init_ret_stub(uc_engine* uc)
-{
-	unsigned int svc_thumb = 0xdf00df00;
-
-	uc_err  err=uc_mem_map(uc,EMULATOR_PAUSE_ADDRESS,0x1000,UC_PROT_ALL);
-
-	err = uc_mem_write(uc,(uint64_t)EMULATOR_PAUSE_ADDRESS,&svc_thumb,4);
-
-	return 1;
-}
-
-uc_engine* init_emulator()
-{
-	uc_engine* uc;
-	uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
-	uc_err  err = uc_open(UC_ARCH_ARM, UC_MODE_THUMB, &uc);
-    if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
-	int mem_size = 4*1024*1024;
-    g_uc = uc;
-
-	//mmap svc stub
-	err=uc_mem_map(uc,addr,mem_size,UC_PROT_ALL);
-	if(err != UC_ERR_OK)
-	{
-		printf("Failed on uc_mem_map() with error returned: %u\n", err);
-		return 0;
-	}
-
-	init_stack(uc);
-	init_jvm(uc);
-	load_library();
-	init_ret_stub(uc);
-
-    return uc;
-}
-
 int main(int argc, char* argv[])
 {
-	init_emulator();
+	emulator* emu = new emulator();
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    soinfo* si = load_android_so("libutil.so");
+    soinfo* si = load_android_so("libjiagu.so");
 	//soinfo* si = load_android_so("libjiagu.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	//uc_emu_stop(g_uc);
@@ -599,7 +443,7 @@ int main(int argc, char* argv[])
 	//start_vm(g_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
 	//start_vm(g_uc,si,(void*)0x4004fb10);
 	//start_vm(g_uc,si,(void*)0x4004721c);
-    libc::start_emulator((unsigned int)JNI_OnLoad-1,si);
+    emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
 
 	return 0;
 }

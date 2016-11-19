@@ -298,7 +298,7 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
 {
 	if(si->emu)
 	{
-		return ((libc*)si->runtime)->get_symbols(name,hash);
+		return ((emulator*)si->emulator)->get_symbols(name,hash);
 	}
 
 	if(si->base)	
@@ -1074,7 +1074,8 @@ void soinfo::CallFunction(const char* function_name,
 
     unsigned int pc = (int)function;
     pc = pc&1?pc-1:pc;
-    libc::start_emulator(pc,this);
+    //emulator::get_emulator()->start_emulator(pc,this);
+    emulator::start_emulator(pc,this);
 
 	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 

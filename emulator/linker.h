@@ -2,7 +2,7 @@
 #define _LINKER_H_
 #include "elf.h"
 #include <stdarg.h>
-#include "runtime/runtime.h"
+#include "runtime/emulator.h"
 
 #define ANDROID_ARM_LINKER
 
@@ -211,7 +211,7 @@ public:
 	unsigned int* tmp_bucket;
 	unsigned int* tmp_chain;
 	int emu;
-	void* runtime;
+	void* emulator;
 
 	void CallConstructors();
 	void CallDestructors();

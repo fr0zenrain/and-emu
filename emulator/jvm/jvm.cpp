@@ -1,5 +1,5 @@
 #include "jvm.h"
-#include "../runtime/runtime.h"
+#include "../runtime/emulator.h"
 #include "../../include/unicorn/unicorn.h"
 #include "jni.h"
 
@@ -9,10 +9,10 @@ unsigned int g_JNIEnv_addr = 0;
 int GetEnv()
 {
 	int env = JVM_INTERFACE_ADDRESS;
-	int jvm = libc::get_r0();
+	int jvm = emulator::get_r0();
 	int ret = 0;
-	unsigned int env_ptr = libc::get_r1();
-	int version = libc::get_r2();
+	unsigned int env_ptr = emulator::get_r1();
+	int version = emulator::get_r2();
 	if (version < JNI_VERSION_1_1 || version > JNI_VERSION_1_6) {
 		return JNI_EVERSION;
 	}
@@ -22,7 +22,7 @@ int GetEnv()
 		uc_mem_write(g_uc,env_ptr,&g_JNIEnv_addr,4);
 	}
 
-	unsigned int lr = libc::get_lr();
+	unsigned int lr = emulator::get_lr();
 	if(lr &1)
 		lr -= 1;
 
@@ -53,8 +53,8 @@ int FindClass()
 	int ret = 1;
 	uc_err err;
 	char buffer[256] ={0};
-	unsigned int env = libc::get_r0();
-	unsigned int name_addr = libc::get_r1();
+	unsigned int env = emulator::get_r0();
+	unsigned int name_addr = emulator::get_r1();
 	
 	if(name_addr)
 	{
@@ -66,7 +66,7 @@ int FindClass()
 		}
 	}
 
-	unsigned int lr = libc::get_lr();
+	unsigned int lr = emulator::get_lr();
 	if(lr &1)
 		lr -= 1;
 
@@ -87,8 +87,8 @@ int FromReflectedMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -107,8 +107,8 @@ int FromReflectedField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -127,8 +127,8 @@ int ToReflectedMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -147,8 +147,8 @@ int GetSuperclass()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -167,8 +167,8 @@ int IsAssignableFrom()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -187,8 +187,8 @@ int ToReflectedField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -207,8 +207,8 @@ int Throw()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -227,8 +227,8 @@ int ThrowNew()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -247,8 +247,8 @@ int ExceptionOccurred()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -267,8 +267,8 @@ int ExceptionDescribe()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -287,8 +287,8 @@ int ExceptionClear()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -307,8 +307,8 @@ int FatalError()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -327,8 +327,8 @@ int PushLocalFrame()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -347,8 +347,8 @@ int PopLocalFrame()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -367,8 +367,8 @@ int NewGlobalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -387,8 +387,8 @@ int DeleteGlobalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -407,8 +407,8 @@ int DeleteLocalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -427,8 +427,8 @@ int IsSameObject()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -447,8 +447,8 @@ int NewLocalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -467,8 +467,8 @@ int EnsureLocalCapacity()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -487,8 +487,8 @@ int AllocObject()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -507,8 +507,8 @@ int NewObject()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -527,8 +527,8 @@ int NewObjectV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -547,8 +547,8 @@ int NewObjectA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -567,8 +567,8 @@ int GetObjectClass()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -587,8 +587,8 @@ int IsInstanceOf()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -607,8 +607,8 @@ int GetMethodID()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -627,8 +627,8 @@ int CallObjectMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -647,8 +647,8 @@ int CallObjectMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -667,8 +667,8 @@ int CallObjectMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -687,8 +687,8 @@ int CallBooleanMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -707,8 +707,8 @@ int CallBooleanMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -727,8 +727,8 @@ int CallBooleanMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -747,8 +747,8 @@ int CallByteMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -767,8 +767,8 @@ int CallByteMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -787,8 +787,8 @@ int CallByteMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -807,8 +807,8 @@ int CallCharMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -827,8 +827,8 @@ int CallCharMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -847,8 +847,8 @@ int CallCharMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -867,8 +867,8 @@ int CallShortMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -887,8 +887,8 @@ int CallShortMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -907,8 +907,8 @@ int CallShortMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -927,8 +927,8 @@ int CallIntMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -947,8 +947,8 @@ int CallIntMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -967,8 +967,8 @@ int CallIntMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -987,8 +987,8 @@ int CallLongMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1007,8 +1007,8 @@ int CallLongMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1027,8 +1027,8 @@ int CallLongMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1047,8 +1047,8 @@ int CallFloatMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1067,8 +1067,8 @@ int CallFloatMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1087,8 +1087,8 @@ int CallFloatMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1107,8 +1107,8 @@ int CallDoubleMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1127,8 +1127,8 @@ int CallDoubleMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1147,8 +1147,8 @@ int CallDoubleMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1167,8 +1167,8 @@ int CallVoidMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1187,8 +1187,8 @@ int CallVoidMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1207,8 +1207,8 @@ int CallVoidMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1227,8 +1227,8 @@ int CallNonvirtualObjectMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1247,8 +1247,8 @@ int CallNonvirtualObjectMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1267,8 +1267,8 @@ int CallNonvirtualObjectMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1287,8 +1287,8 @@ int CallNonvirtualBooleanMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1307,8 +1307,8 @@ int CallNonvirtualBooleanMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1327,8 +1327,8 @@ int CallNonvirtualBooleanMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1347,8 +1347,8 @@ int CallNonvirtualByteMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1367,8 +1367,8 @@ int CallNonvirtualByteMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1387,8 +1387,8 @@ int CallNonvirtualByteMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1407,8 +1407,8 @@ int CallNonvirtualCharMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1427,8 +1427,8 @@ int CallNonvirtualCharMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1447,8 +1447,8 @@ int CallNonvirtualCharMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1467,8 +1467,8 @@ int CallNonvirtualShortMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1487,8 +1487,8 @@ int CallNonvirtualShortMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1507,8 +1507,8 @@ int CallNonvirtualShortMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1527,8 +1527,8 @@ int CallNonvirtualIntMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1547,8 +1547,8 @@ int CallNonvirtualIntMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1567,8 +1567,8 @@ int CallNonvirtualIntMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1587,8 +1587,8 @@ int CallNonvirtualLongMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1607,8 +1607,8 @@ int CallNonvirtualLongMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1627,8 +1627,8 @@ int CallNonvirtualLongMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1647,8 +1647,8 @@ int CallNonvirtualFloatMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1667,8 +1667,8 @@ int CallNonvirtualFloatMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1687,8 +1687,8 @@ int CallNonvirtualFloatMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1707,8 +1707,8 @@ int CallNonvirtualDoubleMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1727,8 +1727,8 @@ int CallNonvirtualDoubleMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1747,8 +1747,8 @@ int CallNonvirtualDoubleMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1767,8 +1767,8 @@ int CallNonvirtualVoidMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1787,8 +1787,8 @@ int CallNonvirtualVoidMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1807,8 +1807,8 @@ int CallNonvirtualVoidMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1827,8 +1827,8 @@ int GetFieldID()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1847,8 +1847,8 @@ int GetObjectField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1867,8 +1867,8 @@ int GetBooleanField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1887,8 +1887,8 @@ int GetByteField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1907,8 +1907,8 @@ int GetCharField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1927,8 +1927,8 @@ int GetShortField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1947,8 +1947,8 @@ int GetIntField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1967,8 +1967,8 @@ int GetLongField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -1987,8 +1987,8 @@ int GetFloatField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2007,8 +2007,8 @@ int GetDoubleField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2027,8 +2027,8 @@ int SetObjectField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2047,8 +2047,8 @@ int SetBooleanField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2067,8 +2067,8 @@ int SetByteField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2087,8 +2087,8 @@ int SetCharField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2107,8 +2107,8 @@ int SetShortField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2127,8 +2127,8 @@ int SetIntField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2147,8 +2147,8 @@ int SetLongField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2167,8 +2167,8 @@ int SetFloatField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2187,8 +2187,8 @@ int SetDoubleField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2207,8 +2207,8 @@ int GetStaticMethodID()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2227,8 +2227,8 @@ int CallStaticObjectMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2247,8 +2247,8 @@ int CallStaticObjectMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2267,8 +2267,8 @@ int CallStaticObjectMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2287,8 +2287,8 @@ int CallStaticBooleanMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2307,8 +2307,8 @@ int CallStaticBooleanMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2327,8 +2327,8 @@ int CallStaticBooleanMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2347,8 +2347,8 @@ int CallStaticByteMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2367,8 +2367,8 @@ int CallStaticByteMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2387,8 +2387,8 @@ int CallStaticByteMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2407,8 +2407,8 @@ int CallStaticCharMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2427,8 +2427,8 @@ int CallStaticCharMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2447,8 +2447,8 @@ int CallStaticCharMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2467,8 +2467,8 @@ int CallStaticShortMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2487,8 +2487,8 @@ int CallStaticShortMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2507,8 +2507,8 @@ int CallStaticShortMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2527,8 +2527,8 @@ int CallStaticIntMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2547,8 +2547,8 @@ int CallStaticIntMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2567,8 +2567,8 @@ int CallStaticIntMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2587,8 +2587,8 @@ int CallStaticLongMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2607,8 +2607,8 @@ int CallStaticLongMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2627,8 +2627,8 @@ int CallStaticLongMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2647,8 +2647,8 @@ int CallStaticFloatMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2667,8 +2667,8 @@ int CallStaticFloatMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2687,8 +2687,8 @@ int CallStaticFloatMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2707,8 +2707,8 @@ int CallStaticDoubleMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2727,8 +2727,8 @@ int CallStaticDoubleMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2747,8 +2747,8 @@ int CallStaticDoubleMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2767,8 +2767,8 @@ int CallStaticVoidMethod()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2787,8 +2787,8 @@ int CallStaticVoidMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2807,8 +2807,8 @@ int CallStaticVoidMethodA()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2827,8 +2827,8 @@ int GetStaticFieldID()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2847,8 +2847,8 @@ int GetStaticObjectField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2867,8 +2867,8 @@ int GetStaticBooleanField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2887,8 +2887,8 @@ int GetStaticByteField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2907,8 +2907,8 @@ int GetStaticCharField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2927,8 +2927,8 @@ int GetStaticShortField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2947,8 +2947,8 @@ int GetStaticIntField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2967,8 +2967,8 @@ int GetStaticLongField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -2987,8 +2987,8 @@ int GetStaticFloatField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3007,8 +3007,8 @@ int GetStaticDoubleField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3027,8 +3027,8 @@ int SetStaticObjectField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3047,8 +3047,8 @@ int SetStaticBooleanField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3067,8 +3067,8 @@ int SetStaticByteField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3087,8 +3087,8 @@ int SetStaticCharField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3107,8 +3107,8 @@ int SetStaticShortField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3127,8 +3127,8 @@ int SetStaticIntField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3147,8 +3147,8 @@ int SetStaticLongField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3167,8 +3167,8 @@ int SetStaticFloatField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3187,8 +3187,8 @@ int SetStaticDoubleField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3207,8 +3207,8 @@ int NewString()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3227,8 +3227,8 @@ int GetStringLength()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3247,8 +3247,8 @@ int GetStringChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3267,8 +3267,8 @@ int ReleaseStringChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3287,8 +3287,8 @@ int NewStringUTF()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3307,8 +3307,8 @@ int GetStringUTFLength()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3327,8 +3327,8 @@ int GetStringUTFChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3347,8 +3347,8 @@ int ReleaseStringUTFChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3367,8 +3367,8 @@ int GetArrayLength()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3387,8 +3387,8 @@ int NewObjectArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3407,8 +3407,8 @@ int GetObjectArrayElement()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3427,8 +3427,8 @@ int SetObjectArrayElement()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3447,8 +3447,8 @@ int NewBooleanArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3467,8 +3467,8 @@ int NewByteArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3487,8 +3487,8 @@ int NewCharArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3507,8 +3507,8 @@ int NewShortArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3527,8 +3527,8 @@ int NewIntArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3547,8 +3547,8 @@ int NewLongArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3567,8 +3567,8 @@ int NewFloatArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3587,8 +3587,8 @@ int NewDoubleArray()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3607,8 +3607,8 @@ int GetBooleanArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3627,8 +3627,8 @@ int GetByteArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3647,8 +3647,8 @@ int GetCharArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3667,8 +3667,8 @@ int GetShortArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3687,8 +3687,8 @@ int GetIntArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3707,8 +3707,8 @@ int GetLongArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3727,8 +3727,8 @@ int GetFloatArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3747,8 +3747,8 @@ int GetDoubleArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3767,8 +3767,8 @@ int ReleaseBooleanArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3787,8 +3787,8 @@ int ReleaseByteArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3807,8 +3807,8 @@ int ReleaseCharArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3827,8 +3827,8 @@ int ReleaseShortArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3847,8 +3847,8 @@ int ReleaseIntArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3867,8 +3867,8 @@ int ReleaseLongArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3887,8 +3887,8 @@ int ReleaseFloatArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3907,8 +3907,8 @@ int ReleaseDoubleArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3927,8 +3927,8 @@ int GetBooleanArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3947,8 +3947,8 @@ int GetByteArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3967,8 +3967,8 @@ int GetCharArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -3987,8 +3987,8 @@ int GetShortArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4007,8 +4007,8 @@ int GetIntArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4027,8 +4027,8 @@ int GetLongArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4047,8 +4047,8 @@ int GetFloatArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4067,8 +4067,8 @@ int GetDoubleArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4087,8 +4087,8 @@ int SetBooleanArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4107,8 +4107,8 @@ int SetByteArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4127,8 +4127,8 @@ int SetCharArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4147,8 +4147,8 @@ int SetShortArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4167,8 +4167,8 @@ int SetIntArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4187,8 +4187,8 @@ int SetLongArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4207,8 +4207,8 @@ int SetFloatArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4227,8 +4227,8 @@ int SetDoubleArrayRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4248,14 +4248,14 @@ int RegisterNatives()
 	int ret = 0;
 	char name[256]={0};
     char sig[256]={0};
-    int count = libc::get_r3();
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr();
+    int count = emulator::get_r3();
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr();
 
 	JNINativeMethod* methodptr = (JNINativeMethod* )malloc(count*sizeof(JNINativeMethod));
     JNINativeMethod* method = methodptr;
 
-    uc_err err = uc_mem_read(g_uc,libc::get_r2(),method,count*sizeof(JNINativeMethod));
+    uc_err err = uc_mem_read(g_uc,emulator::get_r2(),method,count*sizeof(JNINativeMethod));
 
     for(int i = 0 ; i < count ;i++) {
 
@@ -4301,8 +4301,8 @@ int UnregisterNatives()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4321,8 +4321,8 @@ int MonitorEnter()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4341,8 +4341,8 @@ int MonitorExit()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4361,8 +4361,8 @@ int GetJavaVM()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4381,8 +4381,8 @@ int GetStringRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4401,8 +4401,8 @@ int GetStringUTFRegion()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4421,8 +4421,8 @@ int GetPrimitiveArrayCritical()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4441,8 +4441,8 @@ int ReleasePrimitiveArrayCritical()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4461,8 +4461,8 @@ int GetStringCritical()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4481,8 +4481,8 @@ int ReleaseStringCritical()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4501,8 +4501,8 @@ int NewWeakGlobalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4521,8 +4521,8 @@ int DeleteWeakGlobalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4541,8 +4541,8 @@ int ExceptionCheck()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4561,8 +4561,8 @@ int NewDirectByteBuffer()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4581,8 +4581,8 @@ int GetDirectBufferAddress()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4601,8 +4601,8 @@ int GetDirectBufferCapacity()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
@@ -4621,8 +4621,8 @@ int GetObjectRefType()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = libc::get_r0(); 
-	unsigned int lr = libc::get_lr(); 
+	unsigned int env = emulator::get_r0(); 
+	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 
 
