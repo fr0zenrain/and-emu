@@ -74,10 +74,11 @@ public:
     static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
     void start_emulator(unsigned int pc, soinfo * si);
     static void build_proc_self_maps();
+    unsigned int get_jvm_jnienv(){ return JNIEnv;}
 
 private:
     static emulator* instance;
-    uc_engine* uc;
+    static uc_engine* uc;
     unsigned int JNIEnv;
     int init_emulator();
     int init_stack();

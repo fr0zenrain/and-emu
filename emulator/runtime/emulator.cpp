@@ -24,10 +24,11 @@ std::map<int,void*> g_svc_map;
 
 extern uc_engine* g_uc;
 extern int g_sym_cnt;
-
 extern func_info g_invoke_func[];
 extern func_info g_native_func[];
 extern symbols g_syms[];
+
+uc_engine* emulator::uc = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -106,10 +107,10 @@ int emulator::update_cpu_model()
     {
         v_lr-=1;
         v_cpsr |= 0x20;
-        uc_reg_write(g_uc,UC_ARM_REG_CPSR,&v_cpsr);
+        uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
     }
 
-    uc_reg_write(g_uc,UC_ARM_REG_PC,&v_lr);
+    uc_reg_write(uc,UC_ARM_REG_PC,&v_lr);
     return 1;
 }
 
@@ -130,11 +131,11 @@ int emulator::init_symbols()
         g_symbol_map[i].func= (void* (*)(void*))g_syms[i].func;
         if(g_syms[i].model)
         {
-            err=uc_mem_write(g_uc,g_syms[i].vaddr,&svc_thumb, 4);
+            err=uc_mem_write(uc,g_syms[i].vaddr,&svc_thumb, 4);
         }
         else
         {
-            err=uc_mem_write(g_uc,g_syms[i].vaddr,&svc_arm, 4);
+            err=uc_mem_write(uc,g_syms[i].vaddr,&svc_arm, 4);
         }
 
         g_syms[i].vaddr |= g_syms[i].model;
@@ -166,20 +167,20 @@ int emulator::dispatch()
 {
     unsigned int addr = 0;
 
-    uc_err err=uc_reg_read(g_uc, UC_ARM_REG_PC, &v_pc);
-    err=uc_reg_read(g_uc, UC_ARM_REG_CPSR, &v_cpsr);
-    err=uc_reg_read(g_uc, UC_ARM_REG_SPSR, &v_spsr);
-    err=uc_reg_read(g_uc, UC_ARM_REG_LR, &v_lr);
-    err=uc_reg_read(g_uc, UC_ARM_REG_SP, &v_sp);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R0, &v_r0);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R1, &v_r1);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R2, &v_r2);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R3, &v_r3);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R4, &v_r4);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R5, &v_r5);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R6, &v_r6);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R7, &v_r7);
-    err=uc_reg_read(g_uc, UC_ARM_REG_R8, &v_r8);
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &v_pc);
+    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &v_cpsr);
+    err=uc_reg_read(uc, UC_ARM_REG_SPSR, &v_spsr);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &v_lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &v_sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &v_r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &v_r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &v_r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &v_r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &v_r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &v_r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &v_r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
 
     if((v_cpsr >> 5) & 1)
         addr = v_pc -1;
@@ -209,10 +210,10 @@ int emulator::dispatch()
     {
         //restore r7
         int index = v_r7;
-        err=uc_mem_read(g_uc, v_sp, &v_r7,4);
-        err=uc_reg_write(g_uc, UC_ARM_REG_R7, &v_r7);
+        err=uc_mem_read(uc, v_sp, &v_r7,4);
+        err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
         v_sp += 4;
-        err=uc_reg_write(g_uc, UC_ARM_REG_SP, &v_sp);
+        err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);
 #ifdef _MSC_VER
         CONSOLE_SCREEN_BUFFER_INFO Info;
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -228,10 +229,10 @@ int emulator::dispatch()
     {
         //restore r7
         int index = v_r7;
-        err=uc_mem_read(g_uc, v_sp, &v_r7,4);
-        err=uc_reg_write(g_uc, UC_ARM_REG_R7, &v_r7);
+        err=uc_mem_read(uc, v_sp, &v_r7,4);
+        err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
         v_sp += 4;
-        err=uc_reg_write(g_uc, UC_ARM_REG_SP, &v_sp);
+        err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);
 #ifdef _MSC_VER
         CONSOLE_SCREEN_BUFFER_INFO Info;
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -245,7 +246,7 @@ int emulator::dispatch()
     }
     else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
-        err = uc_emu_stop(g_uc);
+        //err = uc_emu_stop(uc);
         //printf("emulator pause\n");
     }
     else
@@ -323,18 +324,18 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
 
     uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
     lr |= 1;
-    err=uc_reg_write(g_uc, UC_ARM_REG_PC, &pc);
-    err=uc_reg_write(g_uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
+    err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 
 
 #ifdef _MSC_VER
-    err=uc_hook_add(g_uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,1);
+    err=uc_hook_add(uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,1);
 #else
-    err=uc_hook_add(g_uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,0);
+    err=uc_hook_add(uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,0);
 #endif
-    err=uc_hook_add(g_uc, &trace2, UC_HOOK_INTR, (void*)hook_inter, (void*)si, 1, 0);
+    err=uc_hook_add(uc, &trace2, UC_HOOK_INTR, (void*)hook_inter, (void*)si, 1, 0);
 
-    err = uc_emu_start(g_uc,(uint64_t)pc,pc+0xffff,0,0);
+    err = uc_emu_start(uc,(uint64_t)pc,pc+0xffff,0,0);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_emu_start() with error returned: %u\n", err);

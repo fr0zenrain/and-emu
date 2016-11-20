@@ -66,6 +66,8 @@ public:
     static void* s_strcmp(void*);
 	static void* s_open(void*);
 	static void* s_read(void*);
+    static void* s_write(void*);
+    static void* s_lseek(void*);
 	static void* s_close(void*);
 	static void* s_sscanf(void*);
 	static void* s_strchr(void*);
@@ -75,6 +77,17 @@ public:
 	static void* s_bsd_signal(void*);
 	static void* s_raise(void*);
     static void* s_getpid(void*);
+	static void* s_strcpy(void*);
+    static void* s__errno(void*);
+    static void* s_strerror(void*);
+	static void* s_access(void*);
+	static void* s_abort(void*);
+    static void* s_strcat(void*);
+    static void* s_pthread_mutex_lock(void*);
+    static void* s_pthread_mutex_unlock(void*);
+    static void* s_pipe(void*);
+    static void* s_fork(void*);
+    static void* s_snprintf(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);

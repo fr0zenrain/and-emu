@@ -4,7 +4,6 @@
 #include "jni.h"
 
 extern uc_engine* g_uc;
-unsigned int g_JNIEnv_addr = 0;
 
 int GetEnv()
 {
@@ -16,10 +15,10 @@ int GetEnv()
 	if (version < JNI_VERSION_1_1 || version > JNI_VERSION_1_6) {
 		return JNI_EVERSION;
 	}
-
+    unsigned int jnienv = emulator::get_emulator()->get_jvm_jnienv();
 	if(env_ptr)
 	{
-		uc_mem_write(g_uc,env_ptr,&g_JNIEnv_addr,4);
+		uc_mem_write(g_uc,env_ptr,&jnienv,4);
 	}
 
 	emulator::update_cpu_model();
@@ -4274,19 +4273,17 @@ int RegisterNatives()
         }
 
 #ifdef _MSC_VER
-        printf("RegisterNatives(\"%s\",\"%s\",%x) ->0x%x\n",name,sig,method->fnPtr,ret);
+        printf("RegisterNatives(\"%s\",\"%s\",%p) ->0x%x\n",name,sig,method->fnPtr,ret);
 #else
-        printf(RED "RegisterNatives(\"%s\",\"%s\",%x) ->0x%\n" RESET, name,sig,method->fnPtr, ret);
+        printf(RED "RegisterNatives(\"%s\",\"%s\",%p) ->0x%\n" RESET, name,sig,method->fnPtr, ret);
 #endif
         method++;
     }
 
     free(methodptr);
 
-    if(lr &1)
-        lr -= 1;
+	emulator::update_cpu_model();
 
-    uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 

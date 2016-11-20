@@ -17,7 +17,6 @@
 #pragma comment(lib,"unicorn_staload.lib")
 //#pragma comment(lib,"capstone.lib")
 uc_engine* g_uc;
-extern unsigned int g_JNIEnv_addr;
 
 static void hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
@@ -433,13 +432,13 @@ int main(int argc, char* argv[])
 {
 	emulator* emu = emulator::get_emulator(UC_MODE_THUMB);
 
-	soinfo* si = load_android_so("libsgmainso-6.0.71.so");
+	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    //soinfo* si = load_android_so("libdata.so");
-	//soinfo* si = load_android_so("libbaiduprotect.so");
+    //soinfo* si = load_android_so("patch");
+	soinfo* si = load_android_so("libutil.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	//uc_emu_stop(g_uc);
-	//start_vm(g_uc,si,(void*)((int)si->base+0x772c));
+    //emu->start_emulator(((int)si->base+0x772c),si);
 	//start_vm(g_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
 	//start_vm(g_uc,si,(void*)0x4004fb10);
 	//start_vm(g_uc,si,(void*)0x4004721c);
