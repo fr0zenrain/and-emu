@@ -99,6 +99,11 @@ emulator::emulator(uc_mode mode)
 
     init_symbols();
     init_emulator();
+
+    //set return address
+    uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
+    lr |= 1;
+    err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 }
 
 
@@ -113,19 +118,20 @@ int emulator::init_emulator()
 
 int emulator::update_cpu_model()
 {
+    uc_err err = uc_reg_read(uc,UC_ARM_REG_LR,&v_lr);
     if (v_lr & 1)
     {
         v_lr-=1;
         v_cpsr |= 0x20;
-        uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
+        err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
     }
     else
     {
         v_cpsr &= ~(1 << 5);
-		uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
+        err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
     }
 
-    uc_reg_write(uc,UC_ARM_REG_PC,&v_lr);
+    err = uc_reg_write(uc,UC_ARM_REG_PC,&v_lr);
     return 1;
 }
 
@@ -293,7 +299,6 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
 {
     unsigned char buf[8] = {0};
     soinfo* si = (soinfo*)user_data;
-    //printf(">>> Tracing instruction at 0x%llx, instruction size = 0x%x\n", address, size);
     if (uc_mem_read(uc, address, buf, 4) != UC_ERR_OK) {
         printf("not ok - uc_mem_read fail during hook_code callback, addr: 0x%llx\n", address);
         if (uc_emu_stop(uc) != UC_ERR_OK) {
@@ -317,7 +322,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-        int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+       /* int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
             int offset = (int)insn->address-si->base;
@@ -325,7 +330,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
-        }
+        }*/
     }
 }
 
@@ -356,11 +361,7 @@ void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *
 void emulator::start_emulator(unsigned int pc, soinfo * si)
 {
     uc_err err;
-
-    uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
-    lr |= 1;
     err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
-    err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 
     if(trace_code)
     {

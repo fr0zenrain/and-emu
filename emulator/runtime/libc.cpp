@@ -580,7 +580,7 @@ void* libc::s_sscanf(void*)
 	char arg6[256]={0};
 	char arg7[256]={0};
 
-	int value = 0;
+	int value = 1;
     unsigned int addr = emulator::get_r0();
     unsigned int addr_format = emulator::get_r1();
     unsigned int r3_addr = emulator::get_r3();
@@ -623,7 +623,7 @@ void* libc::s_sscanf(void*)
 			break;
 	}
 
-	value = sscanf(buf,format,arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+	sscanf(buf,format,arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
 	err = uc_mem_write(g_uc,emulator::get_r2(),arg0,strlen(arg0));
 
@@ -1040,11 +1040,37 @@ void* libc::s_snprintf(void*)
 {
     uc_err err;
     int value = 0;
+    char buf[1024] = {0};
+    char format[128] ={0};
+
+    unsigned int buf_addr = emulator::get_r0();
+    int max = emulator::get_r1();
+    unsigned int format_addr = emulator::get_r2();
+
+    if(buf_addr)
+    {
+        for(int i = 0; i < 1024; i++)
+        {
+            err = uc_mem_read(g_uc,buf_addr+i,&buf[i],1);
+            if(buf[i] == 0)
+                break;
+        }
+    }
+
+    if(format_addr)
+    {
+        for(int i = 0; i < 128; i++)
+        {
+            err = uc_mem_read(g_uc,format_addr+i,&format[i],1);
+            if(format[i] == 0)
+                break;
+        }
+    }
 
 #ifdef _MSC_VER
-    printf("snprintf()-> 0x%x\n",  value);
+    printf("snprintf(\"%s\",0x%x,\"%s\",...)-> 0x%x\n",buf, max, format,  value);
 #else
-    printf(RED "snprintf()-> 0x%x\n" RESET, value);
+    printf(RED "snprintf(\"%s\",0x%x,\"%s\",...)-> 0x%x\n" RESET, buf, max, format, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1093,7 +1119,7 @@ void* libc::s_sysconf(void*)
 	int value = 0;
 	int name = emulator::get_r0();
 	
-	if(name == 0x27)
+	if(name == 0x27 || name == 0x28)
 	{
 		value = 0x1000;
 	}
@@ -1101,7 +1127,7 @@ void* libc::s_sysconf(void*)
 #ifdef _MSC_VER
 		printf("sysconf(0x%x)-> 0x%x\n", name, value);
 #else
-		printf(RED "sysconf()-> 0x%x\n" RESET, name, value);
+		printf(RED "sysconf(0x%x)-> 0x%x\n" RESET, name, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1113,12 +1139,36 @@ void* libc::s_sysconf(void*)
 void* libc::s_fopen(void*)
 {
 	uc_err err;
-	int value = 0;
+	int value = 1;
+	char path[512] ={0};
+	char mode[16] ={0};
+	unsigned int path_addr = emulator::get_r0();
+	unsigned int mode_addr = emulator::get_r1();
+
+    if(path_addr)
+    {
+        for(int i = 0; i < 512; i++)
+        {
+            err = uc_mem_read(g_uc,path_addr+i,&path[i],1);
+            if(path[i] == 0)
+                break;
+        }
+    }
+
+    if(mode_addr)
+    {
+        for(int i = 0; i < 16; i++)
+        {
+            err = uc_mem_read(g_uc,mode_addr+i,&mode[i],1);
+            if(mode[i] == 0)
+                break;
+        }
+    }
 
 #ifdef _MSC_VER
-	printf("fopen()-> 0x%x\n",  value);
+	printf("fopen("%s","%s")-> 0x%x\n",path, mode,  value);
 #else
-	printf(RED "fopen()-> 0x%x\n" RESET, value);
+	printf(RED "fopen(\"%s\",\"%s\")-> 0x%x\n" RESET, path, mode, value);
 #endif
 
 	emulator::update_cpu_model();
