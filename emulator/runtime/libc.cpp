@@ -153,14 +153,20 @@ void* libc::sys_mmap(int type)
 		addr = (unsigned int)s_mmap(0,size,PROT_NONE,MAP_PRIVATE,fd, offset);
 	}
 
-    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
-    emulator::update_cpu_model();
-
 #ifdef _MSC_VER
 	printf("mmap(0x%x,0x%x,0x%x,%d,0x%x)-> 0x%x\n",emulator::get_r0(),size,prot,fd,offset,addr);
 #else
 	printf(RED "mmap(0x%x,0x%x,0x%x,%d,0x%x)-> 0x%x\n" RESET,emulator::get_r0(),size,prot,fd,offset,addr);
 #endif
+
+	if(type == 0)
+	{
+		err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+		return 0;
+	}
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+    emulator::update_cpu_model();
 
 
 	return 0;
@@ -171,14 +177,20 @@ void* libc::sys_cacheflush(int type)
     int value = 0;
     unsigned int addr = emulator::get_r0();
 
-	if(type == 0)
-		uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
-
 #ifdef _MSC_VER
 	printf("cacheflush(0x%x,0x%x,0x%x)-> 0x%x\n",addr,emulator::get_r1(),emulator::get_r2(),value);
 #else
 	printf(RED "cacheflush(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,emulator::get_r1(),emulator::get_r2(),value);
 #endif
+
+	if(type == 0)
+	{
+		uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+		return 0;
+	}
+
+	emulator::update_cpu_model();
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
 	return 0;
 }
@@ -524,7 +536,7 @@ void* libc::s_close(void*)
     return 0;
 }
 
-void* libc::sys_mprotect(void*)
+void* libc::sys_mprotect(void* type)
 {
 	uc_err err;
 	int value = 0;
@@ -537,6 +549,12 @@ void* libc::sys_mprotect(void*)
 #else
 	printf(RED "mprotect(%x,%x,%x)-> 0x%x\n" RESET,addr,addr1,size,value);
 #endif
+
+	if(type == 0)
+	{
+		err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+		return 0;
+	}
 
     emulator::update_cpu_model();
 
@@ -751,6 +769,7 @@ void* libc::s_bsd_signal(void*)
     printf(RED "bsd_signal(0x%x,0x%x)-> 0x%x\n" RESET,sig,addr,value);
 #endif
 
+    emulator::get_emulator()->save_signal_handler(sig,(void*)addr);
     emulator::update_cpu_model();
 
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -770,7 +789,7 @@ void* libc::s_raise(void*)
 #endif
 
     emulator::update_cpu_model();
-
+    emulator::get_emulator()->process_signal(sig);
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
     return 0;
@@ -1066,6 +1085,29 @@ void* libc::s_fork(void*)
     return 0;
 }
 
+void* libc::s_sysconf(void*)
+{
+	uc_err err;
+	int value = 0;
+	int name = emulator::get_r0();
+
+	if(name == 0x27)
+	{
+		value = 0x1000;
+	}
+
+#ifdef _MSC_VER
+	printf("sysconf(0x%x)-> 0x%x\n", name, value);
+#else
+	printf(RED "sysconf()-> 0x%x\n" RESET, name, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",0},
@@ -1109,6 +1151,7 @@ symbols g_syms[] =
     {0xffa1e6f0,"snprintf",(void*)libc::s_snprintf,1},
     {0x1f9a630e,"pipe",(void*)libc::s_pipe,1},
     {0xbbeb587a,"fork",(void*)libc::s_fork,1},
+	{0xe704856a,"sysconf",(void*)libc::s_sysconf,1},
 };
 
 

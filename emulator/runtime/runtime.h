@@ -88,6 +88,7 @@ public:
     static void* s_pipe(void*);
     static void* s_fork(void*);
     static void* s_snprintf(void*);
+	static void* s_sysconf(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);

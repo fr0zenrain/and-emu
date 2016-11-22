@@ -3,6 +3,9 @@
 
 #include "../linker.h"
 #include "../../include/unicorn/unicorn.h"
+#include <map>
+
+using namespace std;
 
 
 #define RED   "\x1B[31m"
@@ -72,9 +75,12 @@ public:
 public:
     static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
     static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+    static void hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
     void start_emulator(unsigned int pc, soinfo * si);
     static void build_proc_self_maps();
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
+    int save_signal_handler(int sig,void* handler);
+    int process_signal(int sig);
 
 private:
     static emulator* instance;
@@ -86,6 +92,12 @@ private:
     int init_env_func(void* invoke, void* addr);
     int init_jvm();
     int init_ret_stub();
+
+    std::map<unsigned int,void*> signal_map;
+
+    uc_hook trace_code;
+    uc_hook trace_inter;
+    uc_hook trace_unmap;
 };
 
 #endif

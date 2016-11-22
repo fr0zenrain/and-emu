@@ -65,9 +65,9 @@ int FindClass()
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("FindClass(\"%s\")\n",buffer);
+	printf("FindClass(0x%x,\"%s\")\n",env, buffer);
 #else
-	printf(RED "FindClass(\"%s\") ->0x%\n" RESET, buffer);
+	printf(RED "FindClass(0x%x,\"%s\") ->0x%\n" RESET,env, buffer);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
@@ -2199,19 +2199,42 @@ int SetDoubleField()
 int GetStaticMethodID() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
+	uc_err err;
+	char name[256] ={0};
+	char sig[256] ={0};
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int classz = emulator::get_r1(); 
+	unsigned int name_addr = emulator::get_r2(); 
+	unsigned int sig_addr = emulator::get_r3(); 
+
+	if(name_addr)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,name_addr+i,&name[i],1);
+			if(name[i] == 0)
+				break;
+		}
+	}
+
+	if(sig_addr)
+	{
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,sig_addr+i,&sig[i],1);
+			if(sig[i] == 0)
+				break;
+		}
+	}
 
 #ifdef _MSC_VER
-	printf("GetStaticMethodID(\"%s\")\n",buffer);
+	printf("GetStaticMethodID(0x%x,0x%x,\"%s\",\"%s\")\n",env, classz, name,sig);
 #else
-	printf(RED "GetStaticMethodID(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticMethodID(0x%x,0x%x,\"%s\")\n" RESET, env, classz, name,sig); 
 #endif 
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+	emulator::update_cpu_model();
+
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 

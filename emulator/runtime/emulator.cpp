@@ -70,8 +70,17 @@ emulator* emulator::get_emulator(uc_mode mode)
     return instance;
 }
 
+emulator::~emulator()
+{
+    uc_close(uc);
+}
+
 emulator::emulator(uc_mode mode)
 {
+    trace_code = 0;
+    trace_inter = 0;
+	trace_unmap = 0;
+
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
@@ -87,6 +96,7 @@ emulator::emulator(uc_mode mode)
 
     memset(&sym,0,sizeof(Elf32_Sym));
     sym.st_value = FUNCTION_VIRTUAL_ADDRESS +0x1000;
+
     init_symbols();
     init_emulator();
 }
@@ -108,6 +118,11 @@ int emulator::update_cpu_model()
         v_lr-=1;
         v_cpsr |= 0x20;
         uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
+    }
+    else
+    {
+        v_cpsr &= ~(1 << 5);
+		uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
     }
 
     uc_reg_write(uc,UC_ARM_REG_PC,&v_lr);
@@ -182,16 +197,19 @@ int emulator::dispatch()
     err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
     err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
 
-    if((v_cpsr >> 5) & 1)
-        addr = v_pc -1;
-    else
-        addr = v_pc - 4;
-
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_cpsr);
+    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
     if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
     {
-        symbols_map*  s= (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+		//assume thumb
+		addr = v_pc -1;
+        symbols_map*  s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+		if(s == 0)
+		{
+			//try arm
+			addr = v_pc -4;
+			s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+		}
         if(s)
         {
 #ifdef _MSC_VER
@@ -246,7 +264,6 @@ int emulator::dispatch()
     }
     else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
-        //err = uc_emu_stop(uc);
         //printf("emulator pause\n");
     }
     else
@@ -317,29 +334,75 @@ void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *
     dispatch();
 }
 
+void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    printf(">>> Tracing unmap at 0x%llx, block size = 0x%x\n", address, size);
+    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
+}
+
+
 void emulator::start_emulator(unsigned int pc, soinfo * si)
 {
     uc_err err;
-    uc_hook trace1,trace2;
 
     uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
     lr |= 1;
     err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 
-
+    if(trace_code)
+    {
+        uc_hook_del(uc,trace_code);
+        trace_code = 0;
+    }
+    else
+    {
 #ifdef _MSC_VER
-    err=uc_hook_add(uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,1);
+        err=uc_hook_add(uc, &trace_code, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,1);
 #else
-    err=uc_hook_add(uc, &trace1, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,0);
+        err = uc_hook_add(uc, &trace_code, UC_HOOK_CODE, (void *) hook_code, (void *) si, 1, 0);
 #endif
-    err=uc_hook_add(uc, &trace2, UC_HOOK_INTR, (void*)hook_inter, (void*)si, 1, 0);
+    }
 
-    err = uc_emu_start(uc,(uint64_t)pc,pc+0xffff,0,0);
+    if(trace_inter)
+    {
+        uc_hook_del(uc,trace_inter);
+        trace_inter = 0;
+    }
+    else
+    {
+        err=uc_hook_add(uc, &trace_inter, UC_HOOK_INTR, (void*)hook_inter, (void*)si, 1, 0);
+    }
+
+    if(trace_unmap)
+    {
+        uc_hook_del(uc,trace_unmap);
+        trace_unmap = 0;
+    }
+    else
+    {
+        err=uc_hook_add(uc, &trace_unmap, UC_HOOK_MEM_FETCH_INVALID| UC_HOOK_MEM_INVALID,
+                        (void*)hook_unmap, (void*)si, 1, 0);
+    }
+
+    err = uc_emu_start(uc,(uint64_t)pc,pc+0xfffff,0,0);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_emu_start() with error returned: %u\n", err);
     }
+
 }
 
 int emulator::init_stack()
@@ -470,5 +533,28 @@ int emulator::init_ret_stub()
 
     err = uc_mem_write(uc,(uint64_t)EMULATOR_PAUSE_ADDRESS,&svc_thumb,4);
 
+    return 1;
+}
+
+int emulator::save_signal_handler(int sig,void* handler)
+{
+    signal_map.insert(std::make_pair(sig,handler));
+    return 1;
+}
+
+int emulator::process_signal(int sig)
+{
+    std::map<unsigned int,void*>::iterator iter = signal_map.begin();
+
+    while (iter != signal_map.end())
+    {
+        void* addr = iter->second;
+        if(iter->first == sig)
+        {
+            v_lr = (unsigned int)addr;
+            update_cpu_model();
+        }
+        ++iter;
+    }
     return 1;
 }
