@@ -384,8 +384,17 @@ static int _phdr_table_set_load_prot(const Elf32_Phdr* phdr_table,
 	const Elf32_Phdr* phdr = phdr_table;
 	const Elf32_Phdr* phdr_limit = phdr + phdr_count;
 
+	unsigned int type = 0; 
+	unsigned int flags = 0; 
+
 	for (; phdr < phdr_limit; phdr++) {
-		if (phdr->p_type != PT_LOAD || (phdr->p_flags & PF_W) != 0)
+		unsigned int addr = (int)phdr + offsetof(Elf32_Phdr,p_type);
+		uc_mem_read(g_uc,addr,&type,4);
+
+		addr = (int)phdr + offsetof(Elf32_Phdr,p_flags);
+		uc_mem_read(g_uc,addr,&flags,4);
+
+		if (type = PT_LOAD || (flags & PF_W) != 0)
 			continue;
 
 		Elf32_Addr seg_page_start = PAGE_START(phdr->p_vaddr) + load_bias;

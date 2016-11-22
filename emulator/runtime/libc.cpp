@@ -125,13 +125,13 @@ void* libc::s__aeabi_memcpy(void*)
 		free(ptr);
 	}
 
-    emulator::update_cpu_model();
-
 #ifdef _MSC_VER
 	printf("s__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
 #else
 	printf(RED "s__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,dst,src,size,dst);
 #endif
+
+	emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&dst);
 
@@ -165,9 +165,8 @@ void* libc::sys_mmap(int type)
 		return 0;
 	}
 
-    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
-    emulator::update_cpu_model();
-
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+	emulator::update_cpu_model();
 
 	return 0;
 }
@@ -176,6 +175,9 @@ void* libc::sys_cacheflush(int type)
 {
     int value = 0;
     unsigned int addr = emulator::get_r0();
+
+	if(type == 0)
+		uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
 
 #ifdef _MSC_VER
 	printf("cacheflush(0x%x,0x%x,0x%x)-> 0x%x\n",addr,emulator::get_r1(),emulator::get_r2(),value);
@@ -1090,21 +1092,112 @@ void* libc::s_sysconf(void*)
 	uc_err err;
 	int value = 0;
 	int name = emulator::get_r0();
-
+	
 	if(name == 0x27)
 	{
 		value = 0x1000;
 	}
+	
+#ifdef _MSC_VER
+		printf("sysconf(0x%x)-> 0x%x\n", name, value);
+#else
+		printf(RED "sysconf()-> 0x%x\n" RESET, name, value);
+#endif
+
+	emulator::update_cpu_model();
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+	return 0;
+}
+
+void* libc::s_fopen(void*)
+{
+	uc_err err;
+	int value = 0;
 
 #ifdef _MSC_VER
-	printf("sysconf(0x%x)-> 0x%x\n", name, value);
+	printf("fopen()-> 0x%x\n",  value);
 #else
-	printf(RED "sysconf()-> 0x%x\n" RESET, name, value);
+	printf(RED "fopen()-> 0x%x\n" RESET, value);
 #endif
 
 	emulator::update_cpu_model();
 
 	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_fread(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("fread()-> 0x%x\n",  value);
+#else
+	printf(RED "fread()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_fseek(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("fseek()-> 0x%x\n",  value);
+#else
+	printf(RED "fseek()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_fclose(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("fclose()-> 0x%x\n",  value);
+#else
+	printf(RED "fclose()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s__stack_chk_fail(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("__stack_chk_fail()-> 0x%x\n",  value);
+#else
+	printf(RED "__stack_chk_fail()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s__stack_chk_guard(void*)
+{
+
 	return 0;
 }
 
@@ -1152,6 +1245,12 @@ symbols g_syms[] =
     {0x1f9a630e,"pipe",(void*)libc::s_pipe,1},
     {0xbbeb587a,"fork",(void*)libc::s_fork,1},
 	{0xe704856a,"sysconf",(void*)libc::s_sysconf,1},
+    {0x55642948,"fopen",(void*)libc::s_fopen,1},
+    {0x6943eb8b,"fread",(void*)libc::s_fread,1},
+    {0x252c547b,"fseek",(void*)libc::s_fseek,1},
+    {0xba4c3b3d,"fclose",(void*)libc::s_fclose,1},
+	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,1},
+	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,1},
 };
 
 
