@@ -85,6 +85,7 @@ public:
 private:
     static emulator* instance;
     static uc_engine* uc;
+	static soinfo* helper_info;
     unsigned int JNIEnv;
     int init_emulator();
     int init_stack();
@@ -92,6 +93,7 @@ private:
     int init_env_func(void* invoke, void* addr);
     int init_jvm();
     int init_ret_stub();
+	static unsigned int get_helper_symbols(const char* name);
 
     std::map<unsigned int,void*> signal_map;
 

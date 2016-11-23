@@ -67,7 +67,7 @@ int FindClass()
 #ifdef _MSC_VER
 	printf("FindClass(0x%x,\"%s\")\n",env, buffer);
 #else
-	printf(RED "FindClass(0x%x,\"%s\") ->0x%\n" RESET,env, buffer);
+	printf(RED "FindClass(0x%x,\"%s\")\n" RESET,env, buffer);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
@@ -4298,7 +4298,7 @@ int RegisterNatives()
 #ifdef _MSC_VER
         printf("RegisterNatives(\"%s\",\"%s\",%p) ->0x%x\n",name,sig,method->fnPtr,ret);
 #else
-        printf(RED "RegisterNatives(\"%s\",\"%s\",%p) ->0x%\n" RESET, name,sig,method->fnPtr, ret);
+        printf(RED "RegisterNatives(\"%s\",\"%s\",%p)\n" RESET, name,sig,method->fnPtr, ret);
 #endif
         method++;
     }

@@ -6,6 +6,7 @@
 #include "../engine.h"
 #include "../jvm/jvm.h"
 #include "runtime.h"
+#include "../dlfcn.h"
 #include <map>
 using namespace std;
 
@@ -29,6 +30,7 @@ extern func_info g_native_func[];
 extern symbols g_syms[];
 
 uc_engine* emulator::uc = 0;
+soinfo* emulator::helper_info = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -149,7 +151,7 @@ int emulator::init_symbols()
     {
         g_syms[i].vaddr = (FUNCTION_VIRTUAL_ADDRESS+i*4);
         g_symbol_map[i].vaddr=(FUNCTION_VIRTUAL_ADDRESS+i*4);
-        g_symbol_map[i].func= (void* (*)(void*))g_syms[i].func;
+		g_symbol_map[i].func= (void* (*)(void*))g_syms[i].func;
         if(g_syms[i].model)
         {
             err=uc_mem_write(uc,g_syms[i].vaddr,&svc_thumb, 4);
@@ -169,17 +171,45 @@ int emulator::init_symbols()
     return 1;
 }
 
+unsigned int emulator::get_helper_symbols(const char* name)
+{
+	unsigned int addr = 0;
+	if(helper_info)
+	{
+		addr = (unsigned int)s_dlsym((void*)helper_info,name);
+		return addr;
+	}
+
+	return 0;
+}
+
+
 Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-    symbols*  s= (symbols*)bsearch(&crc32,g_syms,g_sym_cnt,sizeof(symbols),hash_compare);
-    if(s)
-    {
-        sym.st_size = len;
-        sym.st_name =1;
-        sym.st_value = s->vaddr;
-    }
+	
+	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d)//special func
+	{
+		unsigned int sym_addr = get_helper_symbols(name);
+		if(sym_addr)
+		{
+			sym.st_size = len;
+			sym.st_name =1;
+			sym.st_value = sym_addr;
+		}
+	}
+	else
+	{
+
+		symbols* s = (symbols*)bsearch(&crc32,g_syms,g_sym_cnt,sizeof(symbols),hash_compare);
+		if(s)
+		{
+			sym.st_size = len;
+			sym.st_name =1;
+			sym.st_value = s->vaddr;
+		}
+	}
 
     return &sym;
 }
@@ -322,7 +352,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-       /* int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+        /*int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
             int offset = (int)insn->address-si->base;
@@ -434,11 +464,58 @@ int emulator::load_library()
 {
     libc* c = new libc();
     c->init(this);
+	//helper_info = (soinfo*)s_dlopen("libhelper.so",0);
     void* h1 = s_dlopen("libm.so",0);
     void* h2 = s_dlopen("libstdc++.so",0);
     void* h3 = s_dlopen("liblog.so",0);
     void* h4 = s_dlopen("libz.so",0);
-    //void* h5 = s_dlopen("libdvm.so",0);
+	/*void* h5 = s_dlopen("libutils.so",0);
+	void* h6 = s_dlopen("libinput.so",0);
+	void* h7 = s_dlopen("libgccdemangle.so",0);
+	void* h8 = s_dlopen("libbinder.so",0);
+	void* h9 = s_dlopen("libandroid_runtime.so",0);
+	void* h10 = s_dlopen("libandroidfw.so",0);
+	void* h11 = s_dlopen("libui.so",0);
+	void* h12 = s_dlopen("libhardware.so",0);
+	void* h13 = s_dlopen("libsync.so",0);
+	void* h14 = s_dlopen("libgui.so",0);
+	void* h15 = s_dlopen("libEGL.so",0);
+	void* h16 = s_dlopen("libGLES_trace.so",0);
+	void* h17 = s_dlopen("libGLESv2.so",0);
+	void* h19 = s_dlopen("libmemtrack.so",0);
+	void* h20 = s_dlopen("libexpat.so",0);
+	void* h21 = s_dlopen("libnetutils.so",0);
+	void* h22 = s_dlopen("libcamera_client.so",0);
+	void* h23 = s_dlopen("libcamera_metadata.so",0);
+	void* h24 = s_dlopen("libskia.so",0);
+	void* h25 = s_dlopen("libft2.so",0);
+	void* h26 = s_dlopen("libpng.so",0);
+	void* h27 = s_dlopen("libjpeg.so",0);
+	void* h28 = s_dlopen("libicuuc.so",0);
+	void* h29 = s_dlopen("libgabi++.so",0);
+	void* h30 = s_dlopen("libicui18n.so",0);
+	void* h31 = s_dlopen("libsqlite.so",0);
+	void* h32 = s_dlopen("libGLESv1_CM.so",0);
+	void* h33 = s_dlopen("libETC1.so",0);
+	void* h34 = s_dlopen("libhardware_legacy.so",0);
+	void* h35 = s_dlopen("libwpa_client.so",0);
+	void* h36 = s_dlopen("libsonivox.so",0);
+	void* h37 = s_dlopen("libcrypto.so",0);
+	void* h38 = s_dlopen("libandroid.so",0);
+	void* h39 = s_dlopen("libssl.so",0);
+	void* h40 = s_dlopen("libmedia.so",0);
+	void* h41 = s_dlopen("libstagefright_foundation.so",0);
+	void* h42 = s_dlopen("libaudioutils.so",0);
+	void* h43 = s_dlopen("libspeexresampler.so",0);
+	void* h44 = s_dlopen("libusbhost.so",0);
+	void* h45 = s_dlopen("libharfbuzz_ng.so",0);
+	void* h46 = s_dlopen("libhwui.so",0);
+	void* h47 = s_dlopen("libRS.so",0);
+	void* h48 = s_dlopen("libbcc.so",0);
+	void* h49 = s_dlopen("libbcinfo.so",0);
+	void* h50 = s_dlopen("libLLVM.so",0);
+	void* h51 = s_dlopen("libRScpp.so",0);
+    void* h52 = s_dlopen("libdvm.so",0);*/
 
     return 1;
 }

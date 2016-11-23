@@ -33,7 +33,6 @@ void libc::init(emulator* emu)
 void* libc::s_malloc(void*)
 {
     int size = emulator::get_r0();
-	//void* addr = s_mmap(0,v_r0,PROT_NONE,MAP_PRIVATE,-1,0);
 	void* addr = sys_malloc(size);
 
     emulator::update_cpu_model();
@@ -55,8 +54,8 @@ void* libc::s_free(void*)
 	emulator::update_cpu_model();
 	
 	if(ptr)
-		sys_free((void*)ptr);
-		//uc_mem_unmap(g_uc,v_r0,0x1000);
+		;//sys_free((void*)ptr); FIXME free has a bug
+
 #ifdef _MSC_VER
 	printf("free(0x%x)\n",ptr);
 #else
@@ -1166,7 +1165,7 @@ void* libc::s_fopen(void*)
     }
 
 #ifdef _MSC_VER
-	printf("fopen("%s","%s")-> 0x%x\n",path, mode,  value);
+	printf("fopen(\"%s\",\"%s\")-> 0x%x\n",path, mode,  value);
 #else
 	printf(RED "fopen(\"%s\",\"%s\")-> 0x%x\n" RESET, path, mode, value);
 #endif
@@ -1220,6 +1219,40 @@ void* libc::s_fclose(void*)
 	printf("fclose()-> 0x%x\n",  value);
 #else
 	printf(RED "fclose()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_time(void*)
+{
+	uc_err err;
+	int value = time(0);
+
+#ifdef _MSC_VER
+	printf("time()-> 0x%x\n",  value);
+#else
+	printf(RED "time()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_sbrk(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("sbrk()-> 0x%x\n",  value);
+#else
+	printf(RED "sbrk()-> 0x%x\n" RESET, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1299,8 +1332,10 @@ symbols g_syms[] =
     {0x6943eb8b,"fread",(void*)libc::s_fread,1},
     {0x252c547b,"fseek",(void*)libc::s_fseek,1},
     {0xba4c3b3d,"fclose",(void*)libc::s_fclose,1},
+	{0x6f949845,"time",(void*)libc::s_time,1},
+	{0xd4f46c84,"sbrk",(void*)libc::s_sbrk,1},
 	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,1},
-	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,1},
+	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,0},//var
 };
 
 

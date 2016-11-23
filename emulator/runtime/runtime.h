@@ -93,6 +93,8 @@ public:
 	static void* s_fread(void*);
 	static void* s_fseek(void*);
 	static void* s_fclose(void*);
+	static void* s_time(void*);
+	static void* s_sbrk(void*);
 	static void* s__stack_chk_fail(void*);
 	static void* s__stack_chk_guard(void*);
 	static void* sys_mmap(int type);
