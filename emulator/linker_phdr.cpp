@@ -173,15 +173,8 @@ bool ElfReader::VerifyElfHeader() {
 		return false;
 	}
 
-	if (header_.e_machine !=
-#ifdef ANDROID_ARM_LINKER
-	EM_ARM
-#elif defined(ANDROID_MIPS_LINKER)
-	EM_MIPS
-#elif defined(ANDROID_X86_LINKER)
-	EM_386
-#endif
-	) {
+	if (header_.e_machine != EM_ARM && header_.e_machine != EM_386)
+	{
 		debug_printf("\"%s\" has unexpected e_machine: %d", name_,
 				header_.e_machine);
 		return false;

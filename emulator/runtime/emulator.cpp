@@ -32,21 +32,16 @@ extern symbols g_syms[];
 uc_engine* emulator::uc = 0;
 soinfo* emulator::helper_info = 0;
 
-unsigned int emulator::v_pc =0;
-unsigned int emulator::v_lr =0;
-unsigned int emulator::v_sp =0;
-unsigned int emulator::v_cpsr =0;
-unsigned int emulator::v_spsr =0;
-
-unsigned int emulator::v_r0 =0;
-unsigned int emulator::v_r1 =0;
-unsigned int emulator::v_r2 =0;
-unsigned int emulator::v_r3 =0;
-unsigned int emulator::v_r4 =0;
-unsigned int emulator::v_r5 =0;
-unsigned int emulator::v_r6 =0;
-unsigned int emulator::v_r7 =0;
-unsigned int emulator::v_r8 =0;
+unsigned int emulator::v_eip =0;
+unsigned int emulator::v_eax =0;
+unsigned int emulator::v_ecx =0;
+unsigned int emulator::v_ebx =0;
+unsigned int emulator::v_edx =0;
+unsigned int emulator::v_esi =0;
+unsigned int emulator::v_edi =0;
+unsigned int emulator::v_esp =0;
+unsigned int emulator::v_ebp =0;
+unsigned int emulator::v_eflags =0;
 
 emulator* emulator::instance = 0;
 
@@ -84,7 +79,7 @@ emulator::emulator(uc_mode mode)
 	trace_unmap = 0;
 
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
-    uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
+    uc_err  err = uc_open(UC_ARCH_X86, mode, &uc);
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
     int mem_size = 4*1024*1024;
     g_uc = uc;
@@ -120,20 +115,6 @@ int emulator::init_emulator()
 
 int emulator::update_cpu_model()
 {
-    uc_err err = uc_reg_read(uc,UC_ARM_REG_LR,&v_lr);
-    if (v_lr & 1)
-    {
-        v_lr-=1;
-        v_cpsr |= 0x20;
-        err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
-    }
-    else
-    {
-        v_cpsr &= ~(1 << 5);
-        err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
-    }
-
-    err = uc_reg_write(uc,UC_ARM_REG_PC,&v_lr);
     return 1;
 }
 
@@ -189,7 +170,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
 	
-	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d)//special func
+	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d || crc32 ==0x23398d9a)//special func
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
 		if(sym_addr)
@@ -218,34 +199,23 @@ int emulator::dispatch()
 {
     unsigned int addr = 0;
 
-    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &v_pc);
-    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &v_cpsr);
-    err=uc_reg_read(uc, UC_ARM_REG_SPSR, &v_spsr);
-    err=uc_reg_read(uc, UC_ARM_REG_LR, &v_lr);
-    err=uc_reg_read(uc, UC_ARM_REG_SP, &v_sp);
-    err=uc_reg_read(uc, UC_ARM_REG_R0, &v_r0);
-    err=uc_reg_read(uc, UC_ARM_REG_R1, &v_r1);
-    err=uc_reg_read(uc, UC_ARM_REG_R2, &v_r2);
-    err=uc_reg_read(uc, UC_ARM_REG_R3, &v_r3);
-    err=uc_reg_read(uc, UC_ARM_REG_R4, &v_r4);
-    err=uc_reg_read(uc, UC_ARM_REG_R5, &v_r5);
-    err=uc_reg_read(uc, UC_ARM_REG_R6, &v_r6);
-    err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
-    err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
+    uc_err err=uc_reg_read(uc, UC_X86_REG_EIP, &v_eip);
+    err=uc_reg_read(uc, UC_X86_REG_EFLAGS, &v_eflags);
+    err=uc_reg_read(uc, UC_X86_REG_ESP, &v_esp);
+    err=uc_reg_read(uc, UC_X86_REG_EBP, &v_ebp);
+    err=uc_reg_read(uc, UC_X86_REG_EAX, &v_eax);
+    err=uc_reg_read(uc, UC_X86_REG_ECX, &v_ecx);
+    err=uc_reg_read(uc, UC_X86_REG_EBX, &v_ebx);
+    err=uc_reg_read(uc, UC_X86_REG_EDX, &v_edx);
+    err=uc_reg_read(uc, UC_X86_REG_ESI, &v_esi);
+    err=uc_reg_read(uc, UC_X86_REG_EDI, &v_esi);
 
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
+    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
-    if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
+    if((v_eip & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
     {
-		//assume thumb
-		addr = v_pc -1;
+		addr = v_eip;
         symbols_map*  s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
-		if(s == 0)
-		{
-			//try arm
-			addr = v_pc -4;
-			s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
-		}
         if(s)
         {
 #ifdef _MSC_VER
@@ -260,14 +230,14 @@ int emulator::dispatch()
 #endif
         }
     }
-    else if((v_pc & 0xffffff00) == JVM_INVOKE_ADDRESS)
+    else if((v_eip & 0xffffff00) == JVM_INVOKE_ADDRESS)
     {
         //restore r7
-        int index = v_r7;
-        err=uc_mem_read(uc, v_sp, &v_r7,4);
-        err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
-        v_sp += 4;
-        err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);
+        int index = v_eax;
+        /*  err=uc_mem_read(uc, v_sp, &v_r7,4);
+          err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
+          v_esp += 4;
+          err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);*/
 #ifdef _MSC_VER
         CONSOLE_SCREEN_BUFFER_INFO Info;
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -279,14 +249,14 @@ int emulator::dispatch()
         g_invoke_func[index].f();
 #endif
     }
-    else if((v_pc & 0xfffff000) == JVM_INTERFACE_ADDRESS)
+    else if((v_eip & 0xfffff000) == JVM_INTERFACE_ADDRESS)
     {
         //restore r7
-        int index = v_r7;
-        err=uc_mem_read(uc, v_sp, &v_r7,4);
-        err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
-        v_sp += 4;
-        err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);
+        int index = v_eax;
+        /* err=uc_mem_read(uc, v_sp, &v_r7,4);
+         err=uc_reg_write(uc, UC_ARM_REG_R7, &v_r7);
+         v_sp += 4;
+         err=uc_reg_write(uc, UC_ARM_REG_SP, &v_sp);*/
 #ifdef _MSC_VER
         CONSOLE_SCREEN_BUFFER_INFO Info;
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -298,13 +268,13 @@ int emulator::dispatch()
         g_native_func[index].f();
 #endif
     }
-    else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
+    else if((v_eip & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
         //printf("emulator pause\n");
     }
     else
     {
-        std::map<int,void*>::iterator iter = g_svc_map.find(v_r7);
+        std::map<int,void*>::iterator iter = g_svc_map.find(v_eax);
         if(iter != g_svc_map.end())
         {
             f func = (f)iter->second;
@@ -352,7 +322,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-        /*int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+        int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
             int offset = (int)insn->address-si->base;
@@ -360,7 +330,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
-        }*/
+        }
     }
 }
 
@@ -371,7 +341,7 @@ void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *
 
 void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+  /*  int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
     err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
@@ -384,7 +354,7 @@ void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *
     err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
     printf(">>> Tracing unmap at 0x%llx, block size = 0x%x\n", address, size);
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
+    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);*/
 }
 
 
@@ -464,7 +434,7 @@ int emulator::load_library()
 {
     libc* c = new libc();
     c->init(this);
-	//helper_info = (soinfo*)s_dlopen("libhelper.so",0);
+	helper_info = (soinfo*)s_dlopen("libhelper.so",0);
     void* h1 = s_dlopen("libm.so",0);
     void* h2 = s_dlopen("libstdc++.so",0);
     void* h3 = s_dlopen("liblog.so",0);
@@ -629,7 +599,7 @@ int emulator::process_signal(int sig)
         void* addr = iter->second;
         if(iter->first == sig)
         {
-            v_lr = (unsigned int)addr;
+            v_eip = (unsigned int)addr;
             update_cpu_model();
         }
         ++iter;

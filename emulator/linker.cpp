@@ -822,12 +822,7 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 				 */
 
 				switch (type) {
-#if defined(ANDROID_ARM_LINKER)
-				case R_ARM_JUMP_SLOT:
-				case R_ARM_GLOB_DAT:
-				case R_ARM_ABS32:
-				case R_ARM_RELATIVE: /* Don't care. */
-#elif defined(ANDROID_X86_LINKER)
+#if defined(ANDROID_X86_LINKER)
 				case R_386_JMP_SLOT:
 				case R_386_GLOB_DAT:
 				case R_386_32:
@@ -918,13 +913,17 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO JMP_SLOT %08x <- %08x %s", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+		if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		break;
 		case R_386_GLOB_DAT:
 		count_relocation(kRelocAbsolute);
 		MARK(rel->r_offset);
 		debug_printf("RELO GLOB_DAT %08x <- %08x %s", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
+        err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		break;
 #elif defined(ANDROID_MIPS_LINKER)
 		case R_MIPS_REL32:
@@ -968,7 +967,12 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		MARK(rel->r_offset);
 
 		debug_printf("RELO R_386_32 %08x <- +%08x %s\n", reloc, sym_addr, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
+		//*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
+        err=uc_mem_read(g_uc,reloc,&sym_addr,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
+        sym_addr +=si->base;
+        //uc_mem_write(g_uc,reloc,&sym_addr,4);
+        err=uc_mem_write(g_uc,reloc,&sym_addr,4);
 		break;
 
 		case R_386_PC32:
@@ -976,7 +980,13 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		MARK(rel->r_offset);
 		debug_printf("RELO R_386_PC32 %08x <- +%08x (%08x - %08x) %s\n",
 				reloc, (sym_addr - reloc), sym_addr, reloc, sym_name);
-		*reinterpret_cast<Elf32_Addr*>(reloc) += (sym_addr - reloc);
+		//*reinterpret_cast<Elf32_Addr*>(reloc) += (sym_addr - reloc);
+        err=uc_mem_read(g_uc,reloc,&sym_addr,4);
+        if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
+        sym_addr += si->base;
+        sym_addr -= reloc;
+        //uc_mem_write(g_uc,reloc,&sym_addr,4);
+        err=uc_mem_write(g_uc,reloc,&sym_addr,4);
 		break;
 #endif /* ANDROID_X86_LINKER */
 

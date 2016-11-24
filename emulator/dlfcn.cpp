@@ -227,12 +227,7 @@ soinfo libdl_info = {
 	0,0,0,0,
 	0,0,0,0,
 	0,0,
-	0xffffff,
-	{ 0, 0, 0, 0, 0,},
-	false,
-	0,
-	false,
-	true
+	(char*)0xffffff,
 };
 #else
 soinfo libdl_info = {

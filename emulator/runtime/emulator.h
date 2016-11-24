@@ -40,37 +40,38 @@ public:
 private:
     static Elf32_Sym sym;
     static int sym_cnt;
-    static unsigned int v_pc;
-    static unsigned int v_lr;
-    static unsigned int v_sp;
-    static unsigned int v_r0;
-    static unsigned int v_r1;
-    static unsigned int v_r2;
-    static unsigned int v_r3;
-    static unsigned int v_r4;
-    static unsigned int v_r5;
-    static unsigned int v_r6;
-    static unsigned int v_r7;
-    static unsigned int v_r8;
-    static unsigned int v_cpsr;
-    static unsigned int v_spsr;
+    static unsigned int v_eip;
+    static unsigned int v_esp;
+    static unsigned int v_ebp;
+    static unsigned int v_eax;
+    static unsigned int v_ecx;
+    static unsigned int v_ebx;
+    static unsigned int v_edx;
+    static unsigned int v_esi;
+    static unsigned int v_edi;
+    static unsigned int v_eflags;
 
 public:
-    static unsigned int get_r0(){return v_r0;}
-    static unsigned int get_r1(){return v_r1;}
-    static unsigned int get_r2(){return v_r2;}
-    static unsigned int get_r3(){return v_r3;}
-    static unsigned int get_r4(){return v_r4;}
-    static unsigned int get_r5(){return v_r5;}
-    static unsigned int get_r6(){return v_r6;}
-    static unsigned int get_r7(){return v_r7;}
-    static unsigned int get_r8(){return v_r7;}
-
-    static unsigned int get_pc(){return v_pc;}
-    static unsigned int get_lr(){return v_lr;}
-    static unsigned int get_sp(){return v_sp;}
-
+    static unsigned int get_eip(){return v_eip;}
+    static unsigned int get_esp(){return v_esp;}
+    static unsigned int get_ebp(){return v_ebp;}
+    static unsigned int get_eax(){return v_eax;}
+    static unsigned int get_ecx(){return v_ecx;}
+    static unsigned int get_ebx(){return v_ebx;}
+    static unsigned int get_edx(){return v_edx;}
+    static unsigned int get_esi(){return v_esi;}
+    static unsigned int get_edi(){return v_edi;}
     static int update_cpu_model();
+
+	static unsigned int get_r0(){return 0;}
+    static unsigned int get_r1(){return 0;}
+    static unsigned int get_r2(){return 0;}
+    static unsigned int get_r3(){return 0;}
+    static unsigned int get_r4(){return 0;}
+    static unsigned int get_r5(){return 0;}
+    static unsigned int get_sp(){return 0;}
+    static unsigned int get_pc(){return 0;}
+    static unsigned int get_lr(){return 0;}
 
 public:
     static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);

@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include "runtime/emulator.h"
 
-#define ANDROID_ARM_LINKER
+#define ANDROID_X86_LINKER
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
