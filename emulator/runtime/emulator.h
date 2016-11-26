@@ -84,6 +84,7 @@ public:
 
 private:
     static emulator* instance;
+    static uc_context* context;
     static uc_engine* uc;
 	static soinfo* helper_info;
     unsigned int JNIEnv;

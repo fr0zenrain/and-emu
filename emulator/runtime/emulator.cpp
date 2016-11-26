@@ -30,6 +30,7 @@ extern func_info g_native_func[];
 extern symbols g_syms[];
 
 uc_engine* emulator::uc = 0;
+uc_context* emulator::context = 0;
 soinfo* emulator::helper_info = 0;
 
 unsigned int emulator::v_pc =0;
@@ -88,7 +89,6 @@ emulator::emulator(uc_mode mode)
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
     int mem_size = 4*1024*1024;
     g_uc = uc;
-
     //mmap svc stub
     err=uc_mem_map(uc,addr,mem_size,UC_PROT_ALL);
     if(err != UC_ERR_OK)
@@ -188,7 +188,6 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-	
 	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d)//special func
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
@@ -196,7 +195,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 		{
 			sym.st_size = len;
 			sym.st_name =1;
-			sym.st_value = sym_addr;
+			sym.st_value = sym_addr - FUNCTION_VIRTUAL_ADDRESS;
 		}
 	}
 	else
@@ -207,7 +206,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 		{
 			sym.st_size = len;
 			sym.st_name =1;
-			sym.st_value = s->vaddr;
+			sym.st_value = s->vaddr - FUNCTION_VIRTUAL_ADDRESS;
 		}
 	}
 
@@ -300,6 +299,7 @@ int emulator::dispatch()
     }
     else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
+        //uc_context_save(uc,context);
         //printf("emulator pause\n");
     }
     else
@@ -464,7 +464,7 @@ int emulator::load_library()
 {
     libc* c = new libc();
     c->init(this);
-	//helper_info = (soinfo*)s_dlopen("libhelper.so",0);
+	helper_info = (soinfo*)s_dlopen("libhelper.so",0);
     void* h1 = s_dlopen("libm.so",0);
     void* h2 = s_dlopen("libstdc++.so",0);
     void* h3 = s_dlopen("liblog.so",0);

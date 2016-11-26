@@ -462,9 +462,9 @@ static Elf32_Sym* soinfo_do_lookup(soinfo* si, const char* name, soinfo** lsi,
 	done:
 	if (s != NULL) 
 	{
-		/*debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
+		debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
 				si->name, name, s->st_value, (*lsi)->name, (*lsi)->base,
-				(*lsi)->load_bias);*/
+				(*lsi)->load_bias);
 		return s;
 	}
 
@@ -882,7 +882,7 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		MARK(rel->r_offset);
 		debug_printf("RELO JMP_SLOT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
 		//uc_mem_write(g_uc,reloc,&sym_addr,4);
-		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+		err=uc_mem_write(g_uc,reloc,&sym_addr,4);
         if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
@@ -892,7 +892,7 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		debug_printf("RELO GLOB_DAT %08x <- %08x %s\n", reloc, sym_addr, sym_name);
 		//uc_mem_write(g_uc,reloc,&sym_addr,4);
 		//uc_mem_write(g_uc,reloc,&svc,4);
-		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+		err=uc_mem_write(g_uc,reloc,&sym_addr,4);
         if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) = sym_addr;
 		break;
@@ -902,7 +902,7 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		debug_printf("RELO ABS %08x <- %08x %s\n", reloc, sym_addr, sym_name);
 		//uc_mem_write(g_uc,reloc,&sym_addr,4);
 		//uc_mem_write(g_uc,reloc,&svc,4);
-		err=uc_mem_write(g_uc,reloc,&s->st_value,4);
+		err=uc_mem_write(g_uc,reloc,&sym_addr,4);
         if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		//*reinterpret_cast<Elf32_Addr*>(reloc) += sym_addr;
 		break;

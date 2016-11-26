@@ -843,15 +843,14 @@ void* libc::s_strcpy(void*)
                 break;
         }
     }
-
-#ifdef _MSC_VER
-    printf("strcpy(%s,%s)-> 0x%x\n", buf, buf1, value);
-#else
-    printf(RED "strcpy(%s,%s)-> 0x%x\n" RESET, buf, buf1, value);
-#endif
-
     strcpy(buf,buf1);
     err = uc_mem_write(g_uc,dst,buf,strlen(buf));
+
+#ifdef _MSC_VER
+    printf("strcpy(%s,%s)-> 0x%x\n", buf, buf1, dst);
+#else
+    printf(RED "strcpy(%s,%s)-> 0x%x\n" RESET, buf, buf1, dst);
+#endif
 
     emulator::update_cpu_model();
 
@@ -1306,7 +1305,7 @@ symbols g_syms[] =
     {0x7d6b7a5f,"write",(void*)libc::s_write,1},
     {0x130181c4,"close",(void*)libc::s_close,1},
 	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,1,0x7d},
-	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
+	//{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
 	{0xa8ae7412,"strchr",(void*)libc::s_strchr,1,},
 	{0xe2d7f2a6,"strtoul",(void*)libc::s_strtoul,1,},
 	{0xd141afd3,"memcpy",(void*)libc::s__aeabi_memcpy,0,},
@@ -1324,7 +1323,7 @@ symbols g_syms[] =
     {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,1},
     {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,1},
     {0x6f9c4cda,"lseek",(void*)libc::s_lseek,1},
-    {0xffa1e6f0,"snprintf",(void*)libc::s_snprintf,1},
+    //{0xffa1e6f0,"snprintf",(void*)libc::s_snprintf,1},
     {0x1f9a630e,"pipe",(void*)libc::s_pipe,1},
     {0xbbeb587a,"fork",(void*)libc::s_fork,1},
 	{0xe704856a,"sysconf",(void*)libc::s_sysconf,1},
@@ -1336,6 +1335,8 @@ symbols g_syms[] =
 	{0xd4f46c84,"sbrk",(void*)libc::s_sbrk,1},
 	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,1},
 	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,0},//var
+   // {0x4b19744b,"_Znaj",(void*)libc::s_malloc,1},
+    //{0xc03584f5,"_ZdaPv",(void*)libc::s_free,1},
 };
 
 
