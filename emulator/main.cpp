@@ -434,14 +434,13 @@ int main(int argc, char* argv[])
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    //soinfo* si = load_android_so("patch");
-	soinfo* si = load_android_so("libutil.so");
+    //soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
+    soinfo* si = load_android_so("libdata.so");
+	//soinfo* si = load_android_so("libutil.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
-	//uc_emu_stop(g_uc);
     //emu->start_emulator(((int)si->base+0x772c),si);
-	//start_vm(g_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
-	//start_vm(g_uc,si,(void*)0x4004fb10);
-	//start_vm(g_uc,si,(void*)0x4004721c);
+	//start_vm_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
+    emu->init_jvm();
     emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
 
 	return 0;

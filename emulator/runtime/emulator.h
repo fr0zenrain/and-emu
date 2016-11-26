@@ -78,6 +78,7 @@ public:
     static void hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
     void start_emulator(unsigned int pc, soinfo * si);
     static void build_proc_self_maps();
+    int init_jvm();
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
     int save_signal_handler(int sig,void* handler);
     int process_signal(int sig);
@@ -92,7 +93,6 @@ private:
     int init_stack();
     int load_library();
     int init_env_func(void* invoke, void* addr);
-    int init_jvm();
     int init_ret_stub();
 	static unsigned int get_helper_symbols(const char* name);
 

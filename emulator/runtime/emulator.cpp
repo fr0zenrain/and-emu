@@ -112,7 +112,6 @@ emulator::emulator(uc_mode mode)
 int emulator::init_emulator()
 {
     init_stack();
-    init_jvm();
     load_library();
     init_ret_stub();
 	return 1;
@@ -352,7 +351,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-        /*int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+        int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
             int offset = (int)insn->address-si->base;
@@ -360,7 +359,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
-        }*/
+        }
     }
 }
 
@@ -566,6 +565,9 @@ int emulator::init_env_func(void* invoke, void* addr)
 
 int emulator::init_jvm()
 {
+    if(JNIEnv)
+        return 1;
+
     //alloc javavm
     JNIEnvExt* jvm= (JNIEnvExt*)s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(jvm == 0)

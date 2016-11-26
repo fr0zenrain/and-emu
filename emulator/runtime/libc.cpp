@@ -198,7 +198,6 @@ void* libc::sys_cacheflush(int type)
 
 void* libc::sys_dlopen(void*)
 {
-	int value = 0;
 	soinfo* si = 0;
 	char buf[256] ={0};
     unsigned int addr = emulator::get_r0();
@@ -210,12 +209,12 @@ void* libc::sys_dlopen(void*)
 	}
 	
 #ifdef _MSC_VER
-	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,emulator::get_r1(),value);
+	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,emulator::get_r1(),si);
 #else
-	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,emulator::get_r1(),value);
+	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,emulator::get_r1(),si);
 #endif
 
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
 
     emulator::update_cpu_model();
 
