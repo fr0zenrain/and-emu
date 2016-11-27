@@ -360,6 +360,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
             else
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
         }
+        cs_close(&handle);
     }
 }
 
