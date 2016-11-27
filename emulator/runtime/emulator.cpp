@@ -83,6 +83,7 @@ emulator::emulator(uc_mode mode)
     trace_code = 0;
     trace_inter = 0;
 	trace_unmap = 0;
+    JNIEnv = 0;
 
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);

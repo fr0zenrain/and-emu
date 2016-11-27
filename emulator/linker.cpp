@@ -462,9 +462,9 @@ static Elf32_Sym* soinfo_do_lookup(soinfo* si, const char* name, soinfo** lsi,
 	done:
 	if (s != NULL) 
 	{
-		debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
+		/*debug_printf("si %s sym %s s->st_value = 0x%08x, " "found in %s, base = 0x%08x, load bias = 0x%08x\n",
 				si->name, name, s->st_value, (*lsi)->name, (*lsi)->base,
-				(*lsi)->load_bias);
+				(*lsi)->load_bias);*/
 		return s;
 	}
 

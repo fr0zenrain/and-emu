@@ -1281,6 +1281,278 @@ void* libc::s__stack_chk_guard(void*)
 
 	return 0;
 }
+void* libc::s_opendir(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("opendir()-> 0x%x\n",  value);
+#else
+    printf(RED "opendir()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_readdir(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("readdir()-> 0x%x\n",  value);
+#else
+    printf(RED "readdir()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_closedir(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("closedir()-> 0x%x\n",  value);
+#else
+    printf(RED "closedir()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_getppid(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("getppid()-> 0x%x\n",  value);
+#else
+    printf(RED "getppid()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_kill(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("kill()-> 0x%x\n",  value);
+#else
+    printf(RED "kill()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_realloc(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("realloc()-> 0x%x\n",  value);
+#else
+    printf(RED "realloc()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+void* libc::s_atoi(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("atoi()-> 0x%x\n",  value);
+#else
+    printf(RED "atoi()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_itoa(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("itoa()-> 0x%x\n",  value);
+#else
+    printf(RED "itoa()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_stat(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("stat()-> 0x%x\n",  value);
+#else
+    printf(RED "stat()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_munmap(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("munmap()-> 0x%x\n",  value);
+#else
+    printf(RED "munmap()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_create(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("pthread_create()-> 0x%x\n",  value);
+#else
+    printf(RED "pthread_create()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_inotify_init(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("inotify_init()-> 0x%x\n",  value);
+#else
+    printf(RED "inotify_init()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_inotify_add_watch(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("inotify_add_watch()-> 0x%x\n",  value);
+#else
+    printf(RED "inotify_add_watch()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_fgets(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("fgets()-> 0x%x\n",  value);
+#else
+    printf(RED "fgets()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+
+void* libc::s_select(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("select()-> 0x%x\n",  value);
+#else
+    printf(RED "select()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_strlcpy(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("strlcpy()-> 0x%x\n",  value);
+#else
+    printf(RED "strlcpy()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
 
 symbols g_syms[] = 
 {
@@ -1334,8 +1606,24 @@ symbols g_syms[] =
 	{0xd4f46c84,"sbrk",(void*)libc::s_sbrk,1},
 	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,1},
 	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,0},//var
-   // {0x4b19744b,"_Znaj",(void*)libc::s_malloc,1},
+    //{0x4b19744b,"_Znaj",(void*)libc::s_malloc,1},
     //{0xc03584f5,"_ZdaPv",(void*)libc::s_free,1},
+	{0x247135bc,"opendir",(void*)libc::s_opendir,1},
+    {0xeb5e1d3e,"readdir",(void*)libc::s_readdir,1},
+	{0x7992dd03,"closedir",(void*)libc::s_closedir,1},
+    {0x4638c890,"getppid",(void*)libc::s_getppid,1},
+    {0x7295669,"kill",(void*)libc::s_kill,1},
+    {0x1c13e31d,"realloc",(void*)libc::s_realloc,1},
+    {0x272d2162,"atoi",(void*)libc::s_atoi,1},
+    {0xec4281bf,"itoa",(void*)libc::s_itoa,1},
+    {0x20b8ff21,"stat",(void*)libc::s_stat,1},
+    {0x838f2101,"munmap",(void*)libc::s_munmap,1},
+    {0xa7701c0,"pthread_create",(void*)libc::s_pthread_create,1},
+    {0x17b31dd8,"inotify_init",(void*)libc::s_inotify_init,1},
+    {0xafc21fc6,"inotify_add_watch",(void*)libc::s_inotify_add_watch,1},
+    {0xbae22ff5,"fgets",(void*)libc::s_fgets,1},
+    {0x4bf2eac0,"select",(void*)libc::s_select,1},
+    {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,1},
 };
 
 
