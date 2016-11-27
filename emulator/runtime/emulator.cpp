@@ -77,6 +77,7 @@ emulator::emulator(uc_mode mode)
     trace_code = 0;
     trace_inter = 0;
 	trace_unmap = 0;
+    unsigned int eflags=0x246;
 
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_X86, mode, &uc);
@@ -97,10 +98,12 @@ emulator::emulator(uc_mode mode)
     init_symbols();
     init_emulator();
 
+
+    err=uc_reg_write(uc, UC_X86_REG_EFLAGS, &eflags);
     //set return address
-    uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
-    lr |= 1;
-    err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
+    //uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
+    //lr |= 1;
+    //err=uc_reg_write(uc, UC_X86_REG_ESP, &lr);
 }
 
 
@@ -195,7 +198,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
     return &sym;
 }
 
-int emulator::dispatch()
+int emulator::dispatch(void* user_data)
 {
     unsigned int addr = 0;
 
@@ -210,7 +213,18 @@ int emulator::dispatch()
     err=uc_reg_read(uc, UC_X86_REG_ESI, &v_esi);
     err=uc_reg_read(uc, UC_X86_REG_EDI, &v_esi);
 
-    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
+    printf("eip %x eax %x ecx %x edx %x ebx %x esp %x ebp %x esi %x edi %x eflags %x\n",
+           v_eip,v_eax,v_ecx,v_edx,v_ebx,v_esp,v_ebp,v_esi,v_edi,v_eflags);
+
+    if(v_eip == 0x4004ac3b || v_eip == 0x4004b1c5)
+    {
+        unsigned int value = 0x40046000+0x14;
+        uc_reg_write(uc,UC_X86_REG_EAX,&value);
+        v_eip += 7;
+        uc_reg_write(uc,UC_X86_REG_EIP,&v_eip);
+        v_eflags = 0x246;
+        uc_reg_write(uc,UC_X86_REG_EFLAGS,&v_eflags);
+    }
 
     if((v_eip & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
     {
@@ -297,9 +311,9 @@ int emulator::dispatch()
 
 void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-    unsigned char buf[8] = {0};
+    unsigned char buf[16] = {0};
     soinfo* si = (soinfo*)user_data;
-    if (uc_mem_read(uc, address, buf, 4) != UC_ERR_OK) {
+    if (uc_mem_read(uc, address, buf, size) != UC_ERR_OK) {
         printf("not ok - uc_mem_read fail during hook_code callback, addr: 0x%llx\n", address);
         if (uc_emu_stop(uc) != UC_ERR_OK) {
             printf("not ok - uc_emu_stop fail during hook_code callback, addr: 0x%llx\n", address);
@@ -307,61 +321,77 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         }
     }
 
+    unsigned int eax,ecx,edx,ebx,ebp,esp,esi,edi,eip,eflags;
+    uc_reg_read(uc, UC_X86_REG_EFLAGS, &eflags);
+    uc_reg_read(uc, UC_X86_REG_EIP, &eip);
+    uc_reg_read(uc, UC_X86_REG_EAX, &eax);
+    uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
+    uc_reg_read(uc, UC_X86_REG_EDX, &edx);
+    uc_reg_read(uc, UC_X86_REG_EBX, &ebx);
+    uc_reg_read(uc, UC_X86_REG_ESP, &esp);
+    uc_reg_read(uc, UC_X86_REG_EBP, &ebp);
+    uc_reg_read(uc, UC_X86_REG_ESI, &esi);
+    uc_reg_read(uc, UC_X86_REG_EDI, &edi);
+
+    //printf("eip %x eax %x ecx %x edx %x ebx %x esp %x ebp %x esi %x edi %x eflags %x\n",eip,eax,ecx,edx,ebx,esp,ebp,esi,edi,eflags);
+    char stack[32]={0};
+    for(int i =0; i< 32;i++)
+    {
+        uc_mem_read(uc,esp+i,&stack[i],1);
+    }
+
+    //print_hex_dump_bytes(stack,32);
+
     if(*(unsigned int*)buf == 0)
     {
         uc_emu_stop(uc);
         return ;
     }
-
+    unsigned int offset = address - si->base;
     csh handle;
     cs_insn *insn;
-    cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
-    cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
+    cs_err err = cs_open(CS_ARCH_X86, CS_MODE_32, &handle);
     if(err == CS_ERR_OK)
     {
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-        int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
+        int count = cs_disasm(handle,(unsigned char*) buf, size, address, 0, &insn);
         if(count)
         {
-            int offset = (int)insn->address-si->base;
-            if(insn->size == 2)
-                printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
-            else
-                printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
+            printf(RED "%08x[0x%04x]:\t%x\t%s\t%s\n" RESET, (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
         }
     }
 }
 
 void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-    dispatch();
+    dispatch(user_data);
 }
 
 void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-  /*  int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
-    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
-    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
-    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
-    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
-    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
-    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
-    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
-    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
-    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
-    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
-    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    unsigned int eax,ecx,edx,ebx,ebp,esp,esi,edi,eip,eflags;
+    uc_err err=uc_reg_read(uc, UC_X86_REG_EFLAGS, &eflags);
+    err=uc_reg_read(uc, UC_X86_REG_EIP, &eip);
+    err=uc_reg_read(uc, UC_X86_REG_EAX, &eax);
+    err=uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
+    err=uc_reg_read(uc, UC_X86_REG_EDX, &edx);
+    err=uc_reg_read(uc, UC_X86_REG_EBX, &ebx);
+    err=uc_reg_read(uc, UC_X86_REG_ESP, &esp);
+    err=uc_reg_read(uc, UC_X86_REG_EBP, &ebp);
+    err=uc_reg_read(uc, UC_X86_REG_ESI, &esi);
+    err=uc_reg_read(uc, UC_X86_REG_EDI, &edi);
+
     printf(">>> Tracing unmap at 0x%llx, block size = 0x%x\n", address, size);
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);*/
+    printf("eip %x eax %x ecx %x edx %x ebx %x esp %x ebp %x esi %x edi %x eflags %x\n",eip,eax,ecx,edx,ebx,esp,ebp,esi,edi,eflags);
 }
 
 
 void emulator::start_emulator(unsigned int pc, soinfo * si)
 {
     uc_err err;
-    err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
+    err=uc_reg_write(uc, UC_X86_REG_EIP, &pc);
 
     if(trace_code)
     {
@@ -411,14 +441,14 @@ int emulator::init_stack()
     unsigned int stack_base = 0xbeb00000;
     unsigned int sp = 0xbef00000;
     //0xbeb00000--0xbef00000
-    uc_err err = uc_mem_map(uc,stack_base,sp - stack_base,UC_PROT_READ|UC_PROT_WRITE);
+    uc_err err = uc_mem_map(uc,stack_base,sp - stack_base+0x100000,UC_PROT_READ|UC_PROT_WRITE);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_mem_map() with error returned: %u\n", err);
         return 0;
     }
 
-    err=uc_reg_write(uc, UC_ARM_REG_SP, &sp);
+    err=uc_reg_write(uc, UC_X86_REG_ESP, &sp);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_mem_map() with error returned: %u\n", err);
@@ -566,8 +596,8 @@ int emulator::init_jvm()
     addr = (int)env + offsetof(JNIEnvExt,funcTable);
     uc_mem_write(uc,addr,&native_interface,4);
     init_env_func(invoke_interface,native_interface);
-    uc_reg_write(uc, UC_ARM_REG_R0, &jvm);
-    uc_reg_write(uc, UC_ARM_REG_R1, &env);
+    //uc_reg_write(uc, UC_ARM_REG_R0, &jvm);
+    //uc_reg_write(uc, UC_ARM_REG_R1, &env);
     JNIEnv = (unsigned int)env;
 
     return 1;

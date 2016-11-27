@@ -925,6 +925,10 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
         err=uc_mem_write(g_uc,reloc,&s->st_value,4);
         if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
 		break;
+        case 21:
+        case 22:
+        case 23:
+            break;
 #elif defined(ANDROID_MIPS_LINKER)
 		case R_MIPS_REL32:
 		count_relocation(kRelocAbsolute);
@@ -1082,10 +1086,9 @@ void soinfo::CallFunction(const char* function_name,
 			function, name);
 
 
-    unsigned int pc = (int)function;
-    pc = pc&1?pc-1:pc;
+    unsigned int eip = (int)function;
 
-    emulator::get_emulator()->start_emulator(pc,this);
+    emulator::get_emulator()->start_emulator(eip,this);
 
 	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 

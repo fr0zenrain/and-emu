@@ -34,7 +34,7 @@ public:
 
     static int init_symbols();
     static Elf32_Sym* get_symbols(const char* name,unsigned int hash);
-    static int dispatch();
+    static int dispatch(void* user_data);
     static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);
 
 private:
@@ -82,6 +82,7 @@ public:
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
     int save_signal_handler(int sig,void* handler);
     int process_signal(int sig);
+	static void print_hex_dump_bytes(const void *buf, size_t len);
 
 private:
     static emulator* instance;

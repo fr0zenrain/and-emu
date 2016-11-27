@@ -2,10 +2,12 @@
 include_directories(include)
 
 set(SOURCEFILES
-        arch/ARM/ARMDisassembler.c
-        arch/ARM/ARMInstPrinter.c
-        arch/ARM/ARMMapping.c
-        arch/ARM/ARMModule.c
+        arch/X86/X86ATTInstPrinter.c
+        arch/X86/X86Disassembler.c
+        arch/X86/X86DisassemblerDecoder.c
+        arch/X86/X86IntelInstPrinter.c
+        arch/X86/X86Mapping.c
+        arch/X86/X86Module.c
         cs.c
         MCInst.c
         MCInstrDesc.c

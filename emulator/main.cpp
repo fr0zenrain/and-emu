@@ -354,7 +354,7 @@ static void hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *use
 {
 	//printf(">>> Tracing inter at 0x%llx, instruction size = 0x%x\n", address, size);
 
-	emulator::dispatch();
+	emulator::dispatch(user_data);
 
 }
 
@@ -430,19 +430,56 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 
 int main(int argc, char* argv[])
 {
-	emulator* emu = emulator::get_emulator(UC_MODE_THUMB);
+	emulator* emu = emulator::get_emulator(UC_MODE_32);
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
     //soinfo* si = load_android_so("patch");
-	soinfo* si = load_android_so("libutil.so");
+	soinfo* si = load_android_so("libsgmainso-6.1.2009.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
 	//uc_emu_stop(g_uc);
     //emu->start_emulator(((int)si->base+0x772c),si);
 	//start_vm(g_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
 	//start_vm(g_uc,si,(void*)0x4004fb10);
 	//start_vm(g_uc,si,(void*)0x4004721c);
-    emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
+
+    unsigned int offset = si->base+0x4c3b;
+    unsigned char nop=0xcc;
+    uc_mem_write(g_uc,offset,&nop,1);
+    nop =0x90;
+    offset+=1;
+    for(int i = 0; i < 6;i++)
+    {
+        uc_mem_write(g_uc,offset+i,&nop,1);
+    }
+
+    offset = si->base+0x51c5;
+    nop=0xcc;
+    uc_mem_write(g_uc,offset,&nop,1);
+    nop =0x90;
+    offset+=1;
+    for(int i = 0; i < 6;i++)
+    {
+        uc_mem_write(g_uc,offset+i,&nop,1);
+    }
+    unsigned int esp =0;
+    uc_reg_read(g_uc,UC_X86_REG_ESP,&esp);
+    unsigned int value = EMULATOR_PAUSE_ADDRESS;
+    uc_mem_write(g_uc,esp,&value,4);
+
+    emu->start_emulator((unsigned int)JNI_OnLoad,si);
+
+    FILE* fd = fopen("dump.bin","wb");
+    if(fd)
+    {
+        void* buf = malloc(0x99000);
+        //void* buf1 = malloc(0x558c);
+        uc_err err=uc_mem_read(g_uc,0x40046000,buf,0x99000);
+        fwrite(buf,1,0x99000,fd);
+        //uc_mem_read(g_uc,0x40046000,buf1,0x558c);
+        //fwrite(buf,1,0x91dec,fd);
+        fclose(fd);
+    }
 
 	return 0;
 }
