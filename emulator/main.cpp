@@ -13,7 +13,7 @@
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
-
+#include "vld.h"
 #pragma comment(lib,"unicorn_staload.lib")
 //#pragma comment(lib,"capstone.lib")
 uc_engine* g_uc;
@@ -434,14 +434,20 @@ int main(int argc, char* argv[])
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    //soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
-    soinfo* si = load_android_so("libdata.so");
+    soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
+    //soinfo* si = load_android_so("libdata.so");
 	//soinfo* si = load_android_so("libutil.so");
+    //soinfo* si = load_android_so("libjiagu.so");
+    //soinfo* si = load_android_so("libbaiduprotect.so");
+	//soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
-    //emu->start_emulator(((int)si->base+0x772c),si);
-	//start_vm_uc,si,(void*)((unsigned int)JNI_OnLoad-1));
+
     emu->init_jvm();
+	emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
+    emu->dispose();
+
+	delete emu;
 
 	return 0;
 }

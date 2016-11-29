@@ -248,7 +248,6 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 int emulator::dispatch()
 {
     unsigned int addr = 0;
-	std::map<unsigned int,unsigned int>::iterator iter;
 
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &v_pc);
     err=uc_reg_read(uc, UC_ARM_REG_CPSR, &v_cpsr);
@@ -267,7 +266,7 @@ int emulator::dispatch()
 
     printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
-	//iter = bp_list.find(v_pc);
+    get_emulator()->process_breakpoint();
 
 	if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
     {
@@ -682,7 +681,7 @@ int emulator::set_breakpoint(int addr)
 	if(addr & 1)
 	{
 		err = uc_mem_read(uc,addr-1,&insns,2);
-		err = uc_mem_write(uc,addr,&thumb_bkpt,2);
+		err = uc_mem_write(uc,addr-1,&thumb_bkpt,2);
 	}
 	else
 	{
@@ -693,4 +692,35 @@ int emulator::set_breakpoint(int addr)
 	bp_list.insert(std::make_pair(addr,insns));
 	
 	return err == UC_ERR_OK;
+}
+
+int emulator::process_breakpoint()
+{
+    uc_err err;
+    unsigned int addr = 0;
+    unsigned int insns = 0;
+    unsigned int cpsr = 0;
+    std::map<unsigned int,unsigned int>::iterator iter;
+
+    iter = get_emulator()->bp_list.find(v_pc);
+    if (iter == get_emulator()->bp_list.end())
+    {
+        iter = get_emulator()->bp_list.find(v_pc+1);
+        if (iter != get_emulator()->bp_list.end())
+        {
+            addr = iter->first;
+            insns = iter->second;
+            err = uc_mem_write(uc,addr,&insns,2);
+            err = uc_reg_write(uc,UC_ARM_REG_PC,&addr);
+        }
+    }
+    else
+    {
+        addr = iter->first;
+        insns = iter->second;
+        err = uc_mem_write(uc,addr,&insns,4);
+        err = uc_reg_write(uc,UC_ARM_REG_PC,&v_pc);
+    }
+
+    return err == UC_ERR_OK;
 }

@@ -93,6 +93,7 @@ public:
     int save_signal_handler(int sig,void* handler);
     int process_signal(int sig);
 	int set_breakpoint(int addr);
+	int process_breakpoint();
 
 private:
     static emulator* instance;
