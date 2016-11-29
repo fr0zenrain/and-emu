@@ -1553,6 +1553,22 @@ void* libc::s_strlcpy(void*)
     return 0;
 }
 
+void* libc::s_signal(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("signal()-> 0x%x\n",  value);
+#else
+	printf(RED "signal()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
 
 symbols g_syms[] = 
 {
@@ -1624,6 +1640,7 @@ symbols g_syms[] =
     {0xbae22ff5,"fgets",(void*)libc::s_fgets,1},
     {0x4bf2eac0,"select",(void*)libc::s_select,1},
     {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,1},
+	{0x740c95f5,"signal",(void*)libc::s_signal,1,},
 };
 
 

@@ -14,11 +14,6 @@ typedef struct _symbols{
 	unsigned int vaddr;
 }symbols;
 
-typedef struct _symbols_map{
-	unsigned int vaddr;
-    f func;
-}symbols_map;
-
 struct soinfo;
 
 ///////////////////////////////////////////////
@@ -113,6 +108,7 @@ public:
     static void* s_fgets(void*);
     static void* s_select(void*);
     static void* s_strlcpy(void*);
+	static void* s_signal(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);

@@ -19,8 +19,8 @@ using namespace std;
 
 
 Elf32_Sym emulator::sym ;
+symbols_map* emulator::symbol_map=0;
 
-symbols_map* g_symbol_map = 0;
 std::map<int,void*> g_svc_map;
 
 extern uc_engine* g_uc;
@@ -28,6 +28,7 @@ extern int g_sym_cnt;
 extern func_info g_invoke_func[];
 extern func_info g_native_func[];
 extern symbols g_syms[];
+extern soinfo* solist;
 
 uc_engine* emulator::uc = 0;
 uc_context* emulator::context = 0;
@@ -76,6 +77,9 @@ emulator* emulator::get_emulator(uc_mode mode)
 emulator::~emulator()
 {
     uc_close(uc);
+
+	if(c)
+		delete c;
 }
 
 emulator::emulator(uc_mode mode)
@@ -109,6 +113,34 @@ emulator::emulator(uc_mode mode)
     err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
 }
 
+int emulator::dispose()
+{
+    soinfo* si = solist;
+    while(si)
+    {
+        if(si)
+        {
+            if(si->tmp_strtab)
+                free(si->tmp_strtab);
+            if(si->tmp_bucket)
+                free(si->tmp_bucket);
+            if(si->tmp_chain)
+                free(si->tmp_chain);
+            if(si->tmp_symtab)
+                free(si->tmp_symtab);
+            if(si->tmp_dynamic)
+                free(si->tmp_dynamic);
+			if(si->tmp_needed)
+				free(si->tmp_needed);
+        }
+        si = si->next;
+    }
+
+	if(symbol_map)
+		free(symbol_map);
+
+    return 1;
+}
 
 int emulator::init_emulator()
 {
@@ -142,16 +174,16 @@ int emulator::init_symbols()
     int svc_thumb = 0xdf00df00;
     int svc_arm = 0xef000000;
     uc_err err ;
-    g_symbol_map = (symbols_map*)malloc(g_sym_cnt*sizeof(symbols_map));
-    memset(g_symbol_map,0,g_sym_cnt*sizeof(symbols_map));
+    symbol_map = (symbols_map*)malloc(g_sym_cnt*sizeof(symbols_map));
+    memset(symbol_map,0,g_sym_cnt*sizeof(symbols_map));
 
     qsort(g_syms,g_sym_cnt,sizeof(symbols),hash_compare);
 
     for(int i = 0; i < g_sym_cnt;i++)
     {
         g_syms[i].vaddr = (FUNCTION_VIRTUAL_ADDRESS+i*4);
-        g_symbol_map[i].vaddr=(FUNCTION_VIRTUAL_ADDRESS+i*4);
-		g_symbol_map[i].func= (void* (*)(void*))g_syms[i].func;
+        symbol_map[i].vaddr=(FUNCTION_VIRTUAL_ADDRESS+i*4);
+		symbol_map[i].func= (void* (*)(void*))g_syms[i].func;
         if(g_syms[i].model)
         {
             err=uc_mem_write(uc,g_syms[i].vaddr,&svc_thumb, 4);
@@ -162,11 +194,11 @@ int emulator::init_symbols()
         }
 
         g_syms[i].vaddr |= g_syms[i].model;
-        g_symbol_map[i].vaddr |= g_syms[i].model;
+        symbol_map[i].vaddr |= g_syms[i].model;
         g_svc_map.insert(std::make_pair(g_syms[i].number,g_syms[i].func));
     }
 
-    qsort(g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+    qsort(symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
 
     return 1;
 }
@@ -216,6 +248,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 int emulator::dispatch()
 {
     unsigned int addr = 0;
+	std::map<unsigned int,unsigned int>::iterator iter;
 
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &v_pc);
     err=uc_reg_read(uc, UC_ARM_REG_CPSR, &v_cpsr);
@@ -234,16 +267,18 @@ int emulator::dispatch()
 
     printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
-    if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
+	//iter = bp_list.find(v_pc);
+
+	if((v_pc & 0xf0000000) == FUNCTION_VIRTUAL_ADDRESS)
     {
 		//assume thumb
 		addr = v_pc -1;
-        symbols_map*  s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+        symbols_map*  s = (symbols_map*)bsearch(&addr,symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
 		if(s == 0)
 		{
 			//try arm
 			addr = v_pc -4;
-			s = (symbols_map*)bsearch(&addr,g_symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
+			s = (symbols_map*)bsearch(&addr,symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
 		}
         if(s)
         {
@@ -401,11 +436,7 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     }
     else
     {
-#ifdef _MSC_VER
-        err=uc_hook_add(uc, &trace_code, UC_HOOK_CODE, (void*)hook_code, (void*)si, 1,1);
-#else
-        err = uc_hook_add(uc, &trace_code, UC_HOOK_CODE, (void *) hook_code, (void *) si, 1, 0);
-#endif
+		err = uc_hook_add(uc, &trace_code, UC_HOOK_CODE, (void *) hook_code, (void *) si, 1, 0);
     }
 
     if(trace_inter)
@@ -463,7 +494,7 @@ int emulator::init_stack()
 
 int emulator::load_library()
 {
-    libc* c = new libc();
+    c = new libc();
     c->init(this);
 	helper_info = (soinfo*)s_dlopen("libhelper.so",0);
     void* h1 = s_dlopen("libm.so",0);
@@ -639,4 +670,27 @@ int emulator::process_signal(int sig)
         ++iter;
     }
     return 1;
+}
+
+int emulator::set_breakpoint(int addr)
+{
+	uc_err err;
+	unsigned int arm_bkpt=0xe1200070;
+	unsigned short thumb_bkpt=0xbe00;
+	unsigned int insns = 0;
+
+	if(addr & 1)
+	{
+		err = uc_mem_read(uc,addr-1,&insns,2);
+		err = uc_mem_write(uc,addr,&thumb_bkpt,2);
+	}
+	else
+	{
+		err = uc_mem_read(uc,addr,&insns,4);
+		err = uc_mem_write(uc,addr,&arm_bkpt,4);
+	}
+
+	bp_list.insert(std::make_pair(addr,insns));
+	
+	return err == UC_ERR_OK;
 }

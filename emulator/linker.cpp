@@ -62,7 +62,7 @@ static struct soinfo_pool_t* gSoInfoPools = NULL;
 static soinfo* gSoInfoFreeList = NULL;
 
 soinfo* solist = &libdl_info;
-static soinfo* sonext = &libdl_info;
+soinfo* sonext = &libdl_info;
 static soinfo* somain; /* main process, always the one after libdl_info */
 
 static char gLdPathsBuffer[LDPATH_BUFSIZE];
@@ -1374,8 +1374,8 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 		}
 	}
 
-	soinfo** needed = (soinfo**)malloc((1 + needed_count) * sizeof(soinfo*));
-	soinfo** pneeded = needed;
+	si->tmp_needed = (soinfo**)malloc((1 + needed_count) * sizeof(soinfo*));
+	soinfo** pneeded = si->tmp_needed;
 
 	for (Elf32_Dyn* d = si->tmp_dynamic; d->d_tag != DT_NULL; ++d) {
 		if (d->d_tag == DT_NEEDED) {
@@ -1417,19 +1417,19 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 
 	if (si->plt_rel != NULL && breloc) {
 		debug_printf("[ relocating %s plt ]\n", si->name);
-		if (soinfo_relocate(si, si->plt_rel, si->plt_rel_count, needed)) {
+		if (soinfo_relocate(si, si->plt_rel, si->plt_rel_count, si->tmp_needed)) {
 			return false;
 		}
 	}
 	if (si->rel != NULL && breloc) {
 		debug_printf("[ relocating %s ]\n", si->name);
-		if (soinfo_relocate(si, si->rel, si->rel_count, needed)) {
+		if (soinfo_relocate(si, si->rel, si->rel_count, si->tmp_needed)) {
 			return false;
 		}
 	}
 
 #ifdef ANDROID_MIPS_LINKER
-	if (!mips_relocate_got(si, needed)) {
+	if (!mips_relocate_got(si, si->tmp_needed)) {
 		return false;
 	}
 #endif

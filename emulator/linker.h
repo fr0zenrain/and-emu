@@ -210,6 +210,7 @@ public:
 	char* tmp_strtab;
 	unsigned int* tmp_bucket;
 	unsigned int* tmp_chain;
+	soinfo** tmp_needed;
 	int emu;
 	void* emulator;
 

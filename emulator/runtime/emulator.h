@@ -24,7 +24,16 @@ using namespace std;
 #define EMULATOR_MEMORY_START 0x40000000
 #define EMULATOR_PAUSE_ADDRESS  0x80000000
 
+class libc;
 struct soinfo;
+
+
+typedef void* (*ff)(void*);
+
+typedef struct _symbols_map{
+    unsigned int vaddr;
+    ff func;
+}symbols_map;
 
 class emulator{
 
@@ -36,6 +45,7 @@ public:
     static Elf32_Sym* get_symbols(const char* name,unsigned int hash);
     static int dispatch();
     static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);
+	int dispose();
 
 private:
     static Elf32_Sym sym;
@@ -82,12 +92,14 @@ public:
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
     int save_signal_handler(int sig,void* handler);
     int process_signal(int sig);
+	int set_breakpoint(int addr);
 
 private:
     static emulator* instance;
     static uc_context* context;
     static uc_engine* uc;
 	static soinfo* helper_info;
+    static symbols_map* symbol_map;
     unsigned int JNIEnv;
     int init_emulator();
     int init_stack();
@@ -97,10 +109,12 @@ private:
 	static unsigned int get_helper_symbols(const char* name);
 
     std::map<unsigned int,void*> signal_map;
+	std::map<unsigned int,unsigned int> bp_list;
 
     uc_hook trace_code;
     uc_hook trace_inter;
     uc_hook trace_unmap;
+	libc* c;
 };
 
 #endif
