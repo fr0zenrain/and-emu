@@ -4266,12 +4266,13 @@ int RegisterNatives()
     char sig[256]={0};
     int count = emulator::get_r3();
 	unsigned int env = emulator::get_r0(); 
+	unsigned int method_addr = emulator::get_r2();
 	unsigned int lr = emulator::get_lr();
 
 	JNINativeMethod* methodptr = (JNINativeMethod* )malloc(count*sizeof(JNINativeMethod));
     JNINativeMethod* method = methodptr;
 
-    uc_err err = uc_mem_read(g_uc,emulator::get_r2(),method,count*sizeof(JNINativeMethod));
+    uc_err err = uc_mem_read(g_uc,method_addr,method,count*sizeof(JNINativeMethod));
 
     for(int i = 0 ; i < count ;i++) {
 

@@ -5,6 +5,7 @@
 #include "stdlib.h"
 #include "../type.h"
 #include "../engine.h"
+#include "dirent.h"
 #include "../../capstone/include/capstone.h"
 #include "time.h"
 #include "ctype.h"
@@ -545,9 +546,9 @@ void* libc::sys_mprotect(void* type)
     unsigned int size = emulator::get_r2();
 	
 #ifdef _MSC_VER
-	printf("mprotect(%x,%x,%x)-> 0x%x\n",addr,addr1,size,value);
+	printf("mprotect(0x%x,0x%x,0x%x)-> 0x%x\n",addr,addr1,size,value);
 #else
-	printf(RED "mprotect(%x,%x,%x)-> 0x%x\n" RESET,addr,addr1,size,value);
+	printf(RED "mprotect(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,addr1,size,value);
 #endif
 
 	if(type == 0)
@@ -763,13 +764,21 @@ void* libc::s_bsd_signal(void*)
     unsigned int sig = emulator::get_r0();
     unsigned int addr = emulator::get_r1();
 
+	if(addr)
+	{
+		emulator::get_emulator()->save_signal_handler(sig,(void*)addr);
+	}
+	else
+	{
+		value = -1;
+	}
+
 #ifdef _MSC_VER
-    printf("bsd_signal(0x%x,0x%x)-> 0x%x\n",sig,addr, value);
+	printf("bsd_signal(0x%x,0x%x)-> 0x%x\n",sig,addr, value);
 #else
-    printf(RED "bsd_signal(0x%x,0x%x)-> 0x%x\n" RESET,sig,addr,value);
+	printf(RED "bsd_signal(0x%x,0x%x)-> 0x%x\n" RESET,sig,addr,value);
 #endif
 
-    emulator::get_emulator()->save_signal_handler(sig,(void*)addr);
     emulator::update_cpu_model();
 
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -788,8 +797,8 @@ void* libc::s_raise(void*)
     printf(RED "raise(0x%x)-> 0x%x\n" RESET,sig, value);
 #endif
 
-    emulator::update_cpu_model();
-    emulator::get_emulator()->process_signal(sig);
+	emulator::update_cpu_model();
+    //emulator::get_emulator()->process_signal(sig);
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
     return 0;
@@ -1162,6 +1171,8 @@ void* libc::s_fopen(void*)
         }
     }
 
+	value = (int)fopen("cmdline.txt",mode);
+
 #ifdef _MSC_VER
 	printf("fopen(\"%s\",\"%s\")-> 0x%x\n",path, mode,  value);
 #else
@@ -1213,10 +1224,14 @@ void* libc::s_fclose(void*)
 	uc_err err;
 	int value = 0;
 
+    FILE* fd = (FILE*)emulator::get_r0();
+    if(fd)
+        fclose(fd);
+
 #ifdef _MSC_VER
-	printf("fclose()-> 0x%x\n",  value);
+	printf("fclose(0x%x)-> 0x%x\n", fd, value);
 #else
-	printf(RED "fclose()-> 0x%x\n" RESET, value);
+	printf(RED "fclose(0x%x)-> 0x%x\n" RESET,fd, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1281,15 +1296,32 @@ void* libc::s__stack_chk_guard(void*)
 
 	return 0;
 }
+
 void* libc::s_opendir(void*)
 {
     uc_err err;
-    int value = 0;
+    int value = 1;
+    char buf[512] ={0};
+    unsigned int path_addr = emulator::get_r0();
+
+    if(path_addr)
+    {
+        for(int i = 0; i < 512; i++)
+        {
+            err = uc_mem_read(g_uc,path_addr+i,&buf[i],1);
+            if(buf[i] == 0)
+                break;
+        }
+    }
+
+    DIR* dir = opendir(buf);
+    if(dir)
+        value = (int)dir;
 
 #ifdef _MSC_VER
-    printf("opendir()-> 0x%x\n",  value);
+    printf("opendir(\"%s\")-> 0x%x\n", buf, value);
 #else
-    printf(RED "opendir()-> 0x%x\n" RESET, value);
+    printf(RED "opendir(\"%s\")-> 0x%x\n" RESET, buf, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1504,12 +1536,26 @@ void* libc::s_inotify_add_watch(void*)
 void* libc::s_fgets(void*)
 {
     uc_err err;
-    int value = 0;
+    unsigned int value = 0;
+    char buf[4096] ={0};
+    FILE* fd = (FILE*)emulator::get_r2();
+    int max = emulator::get_r1();
+    unsigned int buf_addr = emulator::get_r0();
+
+    max = (max > 4096)?4096:max;
+
+    char* tmp = fgets(buf,max,fd);
+
+    if(buf_addr && tmp)
+    {
+        err = uc_mem_write(g_uc,buf_addr,tmp,strlen(tmp)) ;
+        value = (int)buf_addr;
+    }
 
 #ifdef _MSC_VER
-    printf("fgets()-> 0x%x\n",  value);
+    printf("fgets(\"%s\",0x%x,0x%x)-> 0x%x\n", buf,max,fd, value);
 #else
-    printf(RED "fgets()-> 0x%x\n" RESET, value);
+    printf(RED "fgets(\"%s\",0x%x,0x%x)-> 0x%x\n" RESET,buf,max,fd, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1562,6 +1608,40 @@ void* libc::s_signal(void*)
 	printf("signal()-> 0x%x\n",  value);
 #else
 	printf(RED "signal()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_rename(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("rename()-> 0x%x\n",  value);
+#else
+	printf(RED "rename()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_remove(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("remove()-> 0x%x\n",  value);
+#else
+	printf(RED "remove()-> 0x%x\n" RESET, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1641,6 +1721,8 @@ symbols g_syms[] =
     {0x4bf2eac0,"select",(void*)libc::s_select,1},
     {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,1},
 	{0x740c95f5,"signal",(void*)libc::s_signal,1,},
+	{0xd99d544e,"rename",(void*)libc::s_rename,1},
+	{0x68801d30,"remove",(void*)libc::s_remove,1,},
 };
 
 

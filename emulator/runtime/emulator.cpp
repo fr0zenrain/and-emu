@@ -393,7 +393,8 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
             if(insn->size == 2)
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
-                printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
+               printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
+ 
         }
         cs_close(&handle);
     }
@@ -664,6 +665,7 @@ int emulator::process_signal(int sig)
         if(iter->first == sig)
         {
             v_lr = (unsigned int)addr;
+			uc_reg_write(uc,UC_ARM_REG_LR,&v_lr);
             update_cpu_model();
         }
         ++iter;
@@ -696,7 +698,7 @@ int emulator::set_breakpoint(int addr)
 
 int emulator::process_breakpoint()
 {
-    uc_err err;
+    uc_err err = UC_ERR_OK;
     unsigned int addr = 0;
     unsigned int insns = 0;
     unsigned int cpsr = 0;
@@ -711,6 +713,9 @@ int emulator::process_breakpoint()
             addr = iter->first;
             insns = iter->second;
             err = uc_mem_write(uc,addr,&insns,2);
+			err = uc_reg_read(uc,UC_ARM_REG_CPSR,&v_cpsr);
+			v_cpsr |= 0x20;
+			err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
             err = uc_reg_write(uc,UC_ARM_REG_PC,&addr);
         }
     }
