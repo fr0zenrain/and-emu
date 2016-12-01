@@ -380,6 +380,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\runtime\emulator.h"
+				>
+			</File>
+			<File
 				RelativePath=".\runtime\libc.cpp"
 				>
 			</File>

@@ -377,7 +377,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }
 
-    csh handle;
+ /*   csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
     cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
@@ -397,7 +397,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
  
         }
         cs_close(&handle);
-    }
+    }*/
 }
 
 void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)

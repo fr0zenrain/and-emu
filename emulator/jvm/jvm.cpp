@@ -4291,7 +4291,7 @@ int RegisterNatives()
             for(int i = 0; i < 256; i++)
             {
                 err = uc_mem_read(g_uc,(uint64_t)method->signature+i,&sig[i],1);
-                if(name[i] == 0)
+                if(sig[i] == 0)
                     break;
             }
         }
@@ -4377,17 +4377,15 @@ int GetJavaVM()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
 
 #ifdef _MSC_VER
-	printf("GetJavaVM(\"%s\")\n",buffer);
+	printf("GetJavaVM(\"%x\")\n",buffer);
 #else
-	printf(RED "GetJavaVM(\"%s\") ->0x%\n" RESET, buffer,ret); 
-#endif 
+	printf(RED "GetJavaVM(\"%s\")\n" RESET, buffer,ret);
+#endif
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+	emulator::update_cpu_model();
+
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 
