@@ -1,6 +1,7 @@
 #ifndef __JVM_H__
 #define __JVM_H__
 #include "jni.h"
+#include "method.h"
 
 struct JNIEnvExt {
 	const struct JNINativeInterface* funcTable;     /* must be first */
@@ -34,6 +35,23 @@ typedef struct _func_info{
 
 class jvm
 {
+
+public:
+	jvm(){}
+	~jvm(){}
+
+public:
+    int initialize();
+
+private:
+    void PushLocalFrame(int size);
+    void PopLocalFrame(int size);
+    jclass FindClass(const char*);
+    jstring NewStringUTF(char* bytes);
+
+public:
+    int doJNICall(const char* name, const char* sig);
+    jobject NewObject(jclass jclazz);
 
 };
 

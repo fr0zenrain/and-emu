@@ -5,7 +5,6 @@
 #include "stdlib.h"
 #include "../type.h"
 #include "../engine.h"
-#include "dirent.h"
 #include "../../capstone/include/capstone.h"
 #include "time.h"
 #include "ctype.h"
@@ -15,6 +14,7 @@
 #else
 #include <sys/mman.h>
 #include <fcntl.h>
+#include "dirent.h"
 #endif
 
 
@@ -1148,6 +1148,7 @@ void* libc::s_fopen(void*)
 	int value = 1;
 	char path[512] ={0};
 	char mode[16] ={0};
+    char cur_dir[1024] = {0};
 	unsigned int path_addr = emulator::get_r0();
 	unsigned int mode_addr = emulator::get_r1();
 
@@ -1171,7 +1172,12 @@ void* libc::s_fopen(void*)
         }
     }
 
-	value = (int)fopen("cmdline.txt",mode);
+    getcwd(cur_dir,1024);
+    if (strncmp(path,"/proc", 5) == 0)
+    {
+        strcat(cur_dir,path);
+        value = (int)fopen(cur_dir,mode);
+    }
 
 #ifdef _MSC_VER
 	printf("fopen(\"%s\",\"%s\")-> 0x%x\n",path, mode,  value);
@@ -1297,11 +1303,13 @@ void* libc::s__stack_chk_guard(void*)
 	return 0;
 }
 
+#include <errno.h>
 void* libc::s_opendir(void*)
 {
     uc_err err;
     int value = 1;
     char buf[512] ={0};
+    char cur_dir[1024] ={0};
     unsigned int path_addr = emulator::get_r0();
 
     if(path_addr)
@@ -1313,10 +1321,15 @@ void* libc::s_opendir(void*)
                 break;
         }
     }
+    getcwd(cur_dir,1024);
+#ifndef _MSC_VER
+    strcat(cur_dir,buf);
+    DIR* dir = opendir(cur_dir);
+    value = (unsigned int)dir;
 
-    DIR* dir = opendir(buf);
-    if(dir)
-        value = (int)dir;
+#else
+
+#endif
 
 #ifdef _MSC_VER
     printf("opendir(\"%s\")-> 0x%x\n", buf, value);
@@ -1334,11 +1347,19 @@ void* libc::s_readdir(void*)
 {
     uc_err err;
     int value = 0;
+    unsigned int dirp = emulator::get_r0();
+
+#ifndef _MSC_VER
+    dirent* dir = readdir((DIR*)dirp);
+    value = (unsigned int)dir;
+#else
+
+#endif
 
 #ifdef _MSC_VER
-    printf("readdir()-> 0x%x\n",  value);
+    printf("readdir(0x%x)-> 0x%x\n", dirp, value);
 #else
-    printf(RED "readdir()-> 0x%x\n" RESET, value);
+    printf(RED "readdir(0x%x)-> 0x%x\n" RESET, dirp, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1352,10 +1373,12 @@ void* libc::s_closedir(void*)
     uc_err err;
     int value = 0;
 
+    unsigned int dirp = emulator::get_r0();
+
 #ifdef _MSC_VER
-    printf("closedir()-> 0x%x\n",  value);
+    printf("closedir(0x%x)-> 0x%x\n", dirp, value);
 #else
-    printf(RED "closedir()-> 0x%x\n" RESET, value);
+    printf(RED "closedir(0x%x)-> 0x%x\n" RESET, dirp, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1367,7 +1390,7 @@ void* libc::s_closedir(void*)
 void* libc::s_getppid(void*)
 {
     uc_err err;
-    int value = 0;
+    int value = 183;
 
 #ifdef _MSC_VER
     printf("getppid()-> 0x%x\n",  value);
@@ -1536,7 +1559,7 @@ void* libc::s_inotify_add_watch(void*)
 void* libc::s_fgets(void*)
 {
     uc_err err;
-    unsigned int value = 0;
+    unsigned int value = -1;
     char buf[4096] ={0};
     FILE* fd = (FILE*)emulator::get_r2();
     int max = emulator::get_r1();
@@ -1650,6 +1673,53 @@ void* libc::s_remove(void*)
 	return 0;
 }
 
+void* libc::s_strncpy(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    char buf[512] ={0};
+    char buf1[512] ={0};
+
+    unsigned int dst = emulator::get_r0();
+    unsigned int src = emulator::get_r1();
+    int n = emulator::get_r2();
+
+    if(dst)
+    {
+        for(int i = 0; i < 512; i++)
+        {
+            err = uc_mem_read(g_uc,dst+i,&buf[i],1);
+            if(buf[i] == 0)
+                break;
+        }
+    }
+
+    if(src)
+    {
+        for(int i = 0; i < 512; i++)
+        {
+            err = uc_mem_read(g_uc,src+i,&buf1[i],1);
+            if(buf1[i] == 0)
+                break;
+        }
+    }
+
+#ifdef _MSC_VER
+    printf("strncpy(\"%s\",\"%s\",0x%x)-> 0x%x\n", buf, buf1, n, dst);
+#else
+    printf(RED "strncpy(\"%s\",\"%s\",0x%x)-> 0x%x\n" RESET, buf, buf1,n, dst);
+#endif
+
+    strncpy(buf,buf1,n);
+    err = uc_mem_write(g_uc,dst,buf,strlen(buf));
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&dst);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",0},
@@ -1723,6 +1793,7 @@ symbols g_syms[] =
 	{0x740c95f5,"signal",(void*)libc::s_signal,1,},
 	{0xd99d544e,"rename",(void*)libc::s_rename,1},
 	{0x68801d30,"remove",(void*)libc::s_remove,1,},
+    {0xc4c3ac97,"strncpy",(void*)libc::s_strncpy,1,},
 };
 
 

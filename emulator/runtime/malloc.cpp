@@ -528,6 +528,7 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 
 #include "../linker.h"
 #include "../engine.h"
+#include "stdlib.h"
 #include "emulator.h"
 
 extern uc_engine* g_uc;

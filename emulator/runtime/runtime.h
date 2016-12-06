@@ -111,6 +111,7 @@ public:
 	static void* s_signal(void*);
 	static void* s_rename(void*);
 	static void* s_remove(void*);
+	static void* s_strncpy(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);

@@ -2,6 +2,10 @@
 #include "../runtime/emulator.h"
 #include "../../include/unicorn/unicorn.h"
 #include "jni.h"
+#include <string>
+#include <map>
+using namespace std;
+std::map<void*,std::map<std::string,std::string>> jni_func_map;
 
 extern uc_engine* g_uc;
 
@@ -88,7 +92,7 @@ int FromReflectedMethod()
 #ifdef _MSC_VER
 	printf("FromReflectedMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "FromReflectedMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "FromReflectedMethod(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -108,7 +112,7 @@ int FromReflectedField()
 #ifdef _MSC_VER
 	printf("FromReflectedField(\"%s\")\n",buffer);
 #else
-	printf(RED "FromReflectedField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "FromReflectedField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -128,7 +132,7 @@ int ToReflectedMethod()
 #ifdef _MSC_VER
 	printf("ToReflectedMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "ToReflectedMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ToReflectedMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -148,7 +152,7 @@ int GetSuperclass()
 #ifdef _MSC_VER
 	printf("GetSuperclass(\"%s\")\n",buffer);
 #else
-	printf(RED "GetSuperclass(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetSuperclass(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -168,7 +172,7 @@ int IsAssignableFrom()
 #ifdef _MSC_VER
 	printf("IsAssignableFrom(\"%s\")\n",buffer);
 #else
-	printf(RED "IsAssignableFrom(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "IsAssignableFrom(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -188,7 +192,7 @@ int ToReflectedField()
 #ifdef _MSC_VER
 	printf("ToReflectedField(\"%s\")\n",buffer);
 #else
-	printf(RED "ToReflectedField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ToReflectedField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -208,7 +212,7 @@ int Throw()
 #ifdef _MSC_VER
 	printf("Throw(\"%s\")\n",buffer);
 #else
-	printf(RED "Throw(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "Throw(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -228,7 +232,7 @@ int ThrowNew()
 #ifdef _MSC_VER
 	printf("ThrowNew(\"%s\")\n",buffer);
 #else
-	printf(RED "ThrowNew(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ThrowNew(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -248,7 +252,7 @@ int ExceptionOccurred()
 #ifdef _MSC_VER
 	printf("ExceptionOccurred(\"%s\")\n",buffer);
 #else
-	printf(RED "ExceptionOccurred(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ExceptionOccurred(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -268,7 +272,7 @@ int ExceptionDescribe()
 #ifdef _MSC_VER
 	printf("ExceptionDescribe(\"%s\")\n",buffer);
 #else
-	printf(RED "ExceptionDescribe(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ExceptionDescribe(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -288,7 +292,7 @@ int ExceptionClear()
 #ifdef _MSC_VER
 	printf("ExceptionClear(\"%s\")\n",buffer);
 #else
-	printf(RED "ExceptionClear(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ExceptionClear(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -308,7 +312,7 @@ int FatalError()
 #ifdef _MSC_VER
 	printf("FatalError(\"%s\")\n",buffer);
 #else
-	printf(RED "FatalError(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "FatalError(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -328,7 +332,7 @@ int PushLocalFrame()
 #ifdef _MSC_VER
 	printf("PushLocalFrame(\"%s\")\n",buffer);
 #else
-	printf(RED "PushLocalFrame(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "PushLocalFrame(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -348,7 +352,7 @@ int PopLocalFrame()
 #ifdef _MSC_VER
 	printf("PopLocalFrame(\"%s\")\n",buffer);
 #else
-	printf(RED "PopLocalFrame(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "PopLocalFrame(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -359,19 +363,16 @@ int PopLocalFrame()
 int NewGlobalRef() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	char buffer[256]={0};
 
 #ifdef _MSC_VER
 	printf("NewGlobalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "NewGlobalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewGlobalRef(\"%s\")\n" RESET, buffer);
 #endif 
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+    emulator::update_cpu_model();
+
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 
@@ -388,7 +389,7 @@ int DeleteGlobalRef()
 #ifdef _MSC_VER
 	printf("DeleteGlobalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "DeleteGlobalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "DeleteGlobalRef(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -408,7 +409,7 @@ int DeleteLocalRef()
 #ifdef _MSC_VER
 	printf("DeleteLocalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "DeleteLocalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "DeleteLocalRef(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -428,7 +429,7 @@ int IsSameObject()
 #ifdef _MSC_VER
 	printf("IsSameObject(\"%s\")\n",buffer);
 #else
-	printf(RED "IsSameObject(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "IsSameObject(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -448,7 +449,7 @@ int NewLocalRef()
 #ifdef _MSC_VER
 	printf("NewLocalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "NewLocalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewLocalRef(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -468,7 +469,7 @@ int EnsureLocalCapacity()
 #ifdef _MSC_VER
 	printf("EnsureLocalCapacity(\"%s\")\n",buffer);
 #else
-	printf(RED "EnsureLocalCapacity(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "EnsureLocalCapacity(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -488,7 +489,7 @@ int AllocObject()
 #ifdef _MSC_VER
 	printf("AllocObject(\"%s\")\n",buffer);
 #else
-	printf(RED "AllocObject(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "AllocObject(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -508,7 +509,7 @@ int NewObject()
 #ifdef _MSC_VER
 	printf("NewObject(\"%s\")\n",buffer);
 #else
-	printf(RED "NewObject(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewObject(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -528,7 +529,7 @@ int NewObjectV()
 #ifdef _MSC_VER
 	printf("NewObjectV(\"%s\")\n",buffer);
 #else
-	printf(RED "NewObjectV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewObjectV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -548,7 +549,7 @@ int NewObjectA()
 #ifdef _MSC_VER
 	printf("NewObjectA(\"%s\")\n",buffer);
 #else
-	printf(RED "NewObjectA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewObjectA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -568,7 +569,7 @@ int GetObjectClass()
 #ifdef _MSC_VER
 	printf("GetObjectClass(\"%s\")\n",buffer);
 #else
-	printf(RED "GetObjectClass(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetObjectClass(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -588,7 +589,7 @@ int IsInstanceOf()
 #ifdef _MSC_VER
 	printf("IsInstanceOf(\"%s\")\n",buffer);
 #else
-	printf(RED "IsInstanceOf(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "IsInstanceOf(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -608,7 +609,7 @@ int GetMethodID()
 #ifdef _MSC_VER
 	printf("GetMethodID(\"%s\")\n",buffer);
 #else
-	printf(RED "GetMethodID(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetMethodID(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -628,7 +629,7 @@ int CallObjectMethod()
 #ifdef _MSC_VER
 	printf("CallObjectMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallObjectMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallObjectMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -648,7 +649,7 @@ int CallObjectMethodV()
 #ifdef _MSC_VER
 	printf("CallObjectMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallObjectMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallObjectMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -668,7 +669,7 @@ int CallObjectMethodA()
 #ifdef _MSC_VER
 	printf("CallObjectMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallObjectMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallObjectMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -688,7 +689,7 @@ int CallBooleanMethod()
 #ifdef _MSC_VER
 	printf("CallBooleanMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallBooleanMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallBooleanMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -708,7 +709,7 @@ int CallBooleanMethodV()
 #ifdef _MSC_VER
 	printf("CallBooleanMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallBooleanMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallBooleanMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -728,7 +729,7 @@ int CallBooleanMethodA()
 #ifdef _MSC_VER
 	printf("CallBooleanMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallBooleanMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallBooleanMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -748,7 +749,7 @@ int CallByteMethod()
 #ifdef _MSC_VER
 	printf("CallByteMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallByteMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallByteMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -768,7 +769,7 @@ int CallByteMethodV()
 #ifdef _MSC_VER
 	printf("CallByteMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallByteMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallByteMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -788,7 +789,7 @@ int CallByteMethodA()
 #ifdef _MSC_VER
 	printf("CallByteMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallByteMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallByteMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -808,7 +809,7 @@ int CallCharMethod()
 #ifdef _MSC_VER
 	printf("CallCharMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallCharMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallCharMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -828,7 +829,7 @@ int CallCharMethodV()
 #ifdef _MSC_VER
 	printf("CallCharMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallCharMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallCharMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -848,7 +849,7 @@ int CallCharMethodA()
 #ifdef _MSC_VER
 	printf("CallCharMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallCharMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallCharMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -868,7 +869,7 @@ int CallShortMethod()
 #ifdef _MSC_VER
 	printf("CallShortMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallShortMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallShortMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -888,7 +889,7 @@ int CallShortMethodV()
 #ifdef _MSC_VER
 	printf("CallShortMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallShortMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallShortMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -908,7 +909,7 @@ int CallShortMethodA()
 #ifdef _MSC_VER
 	printf("CallShortMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallShortMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallShortMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -928,7 +929,7 @@ int CallIntMethod()
 #ifdef _MSC_VER
 	printf("CallIntMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallIntMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallIntMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -948,7 +949,7 @@ int CallIntMethodV()
 #ifdef _MSC_VER
 	printf("CallIntMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallIntMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallIntMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -968,7 +969,7 @@ int CallIntMethodA()
 #ifdef _MSC_VER
 	printf("CallIntMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallIntMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallIntMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -988,7 +989,7 @@ int CallLongMethod()
 #ifdef _MSC_VER
 	printf("CallLongMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallLongMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallLongMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1008,7 +1009,7 @@ int CallLongMethodV()
 #ifdef _MSC_VER
 	printf("CallLongMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallLongMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallLongMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1028,7 +1029,7 @@ int CallLongMethodA()
 #ifdef _MSC_VER
 	printf("CallLongMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallLongMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallLongMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1048,7 +1049,7 @@ int CallFloatMethod()
 #ifdef _MSC_VER
 	printf("CallFloatMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallFloatMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallFloatMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1068,7 +1069,7 @@ int CallFloatMethodV()
 #ifdef _MSC_VER
 	printf("CallFloatMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallFloatMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallFloatMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1088,7 +1089,7 @@ int CallFloatMethodA()
 #ifdef _MSC_VER
 	printf("CallFloatMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallFloatMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallFloatMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1108,7 +1109,7 @@ int CallDoubleMethod()
 #ifdef _MSC_VER
 	printf("CallDoubleMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallDoubleMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallDoubleMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1128,7 +1129,7 @@ int CallDoubleMethodV()
 #ifdef _MSC_VER
 	printf("CallDoubleMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallDoubleMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallDoubleMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1148,7 +1149,7 @@ int CallDoubleMethodA()
 #ifdef _MSC_VER
 	printf("CallDoubleMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallDoubleMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallDoubleMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1168,7 +1169,7 @@ int CallVoidMethod()
 #ifdef _MSC_VER
 	printf("CallVoidMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallVoidMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallVoidMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1188,7 +1189,7 @@ int CallVoidMethodV()
 #ifdef _MSC_VER
 	printf("CallVoidMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallVoidMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallVoidMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1208,7 +1209,7 @@ int CallVoidMethodA()
 #ifdef _MSC_VER
 	printf("CallVoidMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallVoidMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallVoidMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1228,7 +1229,7 @@ int CallNonvirtualObjectMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualObjectMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualObjectMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualObjectMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1248,7 +1249,7 @@ int CallNonvirtualObjectMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualObjectMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualObjectMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualObjectMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1268,7 +1269,7 @@ int CallNonvirtualObjectMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualObjectMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualObjectMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualObjectMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1288,7 +1289,7 @@ int CallNonvirtualBooleanMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualBooleanMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualBooleanMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualBooleanMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1308,7 +1309,7 @@ int CallNonvirtualBooleanMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualBooleanMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualBooleanMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualBooleanMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1328,7 +1329,7 @@ int CallNonvirtualBooleanMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualBooleanMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualBooleanMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualBooleanMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1348,7 +1349,7 @@ int CallNonvirtualByteMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualByteMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualByteMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualByteMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1368,7 +1369,7 @@ int CallNonvirtualByteMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualByteMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualByteMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualByteMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1388,7 +1389,7 @@ int CallNonvirtualByteMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualByteMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualByteMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualByteMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1408,7 +1409,7 @@ int CallNonvirtualCharMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualCharMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualCharMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualCharMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1428,7 +1429,7 @@ int CallNonvirtualCharMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualCharMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualCharMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualCharMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1448,7 +1449,7 @@ int CallNonvirtualCharMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualCharMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualCharMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualCharMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1468,7 +1469,7 @@ int CallNonvirtualShortMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualShortMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualShortMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualShortMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1488,7 +1489,7 @@ int CallNonvirtualShortMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualShortMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualShortMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualShortMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1508,7 +1509,7 @@ int CallNonvirtualShortMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualShortMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualShortMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualShortMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1528,7 +1529,7 @@ int CallNonvirtualIntMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualIntMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualIntMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualIntMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1548,7 +1549,7 @@ int CallNonvirtualIntMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualIntMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualIntMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualIntMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1568,7 +1569,7 @@ int CallNonvirtualIntMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualIntMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualIntMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualIntMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1588,7 +1589,7 @@ int CallNonvirtualLongMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualLongMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualLongMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualLongMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1608,7 +1609,7 @@ int CallNonvirtualLongMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualLongMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualLongMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualLongMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1628,7 +1629,7 @@ int CallNonvirtualLongMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualLongMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualLongMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualLongMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1648,7 +1649,7 @@ int CallNonvirtualFloatMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualFloatMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualFloatMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualFloatMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1668,7 +1669,7 @@ int CallNonvirtualFloatMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualFloatMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualFloatMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualFloatMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1688,7 +1689,7 @@ int CallNonvirtualFloatMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualFloatMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualFloatMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualFloatMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1708,7 +1709,7 @@ int CallNonvirtualDoubleMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualDoubleMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualDoubleMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualDoubleMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1728,7 +1729,7 @@ int CallNonvirtualDoubleMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualDoubleMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualDoubleMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualDoubleMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1748,7 +1749,7 @@ int CallNonvirtualDoubleMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualDoubleMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualDoubleMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualDoubleMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1768,7 +1769,7 @@ int CallNonvirtualVoidMethod()
 #ifdef _MSC_VER
 	printf("CallNonvirtualVoidMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualVoidMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualVoidMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1788,7 +1789,7 @@ int CallNonvirtualVoidMethodV()
 #ifdef _MSC_VER
 	printf("CallNonvirtualVoidMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualVoidMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualVoidMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1808,7 +1809,7 @@ int CallNonvirtualVoidMethodA()
 #ifdef _MSC_VER
 	printf("CallNonvirtualVoidMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallNonvirtualVoidMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallNonvirtualVoidMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1828,7 +1829,7 @@ int GetFieldID()
 #ifdef _MSC_VER
 	printf("GetFieldID(\"%s\")\n",buffer);
 #else
-	printf(RED "GetFieldID(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetFieldID(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1848,7 +1849,7 @@ int GetObjectField()
 #ifdef _MSC_VER
 	printf("GetObjectField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetObjectField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetObjectField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1868,7 +1869,7 @@ int GetBooleanField()
 #ifdef _MSC_VER
 	printf("GetBooleanField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetBooleanField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetBooleanField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1888,7 +1889,7 @@ int GetByteField()
 #ifdef _MSC_VER
 	printf("GetByteField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetByteField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetByteField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1908,7 +1909,7 @@ int GetCharField()
 #ifdef _MSC_VER
 	printf("GetCharField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetCharField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetCharField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1928,7 +1929,7 @@ int GetShortField()
 #ifdef _MSC_VER
 	printf("GetShortField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetShortField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetShortField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1948,7 +1949,7 @@ int GetIntField()
 #ifdef _MSC_VER
 	printf("GetIntField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetIntField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetIntField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1968,7 +1969,7 @@ int GetLongField()
 #ifdef _MSC_VER
 	printf("GetLongField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetLongField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetLongField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1988,7 +1989,7 @@ int GetFloatField()
 #ifdef _MSC_VER
 	printf("GetFloatField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetFloatField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetFloatField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2008,7 +2009,7 @@ int GetDoubleField()
 #ifdef _MSC_VER
 	printf("GetDoubleField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetDoubleField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetDoubleField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2028,7 +2029,7 @@ int SetObjectField()
 #ifdef _MSC_VER
 	printf("SetObjectField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetObjectField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetObjectField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2048,7 +2049,7 @@ int SetBooleanField()
 #ifdef _MSC_VER
 	printf("SetBooleanField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetBooleanField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetBooleanField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2068,7 +2069,7 @@ int SetByteField()
 #ifdef _MSC_VER
 	printf("SetByteField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetByteField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetByteField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2088,7 +2089,7 @@ int SetCharField()
 #ifdef _MSC_VER
 	printf("SetCharField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetCharField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetCharField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2108,7 +2109,7 @@ int SetShortField()
 #ifdef _MSC_VER
 	printf("SetShortField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetShortField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetShortField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2128,7 +2129,7 @@ int SetIntField()
 #ifdef _MSC_VER
 	printf("SetIntField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetIntField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetIntField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2148,7 +2149,7 @@ int SetLongField()
 #ifdef _MSC_VER
 	printf("SetLongField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetLongField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetLongField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2168,7 +2169,7 @@ int SetFloatField()
 #ifdef _MSC_VER
 	printf("SetFloatField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetFloatField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetFloatField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2188,7 +2189,7 @@ int SetDoubleField()
 #ifdef _MSC_VER
 	printf("SetDoubleField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetDoubleField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetDoubleField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2230,7 +2231,7 @@ int GetStaticMethodID()
 #ifdef _MSC_VER
 	printf("GetStaticMethodID(0x%x,0x%x,\"%s\",\"%s\")\n",env, classz, name,sig);
 #else
-	printf(RED "GetStaticMethodID(0x%x,0x%x,\"%s\")\n" RESET, env, classz, name,sig); 
+	printf(RED "GetStaticMethodID(0x%x,0x%x,\"%s\",\"%s\")\n" RESET, env, classz, name,sig);
 #endif 
 
 	emulator::update_cpu_model();
@@ -2251,7 +2252,7 @@ int CallStaticObjectMethod()
 #ifdef _MSC_VER
 	printf("CallStaticObjectMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticObjectMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticObjectMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2271,7 +2272,7 @@ int CallStaticObjectMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticObjectMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticObjectMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticObjectMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2291,7 +2292,7 @@ int CallStaticObjectMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticObjectMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticObjectMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticObjectMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2311,7 +2312,7 @@ int CallStaticBooleanMethod()
 #ifdef _MSC_VER
 	printf("CallStaticBooleanMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticBooleanMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticBooleanMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2331,7 +2332,7 @@ int CallStaticBooleanMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticBooleanMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticBooleanMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticBooleanMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2351,7 +2352,7 @@ int CallStaticBooleanMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticBooleanMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticBooleanMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticBooleanMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2371,7 +2372,7 @@ int CallStaticByteMethod()
 #ifdef _MSC_VER
 	printf("CallStaticByteMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticByteMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticByteMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2391,7 +2392,7 @@ int CallStaticByteMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticByteMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticByteMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticByteMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2411,7 +2412,7 @@ int CallStaticByteMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticByteMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticByteMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticByteMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2431,7 +2432,7 @@ int CallStaticCharMethod()
 #ifdef _MSC_VER
 	printf("CallStaticCharMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticCharMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticCharMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2451,7 +2452,7 @@ int CallStaticCharMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticCharMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticCharMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticCharMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2471,7 +2472,7 @@ int CallStaticCharMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticCharMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticCharMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticCharMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2491,7 +2492,7 @@ int CallStaticShortMethod()
 #ifdef _MSC_VER
 	printf("CallStaticShortMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticShortMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticShortMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2511,7 +2512,7 @@ int CallStaticShortMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticShortMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticShortMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticShortMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2531,7 +2532,7 @@ int CallStaticShortMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticShortMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticShortMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticShortMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2551,7 +2552,7 @@ int CallStaticIntMethod()
 #ifdef _MSC_VER
 	printf("CallStaticIntMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticIntMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticIntMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2571,7 +2572,7 @@ int CallStaticIntMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticIntMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticIntMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticIntMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2591,7 +2592,7 @@ int CallStaticIntMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticIntMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticIntMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticIntMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2611,7 +2612,7 @@ int CallStaticLongMethod()
 #ifdef _MSC_VER
 	printf("CallStaticLongMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticLongMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticLongMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2631,7 +2632,7 @@ int CallStaticLongMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticLongMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticLongMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticLongMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2651,7 +2652,7 @@ int CallStaticLongMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticLongMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticLongMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticLongMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2671,7 +2672,7 @@ int CallStaticFloatMethod()
 #ifdef _MSC_VER
 	printf("CallStaticFloatMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticFloatMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticFloatMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2691,7 +2692,7 @@ int CallStaticFloatMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticFloatMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticFloatMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticFloatMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2711,7 +2712,7 @@ int CallStaticFloatMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticFloatMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticFloatMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticFloatMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2731,7 +2732,7 @@ int CallStaticDoubleMethod()
 #ifdef _MSC_VER
 	printf("CallStaticDoubleMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticDoubleMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticDoubleMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2751,7 +2752,7 @@ int CallStaticDoubleMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticDoubleMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticDoubleMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticDoubleMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2771,7 +2772,7 @@ int CallStaticDoubleMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticDoubleMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticDoubleMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticDoubleMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2791,7 +2792,7 @@ int CallStaticVoidMethod()
 #ifdef _MSC_VER
 	printf("CallStaticVoidMethod(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticVoidMethod(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticVoidMethod(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2811,7 +2812,7 @@ int CallStaticVoidMethodV()
 #ifdef _MSC_VER
 	printf("CallStaticVoidMethodV(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticVoidMethodV(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticVoidMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2831,7 +2832,7 @@ int CallStaticVoidMethodA()
 #ifdef _MSC_VER
 	printf("CallStaticVoidMethodA(\"%s\")\n",buffer);
 #else
-	printf(RED "CallStaticVoidMethodA(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "CallStaticVoidMethodA(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2851,7 +2852,7 @@ int GetStaticFieldID()
 #ifdef _MSC_VER
 	printf("GetStaticFieldID(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticFieldID(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticFieldID(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2871,7 +2872,7 @@ int GetStaticObjectField()
 #ifdef _MSC_VER
 	printf("GetStaticObjectField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticObjectField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticObjectField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2891,7 +2892,7 @@ int GetStaticBooleanField()
 #ifdef _MSC_VER
 	printf("GetStaticBooleanField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticBooleanField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticBooleanField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2911,7 +2912,7 @@ int GetStaticByteField()
 #ifdef _MSC_VER
 	printf("GetStaticByteField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticByteField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticByteField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2931,7 +2932,7 @@ int GetStaticCharField()
 #ifdef _MSC_VER
 	printf("GetStaticCharField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticCharField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticCharField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2951,7 +2952,7 @@ int GetStaticShortField()
 #ifdef _MSC_VER
 	printf("GetStaticShortField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticShortField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticShortField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2971,7 +2972,7 @@ int GetStaticIntField()
 #ifdef _MSC_VER
 	printf("GetStaticIntField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticIntField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticIntField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2991,7 +2992,7 @@ int GetStaticLongField()
 #ifdef _MSC_VER
 	printf("GetStaticLongField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticLongField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticLongField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3011,7 +3012,7 @@ int GetStaticFloatField()
 #ifdef _MSC_VER
 	printf("GetStaticFloatField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticFloatField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticFloatField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3031,7 +3032,7 @@ int GetStaticDoubleField()
 #ifdef _MSC_VER
 	printf("GetStaticDoubleField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStaticDoubleField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStaticDoubleField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3051,7 +3052,7 @@ int SetStaticObjectField()
 #ifdef _MSC_VER
 	printf("SetStaticObjectField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticObjectField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticObjectField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3071,7 +3072,7 @@ int SetStaticBooleanField()
 #ifdef _MSC_VER
 	printf("SetStaticBooleanField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticBooleanField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticBooleanField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3091,7 +3092,7 @@ int SetStaticByteField()
 #ifdef _MSC_VER
 	printf("SetStaticByteField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticByteField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticByteField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3111,7 +3112,7 @@ int SetStaticCharField()
 #ifdef _MSC_VER
 	printf("SetStaticCharField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticCharField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticCharField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3131,7 +3132,7 @@ int SetStaticShortField()
 #ifdef _MSC_VER
 	printf("SetStaticShortField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticShortField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticShortField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3151,7 +3152,7 @@ int SetStaticIntField()
 #ifdef _MSC_VER
 	printf("SetStaticIntField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticIntField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticIntField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3171,7 +3172,7 @@ int SetStaticLongField()
 #ifdef _MSC_VER
 	printf("SetStaticLongField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticLongField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticLongField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3191,7 +3192,7 @@ int SetStaticFloatField()
 #ifdef _MSC_VER
 	printf("SetStaticFloatField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticFloatField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticFloatField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3211,7 +3212,7 @@ int SetStaticDoubleField()
 #ifdef _MSC_VER
 	printf("SetStaticDoubleField(\"%s\")\n",buffer);
 #else
-	printf(RED "SetStaticDoubleField(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetStaticDoubleField(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3231,7 +3232,7 @@ int NewString()
 #ifdef _MSC_VER
 	printf("NewString(\"%s\")\n",buffer);
 #else
-	printf(RED "NewString(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewString(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3251,7 +3252,7 @@ int GetStringLength()
 #ifdef _MSC_VER
 	printf("GetStringLength(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringLength(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringLength(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3271,7 +3272,7 @@ int GetStringChars()
 #ifdef _MSC_VER
 	printf("GetStringChars(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringChars(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringChars(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3291,7 +3292,7 @@ int ReleaseStringChars()
 #ifdef _MSC_VER
 	printf("ReleaseStringChars(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseStringChars(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseStringChars(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3304,14 +3305,15 @@ int NewStringUTF()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
+
+	if(lr &1)
+		lr -= 1;
 
 #ifdef _MSC_VER
 	printf("NewStringUTF(\"%s\")\n",buffer);
 #else
-	printf(RED "NewStringUTF(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewStringUTF(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3331,7 +3333,7 @@ int GetStringUTFLength()
 #ifdef _MSC_VER
 	printf("GetStringUTFLength(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringUTFLength(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringUTFLength(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3351,7 +3353,7 @@ int GetStringUTFChars()
 #ifdef _MSC_VER
 	printf("GetStringUTFChars(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringUTFChars(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringUTFChars(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3371,7 +3373,7 @@ int ReleaseStringUTFChars()
 #ifdef _MSC_VER
 	printf("ReleaseStringUTFChars(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseStringUTFChars(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseStringUTFChars(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3391,7 +3393,7 @@ int GetArrayLength()
 #ifdef _MSC_VER
 	printf("GetArrayLength(\"%s\")\n",buffer);
 #else
-	printf(RED "GetArrayLength(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetArrayLength(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3411,7 +3413,7 @@ int NewObjectArray()
 #ifdef _MSC_VER
 	printf("NewObjectArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewObjectArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewObjectArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3431,7 +3433,7 @@ int GetObjectArrayElement()
 #ifdef _MSC_VER
 	printf("GetObjectArrayElement(\"%s\")\n",buffer);
 #else
-	printf(RED "GetObjectArrayElement(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetObjectArrayElement(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3451,7 +3453,7 @@ int SetObjectArrayElement()
 #ifdef _MSC_VER
 	printf("SetObjectArrayElement(\"%s\")\n",buffer);
 #else
-	printf(RED "SetObjectArrayElement(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetObjectArrayElement(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3471,7 +3473,7 @@ int NewBooleanArray()
 #ifdef _MSC_VER
 	printf("NewBooleanArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewBooleanArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewBooleanArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3491,7 +3493,7 @@ int NewByteArray()
 #ifdef _MSC_VER
 	printf("NewByteArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewByteArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewByteArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3511,7 +3513,7 @@ int NewCharArray()
 #ifdef _MSC_VER
 	printf("NewCharArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewCharArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewCharArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3531,7 +3533,7 @@ int NewShortArray()
 #ifdef _MSC_VER
 	printf("NewShortArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewShortArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewShortArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3551,7 +3553,7 @@ int NewIntArray()
 #ifdef _MSC_VER
 	printf("NewIntArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewIntArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewIntArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3571,7 +3573,7 @@ int NewLongArray()
 #ifdef _MSC_VER
 	printf("NewLongArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewLongArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewLongArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3591,7 +3593,7 @@ int NewFloatArray()
 #ifdef _MSC_VER
 	printf("NewFloatArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewFloatArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewFloatArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3611,7 +3613,7 @@ int NewDoubleArray()
 #ifdef _MSC_VER
 	printf("NewDoubleArray(\"%s\")\n",buffer);
 #else
-	printf(RED "NewDoubleArray(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewDoubleArray(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3631,7 +3633,7 @@ int GetBooleanArrayElements()
 #ifdef _MSC_VER
 	printf("GetBooleanArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetBooleanArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetBooleanArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3651,7 +3653,7 @@ int GetByteArrayElements()
 #ifdef _MSC_VER
 	printf("GetByteArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetByteArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetByteArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3671,7 +3673,7 @@ int GetCharArrayElements()
 #ifdef _MSC_VER
 	printf("GetCharArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetCharArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetCharArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3691,7 +3693,7 @@ int GetShortArrayElements()
 #ifdef _MSC_VER
 	printf("GetShortArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetShortArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetShortArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3711,7 +3713,7 @@ int GetIntArrayElements()
 #ifdef _MSC_VER
 	printf("GetIntArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetIntArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetIntArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3731,7 +3733,7 @@ int GetLongArrayElements()
 #ifdef _MSC_VER
 	printf("GetLongArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetLongArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetLongArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3751,7 +3753,7 @@ int GetFloatArrayElements()
 #ifdef _MSC_VER
 	printf("GetFloatArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetFloatArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetFloatArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3771,7 +3773,7 @@ int GetDoubleArrayElements()
 #ifdef _MSC_VER
 	printf("GetDoubleArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "GetDoubleArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetDoubleArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3791,7 +3793,7 @@ int ReleaseBooleanArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseBooleanArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseBooleanArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseBooleanArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3811,7 +3813,7 @@ int ReleaseByteArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseByteArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseByteArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseByteArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3831,7 +3833,7 @@ int ReleaseCharArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseCharArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseCharArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseCharArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3851,7 +3853,7 @@ int ReleaseShortArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseShortArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseShortArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseShortArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3871,7 +3873,7 @@ int ReleaseIntArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseIntArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseIntArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseIntArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3891,7 +3893,7 @@ int ReleaseLongArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseLongArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseLongArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseLongArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3911,7 +3913,7 @@ int ReleaseFloatArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseFloatArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseFloatArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseFloatArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3931,7 +3933,7 @@ int ReleaseDoubleArrayElements()
 #ifdef _MSC_VER
 	printf("ReleaseDoubleArrayElements(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseDoubleArrayElements(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseDoubleArrayElements(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3951,7 +3953,7 @@ int GetBooleanArrayRegion()
 #ifdef _MSC_VER
 	printf("GetBooleanArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetBooleanArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetBooleanArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3971,7 +3973,7 @@ int GetByteArrayRegion()
 #ifdef _MSC_VER
 	printf("GetByteArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetByteArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetByteArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3991,7 +3993,7 @@ int GetCharArrayRegion()
 #ifdef _MSC_VER
 	printf("GetCharArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetCharArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetCharArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4011,7 +4013,7 @@ int GetShortArrayRegion()
 #ifdef _MSC_VER
 	printf("GetShortArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetShortArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetShortArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4031,7 +4033,7 @@ int GetIntArrayRegion()
 #ifdef _MSC_VER
 	printf("GetIntArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetIntArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetIntArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4051,7 +4053,7 @@ int GetLongArrayRegion()
 #ifdef _MSC_VER
 	printf("GetLongArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetLongArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetLongArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4071,7 +4073,7 @@ int GetFloatArrayRegion()
 #ifdef _MSC_VER
 	printf("GetFloatArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetFloatArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetFloatArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4091,7 +4093,7 @@ int GetDoubleArrayRegion()
 #ifdef _MSC_VER
 	printf("GetDoubleArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetDoubleArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetDoubleArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4111,7 +4113,7 @@ int SetBooleanArrayRegion()
 #ifdef _MSC_VER
 	printf("SetBooleanArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetBooleanArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetBooleanArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4131,7 +4133,7 @@ int SetByteArrayRegion()
 #ifdef _MSC_VER
 	printf("SetByteArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetByteArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetByteArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4151,7 +4153,7 @@ int SetCharArrayRegion()
 #ifdef _MSC_VER
 	printf("SetCharArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetCharArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetCharArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4171,7 +4173,7 @@ int SetShortArrayRegion()
 #ifdef _MSC_VER
 	printf("SetShortArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetShortArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetShortArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4191,7 +4193,7 @@ int SetIntArrayRegion()
 #ifdef _MSC_VER
 	printf("SetIntArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetIntArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetIntArrayRegion(\"%s\")\n" RESET, buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4211,7 +4213,7 @@ int SetLongArrayRegion()
 #ifdef _MSC_VER
 	printf("SetLongArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetLongArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetLongArrayRegion(\"%s\")\n" RESET,buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4231,7 +4233,7 @@ int SetFloatArrayRegion()
 #ifdef _MSC_VER
 	printf("SetFloatArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetFloatArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetFloatArrayRegion(\"%s\")\n" RESET,buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4251,7 +4253,7 @@ int SetDoubleArrayRegion()
 #ifdef _MSC_VER
 	printf("SetDoubleArrayRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "SetDoubleArrayRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "SetDoubleArrayRegion(\"%s\")\n" RESET,buffer); 
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4295,11 +4297,13 @@ int RegisterNatives()
                     break;
             }
         }
-
+        std::map<std::string,std::string> info;
+        info.insert(std::make_pair(name,sig));
+	    jni_func_map.insert(std::make_pair(method->fnPtr,info));
 #ifdef _MSC_VER
-        printf("RegisterNatives(\"%s\",\"%s\",%p) ->0x%x\n",name,sig,method->fnPtr,ret);
+        printf("RegisterNatives(\"%s\",\"%s\",%p)\n",name,sig,method->fnPtr);
 #else
-        printf(RED "RegisterNatives(\"%s\",\"%s\",%p)\n" RESET, name,sig,method->fnPtr, ret);
+        printf(RED "RegisterNatives(\"%s\",\"%s\",%p)\n" RESET, name,sig,method->fnPtr);
 #endif
         method++;
     }
@@ -4324,7 +4328,7 @@ int UnregisterNatives()
 #ifdef _MSC_VER
 	printf("UnregisterNatives(\"%s\")\n",buffer);
 #else
-	printf(RED "UnregisterNatives(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "UnregisterNatives(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4344,7 +4348,7 @@ int MonitorEnter()
 #ifdef _MSC_VER
 	printf("MonitorEnter(\"%s\")\n",buffer);
 #else
-	printf(RED "MonitorEnter(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "MonitorEnter(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4364,7 +4368,7 @@ int MonitorExit()
 #ifdef _MSC_VER
 	printf("MonitorExit(\"%s\")\n",buffer);
 #else
-	printf(RED "MonitorExit(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "MonitorExit(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4381,7 +4385,7 @@ int GetJavaVM()
 #ifdef _MSC_VER
 	printf("GetJavaVM(\"%x\")\n",buffer);
 #else
-	printf(RED "GetJavaVM(\"%s\")\n" RESET, buffer,ret);
+	printf(RED "GetJavaVM(\"%s\")\n" RESET, buffer);
 #endif
 
 	emulator::update_cpu_model();
@@ -4402,7 +4406,7 @@ int GetStringRegion()
 #ifdef _MSC_VER
 	printf("GetStringRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringRegion(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4422,7 +4426,7 @@ int GetStringUTFRegion()
 #ifdef _MSC_VER
 	printf("GetStringUTFRegion(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringUTFRegion(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringUTFRegion(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4442,7 +4446,7 @@ int GetPrimitiveArrayCritical()
 #ifdef _MSC_VER
 	printf("GetPrimitiveArrayCritical(\"%s\")\n",buffer);
 #else
-	printf(RED "GetPrimitiveArrayCritical(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetPrimitiveArrayCritical(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4462,7 +4466,7 @@ int ReleasePrimitiveArrayCritical()
 #ifdef _MSC_VER
 	printf("ReleasePrimitiveArrayCritical(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleasePrimitiveArrayCritical(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleasePrimitiveArrayCritical(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4482,7 +4486,7 @@ int GetStringCritical()
 #ifdef _MSC_VER
 	printf("GetStringCritical(\"%s\")\n",buffer);
 #else
-	printf(RED "GetStringCritical(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetStringCritical(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4502,7 +4506,7 @@ int ReleaseStringCritical()
 #ifdef _MSC_VER
 	printf("ReleaseStringCritical(\"%s\")\n",buffer);
 #else
-	printf(RED "ReleaseStringCritical(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ReleaseStringCritical(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4522,7 +4526,7 @@ int NewWeakGlobalRef()
 #ifdef _MSC_VER
 	printf("NewWeakGlobalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "NewWeakGlobalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewWeakGlobalRef(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4542,7 +4546,7 @@ int DeleteWeakGlobalRef()
 #ifdef _MSC_VER
 	printf("DeleteWeakGlobalRef(\"%s\")\n",buffer);
 #else
-	printf(RED "DeleteWeakGlobalRef(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "DeleteWeakGlobalRef(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4562,7 +4566,7 @@ int ExceptionCheck()
 #ifdef _MSC_VER
 	printf("ExceptionCheck(\"%s\")\n",buffer);
 #else
-	printf(RED "ExceptionCheck(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "ExceptionCheck(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4582,7 +4586,7 @@ int NewDirectByteBuffer()
 #ifdef _MSC_VER
 	printf("NewDirectByteBuffer(\"%s\")\n",buffer);
 #else
-	printf(RED "NewDirectByteBuffer(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "NewDirectByteBuffer(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4602,7 +4606,7 @@ int GetDirectBufferAddress()
 #ifdef _MSC_VER
 	printf("GetDirectBufferAddress(\"%s\")\n",buffer);
 #else
-	printf(RED "GetDirectBufferAddress(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetDirectBufferAddress(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4622,7 +4626,7 @@ int GetDirectBufferCapacity()
 #ifdef _MSC_VER
 	printf("GetDirectBufferCapacity(\"%s\")\n",buffer);
 #else
-	printf(RED "GetDirectBufferCapacity(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetDirectBufferCapacity(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4642,7 +4646,7 @@ int GetObjectRefType()
 #ifdef _MSC_VER
 	printf("GetObjectRefType(\"%s\")\n",buffer);
 #else
-	printf(RED "GetObjectRefType(\"%s\") ->0x%\n" RESET, buffer,ret); 
+	printf(RED "GetObjectRefType(\"%s\")\n" RESET, buffer);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4938,3 +4942,45 @@ func_info g_native_func[] ={
 
 	GetObjectRefType
 };
+
+int jvm::doJNICall(const char* name, const char* sig)
+{
+    std::map<std::string,std::string> name_map;
+    std::map<void*,std::map<std::string,std::string>>::iterator iter = jni_func_map.begin();
+
+    while (iter != jni_func_map.end())
+    {
+        void* fptr = iter->first;
+        std::map<std::string,std::string>::iterator iter1 = iter->second.begin();
+        if(iter1 != iter->second.end())
+        {
+            string func = iter1->first;
+            if (func == name && iter1->second == sig)
+            {
+                emulator::get_emulator()->restore_cpu_status();
+                unsigned int jnienv = emulator::get_emulator()->get_jvm_jnienv();
+                jclass clazz;
+                int value = 0;
+                jobject obj = NewObject(0);
+                uc_err err = uc_reg_write(g_uc,UC_ARM_REG_R0, &jnienv);
+                err = uc_reg_write(g_uc,UC_ARM_REG_R1,&obj);
+                err = uc_reg_write(g_uc,UC_ARM_REG_R2,&value);
+                uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
+                lr |= 1;
+                err=uc_reg_write(g_uc, UC_ARM_REG_LR, &lr);
+                int cpsr= 0x20;
+                err = uc_reg_write(g_uc,UC_ARM_REG_CPSR,&cpsr);
+
+                emulator::get_emulator()->show_disasm = 1;
+                unsigned int pc = (unsigned int)fptr;
+                pc = pc&1?pc-1:pc;
+                emulator::get_emulator()->start_emulator(pc,0);
+            }
+            ++iter;
+        }
+
+        ++iter;
+    }
+
+    return 1;
+}

@@ -79,7 +79,7 @@ public:
     static unsigned int get_pc(){return v_pc;}
     static unsigned int get_lr(){return v_lr;}
     static unsigned int get_sp(){return v_sp;}
-
+    static int show_disasm;
     static int update_cpu_model();
 
 public:
@@ -94,6 +94,8 @@ public:
     int process_signal(int sig);
 	int set_breakpoint(int addr);
 	int process_breakpoint();
+    int save_cpu_status();
+    int restore_cpu_status();
 
 private:
     static emulator* instance;

@@ -14,4 +14,4 @@ set(SOURCEFILES
         utils.c
         )
 
-add_library(capstone ${SOURCEFILES})
+add_library(capstone STATIC ${SOURCEFILES})

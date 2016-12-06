@@ -33,6 +33,7 @@ extern soinfo* solist;
 uc_engine* emulator::uc = 0;
 uc_context* emulator::context = 0;
 soinfo* emulator::helper_info = 0;
+int emulator::show_disasm = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -111,6 +112,10 @@ emulator::emulator(uc_mode mode)
     uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
     lr |= 1;
     err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_write(uc, UC_ARM_REG_R0, &JNIEnv);
+    //void* object = sys_malloc(0x1000);
+    //err=uc_reg_write(uc, UC_ARM_REG_R1, &object);
+    err = uc_context_alloc(uc, &context);
 }
 
 int emulator::dispose()
@@ -333,7 +338,8 @@ int emulator::dispatch()
     }
     else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
-        //uc_context_save(uc,context);
+        //uc_emu_stop(uc);
+        uc_context_save(uc,context);
         //printf("emulator pause\n");
     }
     else
@@ -377,7 +383,12 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }
 
- /*   csh handle;
+    /*if(!show_disasm)
+    {
+        return ;
+    }*/
+/*
+    csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
     cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
@@ -460,12 +471,27 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
                         (void*)hook_unmap, (void*)si, 1, 0);
     }
 
+
+    int r0,r1,r2,r3,r4,r5,r6,r7,lr,sp,cpsr;
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &cpsr);
+
+    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",pc,lr,sp,r0,r1,r2,r3,r7,cpsr);
+
     err = uc_emu_start(uc,(uint64_t)pc,pc+0xfffff,0,0);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_emu_start() with error returned: %u\n", err);
     }
-
 }
 
 int emulator::init_stack()
@@ -473,7 +499,7 @@ int emulator::init_stack()
     unsigned int stack_base = 0xbeb00000;
     unsigned int sp = 0xbef00000;
     //0xbeb00000--0xbef00000
-    uc_err err = uc_mem_map(uc,stack_base,sp - stack_base,UC_PROT_READ|UC_PROT_WRITE);
+    uc_err err = uc_mem_map(uc,stack_base,sp - stack_base + 0x100000,UC_PROT_READ|UC_PROT_WRITE);
     if(err != UC_ERR_OK)
     {
         printf("Failed on uc_mem_map() with error returned: %u\n", err);
@@ -728,4 +754,16 @@ int emulator::process_breakpoint()
     }
 
     return err == UC_ERR_OK;
+}
+
+int emulator::save_cpu_status()
+{
+    uc_context_save(uc,context);
+    return 1;
+}
+
+int emulator::restore_cpu_status()
+{
+    uc_context_restore(uc,context);
+    return 1;
 }
