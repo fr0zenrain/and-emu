@@ -8,13 +8,15 @@
 #include "../../capstone/include/capstone.h"
 #include "time.h"
 #include "ctype.h"
+#include "dirent_win.h"
 
 #ifdef _MSC_VER
 #include "io.h"
+#include "windows.h"
 #else
 #include <sys/mman.h>
 #include <fcntl.h>
-#include "dirent.h"
+#include <errno.h>
 #endif
 
 
@@ -28,6 +30,7 @@ void libc::init(emulator* emu)
     si->emu = 1;
     si->emulator = emu;
     si->load_bias = FUNCTION_VIRTUAL_ADDRESS;
+	si->base = FUNCTION_VIRTUAL_ADDRESS;
     si->flags |= FLAG_LINKED;
 }
 
@@ -55,7 +58,7 @@ void* libc::s_free(void*)
 	emulator::update_cpu_model();
 	
 	if(ptr)
-		;//sys_free((void*)ptr); FIXME free has a bug
+		;//sys_free((void*)ptr); //FIXME free has a bug
 
 #ifdef _MSC_VER
 	printf("free(0x%x)\n",ptr);
@@ -89,12 +92,14 @@ void* libc::s_memset(void*) {
 
 void* libc::s__aeabi_memset(void*)
 {
+	uc_err err;
 	unsigned int addr = emulator::get_r0();
 	int value =emulator::get_r2();
     int size = emulator::get_r1();
+
 	for(int i = 0; i < size; i++)
 	{
-		uc_mem_write(g_uc,addr+i,&value,1);
+		err = uc_mem_write(g_uc,addr+i,&value,1);
 	}
 
     emulator::update_cpu_model();
@@ -199,20 +204,28 @@ void* libc::sys_cacheflush(int type)
 
 void* libc::sys_dlopen(void*)
 {
+	uc_err err;
 	soinfo* si = 0;
 	char buf[256] ={0};
     unsigned int addr = emulator::get_r0();
+	int flags = emulator::get_r1();
 
 	if(addr)
 	{
-		uc_mem_read(g_uc,addr,buf,256);
-		si = (soinfo*)s_dlopen(buf,0);
+		for(int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc,addr+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
 	}
+
+	si = (soinfo*)s_dlopen(buf,0);
 	
 #ifdef _MSC_VER
-	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,emulator::get_r1(),si);
+	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,flags,si);
 #else
-	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,emulator::get_r1(),si);
+	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,flags,si);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
@@ -438,9 +451,11 @@ void* libc::s_open(void*)
 {
 	uc_err err;
 	char buf[256] ={0};
+	char cur_dir[1024] ={0};
 	int value = 1;
 
     unsigned int addr = emulator::get_r0();
+	int mode = emulator::get_r1();
 
 	if(addr)
 	{
@@ -452,7 +467,16 @@ void* libc::s_open(void*)
 		}
 	}
 
-    emulator::update_cpu_model();
+#ifdef _MSC_VER
+	GetCurrentDirectory(1024,cur_dir);
+#else
+	getcwd(cur_dir,1024);
+#endif
+	if (strncmp(buf,"/proc", 5) == 0)
+	{
+		strcat(cur_dir,buf);
+		value = (int)open(cur_dir,mode);
+	}
 
 #ifdef _MSC_VER
 	printf("open(\"%s\")-> 0x%x\n",buf,value);
@@ -460,7 +484,7 @@ void* libc::s_open(void*)
 	printf(RED "open(\"%s\")-> 0x%x\n" RESET,buf,value);
 #endif
 
-    value = open("maps.txt",O_RDONLY);
+	emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
@@ -1172,12 +1196,20 @@ void* libc::s_fopen(void*)
         }
     }
 
-    getcwd(cur_dir,1024);
+#ifdef _MSC_VER
+	GetCurrentDirectory(1024,cur_dir);
+#else
+	getcwd(cur_dir,1024);
+#endif
     if (strncmp(path,"/proc", 5) == 0)
     {
         strcat(cur_dir,path);
         value = (int)fopen(cur_dir,mode);
     }
+	else
+	{
+		value = 0;
+	}
 
 #ifdef _MSC_VER
 	printf("fopen(\"%s\",\"%s\")-> 0x%x\n",path, mode,  value);
@@ -1303,7 +1335,7 @@ void* libc::s__stack_chk_guard(void*)
 	return 0;
 }
 
-#include <errno.h>
+
 void* libc::s_opendir(void*)
 {
     uc_err err;
@@ -1321,15 +1353,15 @@ void* libc::s_opendir(void*)
                 break;
         }
     }
-    getcwd(cur_dir,1024);
+    
 #ifndef _MSC_VER
-    strcat(cur_dir,buf);
-    DIR* dir = opendir(cur_dir);
-    value = (unsigned int)dir;
-
+	getcwd(cur_dir,1024);
 #else
-
+	GetCurrentDirectory(1024,cur_dir);
 #endif
+	strcat(cur_dir,buf);
+	DIRX* dir = opendir_(cur_dir);
+	value = (unsigned int)dir;
 
 #ifdef _MSC_VER
     printf("opendir(\"%s\")-> 0x%x\n", buf, value);
@@ -1349,12 +1381,9 @@ void* libc::s_readdir(void*)
     int value = 0;
     unsigned int dirp = emulator::get_r0();
 
-#ifndef _MSC_VER
-    dirent* dir = readdir((DIR*)dirp);
-    value = (unsigned int)dir;
-#else
 
-#endif
+    direntx* dir = readdir_((DIRX*)dirp);
+    value = (unsigned int)dir;
 
 #ifdef _MSC_VER
     printf("readdir(0x%x)-> 0x%x\n", dirp, value);
@@ -1374,6 +1403,8 @@ void* libc::s_closedir(void*)
     int value = 0;
 
     unsigned int dirp = emulator::get_r0();
+
+	value = closedir_((DIRX*)dirp);
 
 #ifdef _MSC_VER
     printf("closedir(0x%x)-> 0x%x\n", dirp, value);
@@ -1441,11 +1472,26 @@ void* libc::s_atoi(void*)
 {
     uc_err err;
     int value = 0;
+    char buf[64] = {0};
+
+    unsigned int str_addr = emulator::get_r0();
+
+	if(str_addr)
+	{
+		for(int i = 0; i < 64; i++)
+		{
+			err = uc_mem_read(g_uc,str_addr+i,&buf[i],1);
+			if(buf[i] == 0)
+				break;
+		}
+	}
+
+    value = atoi(buf);
 
 #ifdef _MSC_VER
-    printf("atoi()-> 0x%x\n",  value);
+    printf("atoi(\"%s\")-> 0x%x\n", buf, value);
 #else
-    printf(RED "atoi()-> 0x%x\n" RESET, value);
+    printf(RED "atoi(\"%s\")-> 0x%x\n" RESET, buf, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1493,10 +1539,13 @@ void* libc::s_munmap(void*)
     uc_err err;
     int value = 0;
 
+	unsigned int addr = emulator::get_r0();
+	unsigned int size = emulator::get_r1();
+
 #ifdef _MSC_VER
-    printf("munmap()-> 0x%x\n",  value);
+    printf("munmap(0x%x,0x%x)-> 0x%x\n", addr, size, value);
 #else
-    printf(RED "munmap()-> 0x%x\n" RESET, value);
+    printf(RED "munmap(0x%x,0x%x)-> 0x%x\n" RESET, addr, size, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1567,13 +1616,16 @@ void* libc::s_fgets(void*)
 
     max = (max > 4096)?4096:max;
 
-    char* tmp = fgets(buf,max,fd);
+	if(fd)
+	{
+		char* tmp = fgets(buf,max,fd);
+		if(buf_addr && tmp)
+		{
+			err = uc_mem_write(g_uc,buf_addr,tmp,strlen(tmp)+1) ;
+			value = (int)buf_addr;
+		}
+	}
 
-    if(buf_addr && tmp)
-    {
-        err = uc_mem_write(g_uc,buf_addr,tmp,strlen(tmp)) ;
-        value = (int)buf_addr;
-    }
 
 #ifdef _MSC_VER
     printf("fgets(\"%s\",0x%x,0x%x)-> 0x%x\n", buf,max,fd, value);
@@ -1783,7 +1835,7 @@ symbols g_syms[] =
     {0x272d2162,"atoi",(void*)libc::s_atoi,1},
     {0xec4281bf,"itoa",(void*)libc::s_itoa,1},
     {0x20b8ff21,"stat",(void*)libc::s_stat,1},
-    {0x838f2101,"munmap",(void*)libc::s_munmap,1},
+    {0x838f2101,"munmap",(void*)libc::s_munmap,1,0x5b},
     {0xa7701c0,"pthread_create",(void*)libc::s_pthread_create,1},
     {0x17b31dd8,"inotify_init",(void*)libc::s_inotify_init,1},
     {0xafc21fc6,"inotify_add_watch",(void*)libc::s_inotify_add_watch,1},

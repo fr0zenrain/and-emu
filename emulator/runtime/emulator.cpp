@@ -115,7 +115,7 @@ emulator::emulator(uc_mode mode)
     err=uc_reg_write(uc, UC_ARM_REG_R0, &JNIEnv);
     //void* object = sys_malloc(0x1000);
     //err=uc_reg_write(uc, UC_ARM_REG_R1, &object);
-    err = uc_context_alloc(uc, &context);
+    //err = uc_context_alloc(uc, &context);
 }
 
 int emulator::dispose()
@@ -339,7 +339,7 @@ int emulator::dispatch()
     else if((v_pc & 0xffffff00) == EMULATOR_PAUSE_ADDRESS)
     {
         //uc_emu_stop(uc);
-        uc_context_save(uc,context);
+        //uc_context_save(uc,context);
         //printf("emulator pause\n");
     }
     else
@@ -387,8 +387,8 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     {
         return ;
     }*/
-/*
-    csh handle;
+
+   /* csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
     cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
@@ -405,7 +405,8 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
                printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned int*)buf, insn->mnemonic, insn->op_str);
- 
+
+			 cs_free(insn, count);
         }
         cs_close(&handle);
     }*/
@@ -660,6 +661,7 @@ int emulator::init_jvm()
     uc_reg_write(uc, UC_ARM_REG_R0, &jvm);
     uc_reg_write(uc, UC_ARM_REG_R1, &env);
     JNIEnv = (unsigned int)env;
+    JVM = (unsigned int)jvm;
 
     return 1;
 }
@@ -758,12 +760,12 @@ int emulator::process_breakpoint()
 
 int emulator::save_cpu_status()
 {
-    uc_context_save(uc,context);
+    //uc_context_save(uc,context);
     return 1;
 }
 
 int emulator::restore_cpu_status()
 {
-    uc_context_restore(uc,context);
+    //uc_context_restore(uc,context);
     return 1;
 }

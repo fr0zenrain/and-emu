@@ -118,7 +118,7 @@ struct mstat {
 
 typedef unsigned short mode_t;
 
-
+#ifndef _MSC_VER
 #define __SOCK_SIZE__ 16
 
 struct in_addr {
@@ -138,6 +138,8 @@ struct sockaddr_in {
 	//WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS
 	unsigned char __pad[__SOCK_SIZE__ - sizeof(short int) - sizeof(unsigned short int) - sizeof(struct in_addr)];
 };
+
+#endif
 
 #define _IOC_NRBITS 8
 #define _IOC_TYPEBITS 8
@@ -332,7 +334,7 @@ struct rlimit {
 	unsigned long	rlim_max;
 };
 
-
+#undef offsetof
 #define offsetof(a,b) ((int)(&(((a*)(0))->b)))
 
 #endif

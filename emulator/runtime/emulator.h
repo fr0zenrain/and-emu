@@ -90,6 +90,7 @@ public:
     static void build_proc_self_maps();
     int init_jvm();
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
+    unsigned int get_jvm(){ return JVM;}
     int save_signal_handler(int sig,void* handler);
     int process_signal(int sig);
 	int set_breakpoint(int addr);
@@ -104,6 +105,7 @@ private:
 	static soinfo* helper_info;
     static symbols_map* symbol_map;
     unsigned int JNIEnv;
+	unsigned int JVM;
     int init_emulator();
     int init_stack();
     int load_library();

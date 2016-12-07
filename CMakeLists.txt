@@ -23,6 +23,7 @@ set(SOURCEFILES
         emulator/runtime/emulator.cpp
         emulator/runtime/malloc.cpp
         emulator/runtime/system.cpp
+        emulator/runtime/opendir.cpp
         emulator/jvm/jvm.cpp
         emulator/jvm/func.cpp
         emulator/jvm/alloc.cpp

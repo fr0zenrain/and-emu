@@ -376,6 +376,10 @@
 			Name="runtime"
 			>
 			<File
+				RelativePath=".\runtime\dirent_win.h"
+				>
+			</File>
+			<File
 				RelativePath=".\runtime\emulator.cpp"
 				>
 			</File>
@@ -389,6 +393,10 @@
 			</File>
 			<File
 				RelativePath=".\runtime\malloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\runtime\opendir.cpp"
 				>
 			</File>
 			<File

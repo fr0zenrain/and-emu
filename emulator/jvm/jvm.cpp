@@ -363,12 +363,13 @@ int PopLocalFrame()
 int NewGlobalRef() 
 {
 	int ret = 0;
-	char buffer[256]={0};
+	unsigned int env = emulator::get_r0();
+    unsigned int clazz = emulator::get_r1();
 
 #ifdef _MSC_VER
-	printf("NewGlobalRef(\"%s\")\n",buffer);
+	printf("NewGlobalRef(0x%x,0x%x)\n",env,clazz);
 #else
-	printf(RED "NewGlobalRef(\"%s\")\n" RESET, buffer);
+	printf(RED "NewGlobalRef(0x%x,0x%x)\n" RESET, env,clazz);
 #endif 
 
     emulator::update_cpu_model();
@@ -401,18 +402,18 @@ int DeleteLocalRef()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int clazz = emulator::get_r1();
+
 
 #ifdef _MSC_VER
-	printf("DeleteLocalRef(\"%s\")\n",buffer);
+	printf("DeleteLocalRef(0x%x,0x%x)\n", env,clazz);
 #else
-	printf(RED "DeleteLocalRef(\"%s\")\n" RESET, buffer); 
+	printf(RED "DeleteLocalRef(0x%x,0x%x)\n" RESET, env,clazz);
 #endif 
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+	emulator::update_cpu_model();
+
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
 	return JNI_OK; 
@@ -4379,13 +4380,17 @@ int MonitorExit()
 int GetJavaVM() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+    uc_err err;
 
+	unsigned int env = emulator::get_r0();
+    unsigned int vm = emulator::get_r1();
+
+    unsigned int jvm = emulator::get_emulator()->get_jvm();
+    err = uc_mem_write(g_uc,vm,&jvm,4);
 #ifdef _MSC_VER
-	printf("GetJavaVM(\"%x\")\n",buffer);
+	printf("GetJavaVM(0x%x, 0x%x)\n",env, vm);
 #else
-	printf(RED "GetJavaVM(\"%s\")\n" RESET, buffer);
+	printf(RED "GetJavaVM(0x%x, 0x%x)\n" RESET, env, vm);
 #endif
 
 	emulator::update_cpu_model();
@@ -4957,7 +4962,7 @@ int jvm::doJNICall(const char* name, const char* sig)
             string func = iter1->first;
             if (func == name && iter1->second == sig)
             {
-                emulator::get_emulator()->restore_cpu_status();
+               /* emulator::get_emulator()->restore_cpu_status();
                 unsigned int jnienv = emulator::get_emulator()->get_jvm_jnienv();
                 jclass clazz;
                 int value = 0;
@@ -4974,7 +4979,7 @@ int jvm::doJNICall(const char* name, const char* sig)
                 emulator::get_emulator()->show_disasm = 1;
                 unsigned int pc = (unsigned int)fptr;
                 pc = pc&1?pc-1:pc;
-                emulator::get_emulator()->start_emulator(pc,0);
+                emulator::get_emulator()->start_emulator(pc,0);*/
             }
             ++iter;
         }

@@ -63,7 +63,7 @@ static soinfo* gSoInfoFreeList = NULL;
 
 soinfo* solist = &libdl_info;
 soinfo* sonext = &libdl_info;
-static soinfo* somain; /* main process, always the one after libdl_info */
+soinfo* somain; /* main process, always the one after libdl_info */
 
 static char gLdPathsBuffer[LDPATH_BUFSIZE];
 static const char* gLdPaths[LDPATH_MAX + 1] = { "", "/system/lib",
@@ -296,6 +296,8 @@ dl_iterate_phdr(int (*cb)(dl_phdr_info *info, size_t size, void *data),
 
 static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name) 
 {
+	Elf32_Sym* s = 0;
+
 	if(si->emu)
 	{
 		return ((emulator*)si->emulator)->get_symbols(name,hash);
@@ -305,7 +307,7 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
 	{
 		for (unsigned n = si->tmp_bucket[hash % si->nbucket]; n != 0; n =
 				si->tmp_chain[n]) {
-			Elf32_Sym* s = si->tmp_symtab + n;
+			s = si->tmp_symtab + n;
 			if (strcmp((char*)si->tmp_strtab + s->st_name, name))
 				continue;
 
@@ -1412,6 +1414,16 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 					"can't unprotect loadable segments for \"%s\": %s",
 					si->name, strerror(errno));
 			return false;
+		}
+	}
+
+	if(somain == 0 && !si->emulator)
+	{
+		if(strcmp(si->name,"libz.so") && strcmp(si->name,"liblog.so") &&
+			strcmp(si->name,"libm.so") && strcmp(si->name,"libstdc++.so") &&
+			  strcmp(si->name,"libhelper.so"))
+		{
+			somain = si;
 		}
 	}
 
