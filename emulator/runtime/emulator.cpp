@@ -225,7 +225,7 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d)//special func
+	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d || crc32 == 0x23398d9a)//snprint sscanf sprintf
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
 		if(sym_addr)
@@ -388,7 +388,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }*/
 
-   /* csh handle;
+  /*  csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
     cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
