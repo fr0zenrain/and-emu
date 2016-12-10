@@ -138,44 +138,51 @@ size_t linker_get_error_buffer_size() {
 }
 
 static bool ensure_free_list_non_empty() {
+	unsigned int addr = 0;
+	unsigned int value = 0;
 	if (gSoInfoFreeList != NULL) {
 		return true;
 	}
 
 	// Allocate a new pool.
 	soinfo_pool_t* pool = reinterpret_cast<soinfo_pool_t*>(s_mmap(NULL,
-			sizeof(*pool), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
-			0, 0));
+			sizeof(*pool), PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS,
+			-1, 0));
 	if (pool == MAP_FAILED) {
 		return false;
 	}
 
 	// Add the pool to our list of pools.
-	//uc_err err = uc_mem_write(g_uc,(uint64_t)pool,&gSoInfoPools,4);
-	pool->next = gSoInfoPools;
+	addr = (unsigned int)pool + offsetof(soinfo_pool_t,next);
+	uc_err err = uc_mem_write(g_uc,(uint64_t)pool,&gSoInfoPools,4);
+	//pool->next = gSoInfoPools;
 	gSoInfoPools = pool;
 
 	// Chain the entries in the new pool onto the free list.
-	gSoInfoFreeList = &pool->info[0];
+	//gSoInfoFreeList = &pool->info[0];
+	addr = (unsigned int)pool + offsetof(soinfo_pool_t,info);
+	gSoInfoFreeList = (soinfo*)addr;
+
 	soinfo* next = NULL;
 	for (int i = SOINFO_PER_POOL - 1; i >= 0; --i) {
-		soinfo* s=&pool->info[i];
-		int addr = (int)s+offsetof(soinfo,next);
-		//err=uc_mem_write(g_uc,(uint64_t)addr,&next,4);
-		//err=uc_mem_read(g_uc,(uint64_t)&pool->info[i],&next,4);
-		pool->info[i].next = next;
-		next = &pool->info[i];
+
+		//pool->info[i].next = next;
+		//next = &pool->info[i];
+		unsigned int s = (unsigned int)pool + offsetof(soinfo_pool_t,info)+i*sizeof(soinfo);
+		addr = (int)s+offsetof(soinfo,next);
+		err=uc_mem_write(g_uc,(uint64_t)addr,&next,4);
+		err=uc_mem_read(g_uc,(uint64_t)s,&next,4);	
 	}
 
 	return true;
 }
 
 static void set_soinfo_pool_protection(int protection) {
-	for (soinfo_pool_t* p = gSoInfoPools; p != NULL; p = p->next) {
+	/*for (soinfo_pool_t* p = gSoInfoPools; p != NULL; p = p->next) {
 		if (s_mprotect(p, sizeof(*p), protection) == -1) {
 			abort(); // Can't happen.
 		}
-	}
+	}*/
 }
 
 soinfo* soinfo_alloc(const char* name) {
@@ -191,22 +198,34 @@ soinfo* soinfo_alloc(const char* name) {
 
 	// Take the head element off the free list.
 	soinfo* si = gSoInfoFreeList;
-	/*int addr = (int)gSoInfoFreeList+offsetof(soinfo,next);
+	unsigned int addr = (int)gSoInfoFreeList+offsetof(soinfo,next);
 	int value = 0;
 	uc_err err = uc_mem_read(g_uc,(uint64_t)addr,&value,4);
-	err = uc_mem_write(g_uc,(uint64_t)gSoInfoFreeList,&value,4);*/
-	gSoInfoFreeList = gSoInfoFreeList->next;
+	err = uc_mem_write(g_uc,(uint64_t)gSoInfoFreeList,&value,4);
+	//gSoInfoFreeList = gSoInfoFreeList->next;
 
 	// Initialize the new element.
-	/*soinfo s;
+	soinfo s;
 	memset(&s, 0, sizeof(soinfo));
-	err = uc_mem_write(g_uc,(uint64_t)si,&s,sizeof(soinfo));*/
-	memset(si, 0, sizeof(soinfo));
-	/*addr = (int)si+offsetof(soinfo,name);
-	err = uc_mem_write(g_uc,(uint64_t)addr,&s,128);*/
-	s_strlcpy(si->name, name, sizeof(si->name));
-	sonext->next = si;
-	sonext = si;
+	err = uc_mem_write(g_uc,(uint64_t)si,&s,sizeof(soinfo));
+	//memset(si, 0, sizeof(soinfo));
+	addr = (int)si+offsetof(soinfo,name);
+
+	err = uc_mem_write(g_uc,(uint64_t)addr,name,strlen(name)+1);
+	//s_strlcpy(si->name, name, sizeof(si->name));
+
+    if((int)sonext >= EMULATOR_MEMORY_START)
+    {
+        addr = (int)sonext+offsetof(soinfo,next);
+        err = uc_mem_write(g_uc,(uint64_t)addr,&si,4);
+
+        err = uc_mem_write(g_uc,(uint64_t)sonext,&si,4);
+    }
+	else
+    {
+        sonext->next = si;
+        sonext = si;
+    }
 
 	//loader_printf( "name %s: allocated soinfo @ %p\n", name, si);
 	return si;
@@ -630,20 +649,59 @@ static soinfo* load_library(const char* name) {
 	if (si == NULL) {
 		return NULL;
 	}
-	si->base = elf_reader.load_start();
-	si->size = elf_reader.load_size();
-	si->load_bias = elf_reader.load_bias();
-	si->flags = 0;
-	si->entry = 0;
-	si->dynamic = NULL;
-	si->phnum = elf_reader.phdr_count();
-	si->phdr = elf_reader.loaded_phdr();
+    if((int)si >= EMULATOR_MEMORY_START)
+    {
+        unsigned int addr = (int)si + offsetof(soinfo, base);
+        unsigned int value = elf_reader.load_start();
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, size);
+        value = elf_reader.load_size();
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, load_bias);
+        value = elf_reader.load_bias();
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, flags);
+        value = 0;
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, entry);
+        value = 0;
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, dynamic);
+        value = 0;
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, phnum);
+        value = elf_reader.phdr_count();
+        uc_mem_write(g_uc,addr,&value, 4);
+
+        addr = (int)si + offsetof(soinfo, phdr);
+        value = (unsigned int)elf_reader.loaded_phdr();
+        uc_mem_write(g_uc,addr,&value, 4);
+    }
+    else
+    {
+        si->base = elf_reader.load_start();
+        si->size = elf_reader.load_size();
+        si->load_bias = elf_reader.load_bias();
+        si->flags = 0;
+        si->entry = 0;
+        si->dynamic = NULL;
+        si->phnum = elf_reader.phdr_count();
+        si->phdr = elf_reader.loaded_phdr();
+    }
 	return si;
 }
 
 soinfo *find_loaded_library(const char *name) {
 	soinfo *si;
 	const char *bname;
+    char buf[128] = {0};
+    unsigned int addr = 0;
 
 	// TODO: don't use basename only for determining libraries
 	// http://code.google.com/p/android/issues/detail?id=6670
@@ -651,10 +709,28 @@ soinfo *find_loaded_library(const char *name) {
 	bname = strrchr(name, '/');
 	bname = bname ? bname + 1 : name;
 
-	for (si = solist; si != NULL; si = si->next) {
-		if (!strcmp(bname, si->name)) {
+	for (si = solist; si != NULL; ) {
+        if((int)si >= EMULATOR_MEMORY_START)
+        {
+            addr = (int)si + offsetof(soinfo,name);
+            uc_mem_read(g_uc,addr,buf,128);
+        }
+        else
+        {
+            memcpy(buf,si->name,128);
+        }
+
+		if (!strcmp(bname, buf)) {
 			return si;
 		}
+        if((int)si >= EMULATOR_MEMORY_START) {
+            addr = (int) si + offsetof(soinfo, next);
+            uc_mem_read(g_uc, addr, &si, 4);
+        }
+        else
+        {
+            si = si->next;
+        }
 	}
 	return NULL;
 }
@@ -682,8 +758,8 @@ static soinfo* find_library_internal(const char* name) {
 
 	// At this point we know that whatever is loaded @ base is a valid ELF
 	// shared library whose segments are properly mapped in.
-	debug_printf("[ init_library base=0x%08x sz=0x%08x name='%s' ]\n",
-			si->base, si->size, si->name);
+	//debug_printf("[ init_library base=0x%08x sz=0x%08x name='%s' ]\n",
+	//		si->base, si->size, si->name);
 
 	if (!soinfo_link_image(si, true, 0)) {
 		s_munmap(reinterpret_cast<void*>(si->base), si->size);
@@ -695,9 +771,14 @@ static soinfo* find_library_internal(const char* name) {
 }
 
 static soinfo* find_library(const char* name) {
+    int ref = 0;
 	soinfo* si = find_library_internal(name);
 	if (si != NULL) {
-		si->ref_count++;
+        unsigned int addr = (unsigned int)si + offsetof(soinfo,ref_count);
+        uc_mem_read(g_uc,addr,&ref,4);
+        ref++;
+        uc_mem_write(g_uc,addr,&ref,4);
+		//si->ref_count++;
 	}
 	return si;
 }
@@ -736,17 +817,18 @@ static int soinfo_unload(soinfo* si) {
 }
 
 soinfo* do_dlopen(const char* name, int flags) {
+    char tmp[128] = {0};
 	if ((flags & ~(RTLD_NOW | RTLD_LAZY | RTLD_LOCAL | RTLD_GLOBAL)) != 0) {
 		debug_printf( "invalid flags to dlopen: %x", flags);
 		return NULL;
 	}
 	set_soinfo_pool_protection(PROT_READ | PROT_WRITE);
 	soinfo* si = find_library(name);
-
+    uc_mem_read(g_uc,(unsigned int)si,tmp,128);
 	if (si != NULL) {
-		if (!strcmp(si->name, "libc.so") || !strcmp(si->name, "libstdc++.so")
-				|| !strcmp(si->name, "libz.so") || !strcmp(si->name, "libm.so")
-				|| !strcmp(si->name, "liblog.so"))
+		if (!strcmp(tmp, "libc.so") || !strcmp(tmp, "libstdc++.so")
+				|| !strcmp(tmp, "libz.so") || !strcmp(tmp, "libm.so")
+				|| !strcmp(tmp, "liblog.so"))
 			;
 		else {
 			si->CallConstructors();
@@ -1093,7 +1175,17 @@ void soinfo::CallPreInitConstructors() {
 }
 
 void soinfo::CallConstructors() {
-	if (constructors_called) {
+    int con_called = 0;
+    int flag = 0;
+    int prein_array;
+	int dyn;
+    unsigned int tmp_dyn;
+    uc_mem_read(g_uc,(unsigned int)&constructors_called,&con_called,4);
+    uc_mem_read(g_uc,(unsigned int)&flags,&flag,4);
+    uc_mem_read(g_uc,(unsigned int)&preinit_array,&prein_array,4);
+    uc_mem_read(g_uc,(unsigned int)&dynamic,&dyn,4);
+
+	if (con_called) {
 		return;
 	}
 
@@ -1107,17 +1199,16 @@ void soinfo::CallConstructors() {
 	// 4. The debug .so depends on libc, so CallConstructors is
 	//    called again with the libc soinfo. If it doesn't trigger the early-
 	//    out above, the libc constructor will be called again (recursively!).
-	constructors_called = true;
+    con_called = true;
 
-	if ((flags & FLAG_EXE) == 0 && preinit_array != NULL) {
+	if ((flag & FLAG_EXE) == 0 && prein_array != NULL) {
 		// The GNU dynamic linker silently ignores these, but we warn the developer.
-		debug_printf(
-				"\"%s\": ignoring %d-entry DT_PREINIT_ARRAY in shared library!\n",
-				name, preinit_array_count);
+		//debug_printf("\"%s\": ignoring %d-entry DT_PREINIT_ARRAY in shared library!\n", name, preinit_array_count);
 	}
 
-	if (dynamic != NULL) {
-		for (Elf32_Dyn* d = tmp_dynamic; d->d_tag != DT_NULL; ++d) {
+    uc_mem_read(g_uc,(unsigned int)&tmp_dynamic,&tmp_dyn,4);
+	if (dyn != NULL) {
+		for (Elf32_Dyn* d = (Elf32_Dyn*)tmp_dyn; d->d_tag != DT_NULL; ++d) {
 			if (d->d_tag == DT_NEEDED) {
 				const char* library_name = tmp_strtab + d->d_un.d_val;
 				//debug_printf("\"%s\": calling constructors in DT_NEEDED \"%s\"\n", name, library_name);
@@ -1126,7 +1217,7 @@ void soinfo::CallConstructors() {
 		}
 	}
 
-	debug_printf("\"%s\": calling constructors\n", name);
+	//debug_printf("\"%s\": calling constructors\n", name);
 
 	// DT_INIT should be called before DT_INIT_ARRAY if both are present.
 	CallFunction("DT_INIT", init_func);
@@ -1164,8 +1255,11 @@ int get_strtab_size(soinfo* si)
 	return size; 
 }
 
-bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
+bool soinfo_link_image(soinfo* si1, bool breloc, ElfReader* reader) {
 	/* "base" might wrap around UINT32_MAX. */
+    soinfo ss;
+    uc_mem_read(g_uc,(unsigned int)si1,&ss,sizeof(soinfo));
+    soinfo* si = &ss;
 	Elf32_Addr base = si->load_bias;
 	const Elf32_Phdr *phdr = si->phdr;
 	int phnum = si->phnum;
@@ -1467,6 +1561,7 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 		return false;
 	}
 
+    err = uc_mem_write(g_uc,(unsigned int)si1,si,sizeof(soinfo));
 	return true;
 }
 

@@ -27,11 +27,32 @@ soinfo* libc::si =0;
 void libc::init(emulator* emu)
 {
     si = soinfo_alloc("libc.so");
-    si->emu = 1;
+  /*  si->emu = 1;
     si->emulator = emu;
     si->load_bias = FUNCTION_VIRTUAL_ADDRESS;
 	si->base = FUNCTION_VIRTUAL_ADDRESS;
-    si->flags |= FLAG_LINKED;
+    si->flags |= FLAG_LINKED;*/
+
+	unsigned int addr = (int)si + offsetof(soinfo,emu);
+	unsigned int value = 1;
+	uc_err err = uc_mem_write(g_uc,addr,&value,4);
+
+	addr = (int)si + offsetof(soinfo,emulator);
+	value = (int)emu;
+	err = uc_mem_write(g_uc,addr,&value,4);
+
+	addr = (int)si + offsetof(soinfo,load_bias);
+	value = FUNCTION_VIRTUAL_ADDRESS;
+	err = uc_mem_write(g_uc,addr,&value,4);
+
+	addr = (int)si + offsetof(soinfo,base);
+	value = FUNCTION_VIRTUAL_ADDRESS;
+	err = uc_mem_write(g_uc,addr,&value,4);
+
+	addr = (int)si + offsetof(soinfo,flags);
+	value = FLAG_LINKED;
+	err = uc_mem_write(g_uc,addr,&value,4);
+
 }
 
 void* libc::s_malloc(void*)
