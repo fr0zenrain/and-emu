@@ -1389,6 +1389,7 @@ void* libc::s_readdir(void*)
     printf("readdir(0x%x)-> 0x%x\n", dirp, value);
 #else
     printf(RED "readdir(0x%x)-> 0x%x\n" RESET, dirp, value);
+	//sys_free(dir);
 #endif
 
     emulator::update_cpu_model();
@@ -1661,11 +1662,51 @@ void* libc::s_strlcpy(void*)
 {
     uc_err err;
     int value = 0;
+    char dst[1024] = {0};
+    char src[1024] = {0};
+    unsigned int dst_addr = emulator::get_r0();
+    unsigned int src_addr = emulator::get_r1();
+    unsigned int siz = emulator::get_r2();
+
+    for(int i = 0; i < 1024; i++)
+    {
+        err = uc_mem_read(g_uc,dst_addr+i,&dst[i],1);
+        if(dst[i] == 0)
+            break;
+    }
+
+    for(int i = 0; i < 1024; i++)
+    {
+        err = uc_mem_read(g_uc,src_addr+i,&src[i],1);
+        if(src[i] == 0)
+            break;
+    }
+    char *d = dst;
+    const char *s = src;
+    size_t n = siz;
+
+    /* Copy as many bytes as will fit */
+    if (n != 0) {
+        while (--n != 0) {
+            if ((*d++ = *s++) == '\0')
+                break;
+        }
+    }
+    /* Not enough room in dst, add NUL and traverse rest of src */
+    if (n == 0) {
+        if (siz != 0)
+            *d = '\0';		/* NUL-terminate dst */
+        while (*s++)
+            ;
+    }
+
+    value = (s - src - 1);	/* count does not include NUL */
+    err = uc_mem_write(g_uc,dst_addr,dst,strlen(dst)+1);
 
 #ifdef _MSC_VER
-    printf("strlcpy()-> 0x%x\n",  value);
+    printf("strlcpy(\"%s\",\"%s\",0x%x)-> 0x%x\n", dst, src, siz, value);
 #else
-    printf(RED "strlcpy()-> 0x%x\n" RESET, value);
+    printf(RED "strlcpy(\"%s\",\"%s\",0x%x)-> 0x%x\n" RESET, dst, src, siz, value);
 #endif
 
     emulator::update_cpu_model();
