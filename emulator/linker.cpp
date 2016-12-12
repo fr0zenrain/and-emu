@@ -202,7 +202,8 @@ soinfo* soinfo_alloc(const char* name) {
 	int value = 0;
 	uc_err err = uc_mem_read(g_uc,(uint64_t)addr,&value,4);
 	err = uc_mem_write(g_uc,(uint64_t)gSoInfoFreeList,&value,4);
-	//gSoInfoFreeList = gSoInfoFreeList->next;
+	gSoInfoFreeList = (soinfo*)addr;
+	
 
 	// Initialize the new element.
 	soinfo s;
@@ -1146,17 +1147,23 @@ void soinfo::CallArray(const char* array_name,linker_function_t* functions, size
 
 void soinfo::CallFunction(const char* function_name,
 		linker_function_t function) {
+			char namebuf[128] ={0};
 	if (function == NULL
 			|| reinterpret_cast<unsigned int>(function)
 					== static_cast<unsigned int>(-1)) {
 		return;
 	}
 
-	debug_printf("[ Calling %s @ %p for '%s' ]\n", function_name,
-			function, name);
+	uc_err err = uc_mem_read(g_uc,(unsigned int)name,namebuf,128);
+	debug_printf("[ Calling %s @ %p for '%s' ]\n", function_name,&function, namebuf);
 
-
-    unsigned int pc = (int)function;
+	unsigned int func;
+	err = uc_mem_read(g_uc,(unsigned int)function,&func,4);
+	if(func == 0)
+	{
+		return ;
+	}
+    unsigned int pc = (int)func;
     pc = pc&1?pc-1:pc;
 
     emulator::get_emulator()->start_emulator(pc,this);
@@ -1220,7 +1227,7 @@ void soinfo::CallConstructors() {
 	//debug_printf("\"%s\": calling constructors\n", name);
 
 	// DT_INIT should be called before DT_INIT_ARRAY if both are present.
-	CallFunction("DT_INIT", init_func);
+	CallFunction("DT_INIT", (linker_function_t)&init_func);
 	linker_function_t* f = (linker_function_t*)malloc(init_array_count*4);
 	uc_mem_read(g_uc,(uint64_t)init_array,f,init_array_count*4);
 	CallArray("DT_INIT_ARRAY", f, init_array_count, false);
