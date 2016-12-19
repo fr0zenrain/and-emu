@@ -12,6 +12,7 @@
 
 #ifdef _MSC_VER
 #include "io.h"
+#include <fcntl.h>
 #include "windows.h"
 #else
 #include <sys/mman.h>
@@ -231,6 +232,24 @@ void* libc::sys_dlopen(void*)
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
 
     emulator::update_cpu_model();
+
+	return 0;
+}
+
+void* libc::sys_dlclose(void*)
+{
+	uc_err err;
+	int value = 0;
+	unsigned int addr = emulator::get_r0();
+
+#ifdef _MSC_VER
+	printf("dlclose(0x%x)-> 0x%x\n",addr,value);
+#else
+	printf(RED "dlclose(0x%x)-> 0x%x\n" RESET,addr,value);
+#endif
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
+
+	emulator::update_cpu_model();
 
 	return 0;
 }
@@ -547,7 +566,7 @@ void* libc::s_close(void*)
     int value = 0;
     unsigned int fd = emulator::get_r0();
 
-    close(fd);
+    //close(fd);
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
@@ -1030,6 +1049,24 @@ void* libc::s_lseek(void*)
     return 0;
 }
 
+void* libc::s_pthread_mutex_init(void*)
+{
+	uc_err err;
+	int value = 0;
+	unsigned int mutex = emulator::get_r0();
+
+#ifdef _MSC_VER
+	printf("pthread_mutex_init(0x%x)-> 0x%x\n", mutex, value);
+#else
+	printf(RED "pthread_mutex_init(0x%x)-> 0x%x\n" RESET, mutex, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
 void* libc::s_pthread_mutex_lock(void*)
 {
     uc_err err;
@@ -1113,11 +1150,18 @@ void* libc::s_pipe(void*)
 {
     uc_err err;
     int value = 0;
+	unsigned int pipe_addr = emulator::get_r0();
+	int fd;
+	
+	fd = (int)fopen("rd.pipe","wb" );
+
+	err = uc_mem_write(g_uc,pipe_addr,&fd,4);
+	err = uc_mem_write(g_uc,pipe_addr+4,&fd,4);
 
 #ifdef _MSC_VER
-    printf("pipe()-> 0x%x\n",  value);
+    printf("pipe(0x%x)-> 0x%x\n", pipe_addr, value);
 #else
-    printf(RED "pipe()-> 0x%x\n" RESET, value);
+    printf(RED "pipe(0x%x)-> 0x%x\n" RESET, pipe_addr, value);
 #endif
 
     emulator::update_cpu_model();
@@ -1572,6 +1616,74 @@ void* libc::s_pthread_create(void*)
     return 0;
 }
 
+void* libc::s_pthread_key_create(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("pthread_key_create()-> 0x%x\n",  value);
+#else
+	printf(RED "pthread_key_create()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_pthread_key_delete(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("pthread_key_delete()-> 0x%x\n",  value);
+#else
+	printf(RED "pthread_key_delete()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_pthread_getspecific(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("pthread_getspecific()-> 0x%x\n",  value);
+#else
+	printf(RED "pthread_getspecific()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_pthread_setspecific(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("pthread_setspecific()-> 0x%x\n",  value);
+#else
+	printf(RED "pthread_setspecific()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
 void* libc::s_inotify_init(void*)
 {
     uc_err err;
@@ -1604,6 +1716,23 @@ void* libc::s_inotify_add_watch(void*)
 
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
+}
+
+void* libc::s_inotify_rm_watch(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("inotify_rm_watch()-> 0x%x\n",  value);
+#else
+	printf(RED "inotify_rm_watch()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
 }
 
 void* libc::s_fgets(void*)
@@ -1813,6 +1942,142 @@ void* libc::s_strncpy(void*)
     return 0;
 }
 
+void* libc::s_exit(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("exit()-> 0x%x\n",  value);
+#else
+	printf(RED "exit()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_getuid(void*)
+{
+	uc_err err;
+	int value = 10028;
+
+#ifdef _MSC_VER
+	printf("getuid()-> 0x%x\n",  value);
+#else
+	printf(RED "getuid()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_unlink(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("unlink()-> 0x%x\n",  value);
+#else
+	printf(RED "unlink()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_madvise(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("madvise()-> 0x%x\n",  value);
+#else
+	printf(RED "madvise()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_puts(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("puts()-> 0x%x\n",  value);
+#else
+	printf(RED "puts()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_pread(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("pread()-> 0x%x\n",  value);
+#else
+	printf(RED "pread()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_memmove(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("memmove()-> 0x%x\n",  value);
+#else
+	printf(RED "memmove()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_setenv(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("setenv()-> 0x%x\n",  value);
+#else
+	printf(RED "setenv()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",0},
@@ -1825,6 +2090,7 @@ symbols g_syms[] =
 	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,1,0xf0002},
 	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,1},
 	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,1},
+	{0x48800e70,"dlclose",(void*)libc::sys_dlclose,1},
 	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,1},
 	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,1},
 	{0xbc836fa7,"strdup",(void*)libc::s_strdup,1},
@@ -1850,6 +2116,7 @@ symbols g_syms[] =
     {0xfab5b424,"abort",(void*)libc::s_abort,1},
     {0x900f6a6e,"strcat",(void*)libc::s_strcat,1},
     {0x9d13bfdf,"calloc",(void*)libc::s_malloc,1},
+	{0x93f54eea,"pthread_mutex_init",(void*)libc::s_pthread_mutex_init,1},
     {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,1},
     {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,1},
     {0x6f9c4cda,"lseek",(void*)libc::s_lseek,1},
@@ -1878,8 +2145,13 @@ symbols g_syms[] =
     {0x20b8ff21,"stat",(void*)libc::s_stat,1},
     {0x838f2101,"munmap",(void*)libc::s_munmap,1,0x5b},
     {0xa7701c0,"pthread_create",(void*)libc::s_pthread_create,1},
+	{0x212b3e97,"pthread_key_create",(void*)libc::s_pthread_key_create,1},
+	{0x94efa2eb,"pthread_key_delete",(void*)libc::s_pthread_key_delete,1},
+	{0x8c79a112,"pthread_getspecific",(void*)libc::s_pthread_getspecific,1},
+	{0x9256165b,"pthread_setspecific",(void*)libc::s_pthread_setspecific,1},
     {0x17b31dd8,"inotify_init",(void*)libc::s_inotify_init,1},
     {0xafc21fc6,"inotify_add_watch",(void*)libc::s_inotify_add_watch,1},
+	{0xc2002e91,"inotify_rm_watch",(void*)libc::s_inotify_rm_watch,1},
     {0xbae22ff5,"fgets",(void*)libc::s_fgets,1},
     {0x4bf2eac0,"select",(void*)libc::s_select,1},
     {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,1},
@@ -1887,6 +2159,15 @@ symbols g_syms[] =
 	{0xd99d544e,"rename",(void*)libc::s_rename,1},
 	{0x68801d30,"remove",(void*)libc::s_remove,1,},
     {0xc4c3ac97,"strncpy",(void*)libc::s_strncpy,1,},
+	{0x9409840e,"exit",(void*)libc::s_exit,1,},
+	{0xbd668ea3,"getuid",(void*)libc::s_getuid,1,},
+	{0xdbc7b210,"unlink",(void*)libc::s_unlink,1,},
+	{0xe88f4f24,"madvise",(void*)libc::s_madvise,1,},
+	{0x9a1e494f,"puts",(void*)libc::s_puts,1,},
+	{0x86e389a9,"pread",(void*)libc::s_pread,1,},
+	{0x80ec372a,"memmove",(void*)libc::s_memmove,1,},
+	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,1,},
+
 };
 
 

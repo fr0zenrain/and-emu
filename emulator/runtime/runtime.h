@@ -78,6 +78,7 @@ public:
 	static void* s_access(void*);
 	static void* s_abort(void*);
     static void* s_strcat(void*);
+	static void* s_pthread_mutex_init(void*);
     static void* s_pthread_mutex_lock(void*);
     static void* s_pthread_mutex_unlock(void*);
     static void* s_pipe(void*);
@@ -103,8 +104,13 @@ public:
     static void* s_stat(void*);
     static void* s_munmap(void*);
     static void* s_pthread_create(void*);
+	static void* s_pthread_key_create(void*);
+	static void* s_pthread_key_delete(void*);
+	static void* s_pthread_getspecific(void*);
+	static void* s_pthread_setspecific(void*);
     static void* s_inotify_init(void*);
     static void* s_inotify_add_watch(void*);
+	static void* s_inotify_rm_watch(void*);
     static void* s_fgets(void*);
     static void* s_select(void*);
     static void* s_strlcpy(void*);
@@ -112,9 +118,18 @@ public:
 	static void* s_rename(void*);
 	static void* s_remove(void*);
 	static void* s_strncpy(void*);
+	static void* s_exit(void*);
+	static void* s_getuid(void*);
+	static void* s_unlink(void*);
+	static void* s_madvise(void*);
+	static void* s_puts(void*);
+	static void* s_pread(void*);
+	static void* s_memmove(void*);
+	static void* s_setenv(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);
+	static void* sys_dlclose(void*);
 	static void* sys_mprotect(void*);
 
 };
