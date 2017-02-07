@@ -13,7 +13,7 @@
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
-#include "vld.h"
+//#include "vld.h"
 #pragma comment(lib,"unicorn_staload.lib")
 //#pragma comment(lib,"capstone.lib")
 uc_engine* g_uc;
@@ -430,20 +430,37 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 
 int main(int argc, char* argv[])
 {
-	emulator* emu = emulator::get_emulator(UC_MODE_THUMB);
+    if(argc < 3)
+    {
+        printf("usage: emulator sopath (arm|thumb)\n");
+        return 0;
+    }
+
+    emulator* emu = NULL;
+
+    if(stricmp(argv[2],"arm"))
+    {
+        emu = emulator::get_emulator(UC_MODE_ARM);
+    }
+
+    else if(stricmp(argv[2],"thumb"))
+    {
+        emu = emulator::get_emulator(UC_MODE_THUMB);
+    }
 
 	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
 	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
-    soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
-    //soinfo* si = load_android_so("libdata.so");
+    //soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
+    soinfo* si = load_android_so(argv[1]);
 	//soinfo* si = load_android_so("libutil.so");
     //soinfo* si = load_android_so("libjiagu.so");
     //soinfo* si = load_android_so("libbaiduprotect.so");
 	//soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
-
+    uint64_t addr =0 ;
+   // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
     emu->init_jvm();
-	emu->set_breakpoint(si->base + 0x342d);
+	//emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
     emu->dispose();
 

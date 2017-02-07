@@ -269,7 +269,7 @@ int emulator::dispatch()
     err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
     err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
 
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
+    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
     get_emulator()->process_breakpoint();
 
@@ -387,16 +387,15 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     {
         return ;
     }*/
-
-  /*  csh handle;
+/*
+    csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
-    cs_err err = cs_open(CS_ARCH_ARM, mode, &handle);
-    if(err == CS_ERR_OK)
+    cs_err e = cs_open(CS_ARCH_ARM, mode, &handle);
+    if(e == CS_ERR_OK)
     {
         cs_option(handle, CS_OPT_SYNTAX, 0);
         cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
-
         int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
@@ -409,7 +408,20 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
 			 cs_free(insn, count);
         }
         cs_close(&handle);
-    }*/
+    }
+    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);*/
+    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
 }
 
 void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -486,7 +498,7 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
     err=uc_reg_read(uc, UC_ARM_REG_CPSR, &cpsr);
 
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",pc,lr,sp,r0,r1,r2,r3,r7,cpsr);
+    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",pc,lr,sp,r0,r1,r2,r3,r7,cpsr);
 
     err = uc_emu_start(uc,(uint64_t)pc,pc+0xfffff,0,0);
     if(err != UC_ERR_OK)

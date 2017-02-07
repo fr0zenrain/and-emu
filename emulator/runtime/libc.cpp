@@ -1738,7 +1738,7 @@ void* libc::s_inotify_rm_watch(void*)
 void* libc::s_fgets(void*)
 {
     uc_err err;
-    unsigned int value = -1;
+    unsigned int value = 0;
     char buf[4096] ={0};
     FILE* fd = (FILE*)emulator::get_r2();
     int max = emulator::get_r1();
@@ -2066,10 +2066,37 @@ void* libc::s_setenv(void*)
 	uc_err err;
 	int value = 0;
 
+    char buf[512] ={0};
+    char buf1[512] ={0};
+
+    unsigned int name_addr = emulator::get_r0();
+    unsigned int value_addr = emulator::get_r1();
+    unsigned int overwrite = emulator::get_r2();
+
+    if(name_addr)
+    {
+        for(int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc,name_addr+i,&buf[i],1);
+            if(buf[i] == 0)
+                break;
+        }
+    }
+
+    if(value_addr)
+    {
+        for(int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc,value_addr+i,&buf1[i],1);
+            if(buf1[i] == 0)
+                break;
+        }
+    }
+
 #ifdef _MSC_VER
-	printf("setenv()-> 0x%x\n",  value);
+	printf("setenv(%s,%s,0x%x)-> 0x%x\n",  buf,buf1,overwrite,value);
 #else
-	printf(RED "setenv()-> 0x%x\n" RESET, value);
+	printf(RED "setenv(%s,%s,0x%x)-> 0x%x\n" RESET, buf,buf1,overwrite,value);
 #endif
 
 	emulator::update_cpu_model();
