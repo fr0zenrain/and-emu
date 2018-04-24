@@ -522,13 +522,14 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libjiagu.so");
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
-    void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
+    unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
+    JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;
     uint64_t addr =0 ;
     // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
     emu->init_jvm();
 	baidu_protect_init(si);
     //emu->set_breakpoint(si->base + 0x342d);
-    emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
+    emu->start_emulator((unsigned int)JNI_OnLoad,si);
     emu->dispose();
 
     delete emu;

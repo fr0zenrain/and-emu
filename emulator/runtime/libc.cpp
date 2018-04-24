@@ -257,18 +257,18 @@ void* libc::sys_dlclose(void*)
 void* libc::s__system_property_get(void*)
 {
 	int ret = 0;
-	char name[32] ={0};
+	char name[92] ={0};
 	char value[92] ={0};
     unsigned int name_addr = emulator::get_r0();
     unsigned int value_addr = emulator::get_r1();
 
 	if(name_addr && value_addr)
 	{
-		uc_mem_read(g_uc,name_addr,name,32);
+		uc_mem_read(g_uc,name_addr,name,92);
 		ret = get_prop(name,value);
 		if(ret)
 		{
-			uc_mem_write(g_uc,value_addr,value,32);
+			uc_mem_write(g_uc,value_addr,value,ret);
 		}
 	}
 #ifdef _MSC_VER
@@ -1561,7 +1561,7 @@ void* libc::s_realloc(void*)
 #ifdef _MSC_VER
 	printf("realloc(0x%x,0x%x) ->0x%x\n", ptr, new_size, addr);
 #else
-	printf(RED "realloc(0x%x,0x%x) ->0x%x\n" RESET, ptr, size, addr);
+	printf(RED "realloc(0x%x,0x%x) ->0x%x\n" RESET, ptr, new_size, addr);
 #endif
 
 	uc_reg_write(g_uc, UC_ARM_REG_R0, &addr);
@@ -2164,11 +2164,14 @@ void* libc::s_getopt(void*)
 {
 	uc_err err;
 	int value = 0;
+	int argc = emulator::get_r0();
+    int argv = emulator::get_r1();
+    int opt = emulator::get_r2();
 
 #ifdef _MSC_VER
-	printf("getopt()-> 0x%x\n", value);
+	printf("getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n", argc, value);
 #else
-	printf(RED "getopt()-> 0x%x\n" RESET, value);
+	printf(RED "getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n" RESET, argc, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2185,7 +2188,7 @@ void* libc::s__cxa_finalize(void*)
 #ifdef _MSC_VER
 	printf("__cxa_finalize()-> 0x%x\n", value);
 #else
-	printf(RED "getopt()-> 0x%x\n" RESET, value);
+	printf(RED "__cxa_finalize()-> 0x%x\n" RESET, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2202,7 +2205,7 @@ void* libc::s__cxa_exit(void*)
 #ifdef _MSC_VER
 	printf("__cxa_exit()-> 0x%x\n", value);
 #else
-	printf(RED "getopt()-> 0x%x\n" RESET, value);
+	printf(RED "__cxa_exit()-> 0x%x\n" RESET, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2210,6 +2213,24 @@ void* libc::s__cxa_exit(void*)
 	err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
 	return 0;
 }
+
+void* libc::s_printf(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("printf()-> 0x%x\n", value);
+#else
+    printf(RED "printf()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2300,6 +2321,7 @@ symbols g_syms[] =
 	{0x80ec372a,"memmove",(void*)libc::s_memmove,1,},
 	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,1,},
 	{0x2a601179,"getopt",(void*)libc::s_getopt,1,},
+    {0x23398d9a,"printf",(void*)libc::s_printf,1,0xff},
 
 };
 

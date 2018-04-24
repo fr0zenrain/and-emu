@@ -135,6 +135,7 @@ public:
 	static void* sys_realloc(void*);
 	static void* s__cxa_exit(void*);
 	static void* s__cxa_finalize(void*);
+	static void* s_printf(void*);
 };
 
 

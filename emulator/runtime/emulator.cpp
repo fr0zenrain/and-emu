@@ -25,6 +25,7 @@ std::map<int,void*> g_svc_map;
 
 extern uc_engine* g_uc;
 extern int g_sym_cnt;
+extern int g_show_ins;
 extern func_info g_invoke_func[];
 extern func_info g_native_func[];
 extern symbols g_syms[];
@@ -34,7 +35,6 @@ uc_engine* emulator::uc = 0;
 uc_context* emulator::context = 0;
 soinfo* emulator::helper_info = 0;
 soinfo* emulator::module_info = 0;
-int emulator::show_disasm = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -161,7 +161,7 @@ int emulator::update_cpu_model()
     uc_err err = uc_reg_read(uc,UC_ARM_REG_LR,&v_lr);
     if (v_lr & 1)
     {
-        v_lr-=1;
+        //v_lr-=1;
         v_cpsr |= 0x20;
         err = uc_reg_write(uc,UC_ARM_REG_CPSR,&v_cpsr);
     }
@@ -385,11 +385,11 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }
 
-    /*if(!show_disasm)
+    if(!g_show_ins)
     {
         return ;
-    }*/
-	/*
+    }
+
     csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
@@ -422,7 +422,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
     err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
     err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
-    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);*/
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
     //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
 }
 

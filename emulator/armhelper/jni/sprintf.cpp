@@ -934,3 +934,14 @@ extern "C" int sprintf(char *str, const char *fmt, ...)
 
 	return n;
 }
+
+extern "C" int printf(const char *fmt, ...)
+{
+    va_list args;
+    int n = 0;
+
+    asm ("mov r7, 0xff");
+    asm("svc 0");
+
+    return n;
+}

@@ -533,7 +533,10 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 
 extern void* s_memcpy(void* dst,void* src,int n);
 extern void * s_memset(void *d, int v, int c);
-
+extern void* s_mmap(void*, int, int, int, int, int);
+extern int s_munmap(void*, int);
+int __error = 0;
+void abort(){}
 #define LACKS_STRING_H
 #define LACKS_TIME_H
 #define LACKS_ERRNO_H
@@ -1649,14 +1652,14 @@ unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 #if HAVE_MMAP
 
 #ifndef WIN32
-#define MUNMAP_DEFAULT(a, s)  munmap((a), (s))
+#define MUNMAP_DEFAULT(a, s)  s_munmap((a), (s))
 #define MMAP_PROT            (PROT_READ|PROT_WRITE)
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS        MAP_ANON
 #endif /* MAP_ANON */
 #ifdef MAP_ANONYMOUS
 #define MMAP_FLAGS           (MAP_PRIVATE|MAP_ANONYMOUS)
-#define MMAP_DEFAULT(s)       mmap(0, (s), MMAP_PROT, MMAP_FLAGS, -1, 0)
+#define MMAP_DEFAULT(s)       s_mmap(0, (s), MMAP_PROT, MMAP_FLAGS, -1, 0)
 #else /* MAP_ANONYMOUS */
 /*
    Nearly all versions of mmap support MAP_ANONYMOUS, so the following
@@ -3154,7 +3157,7 @@ static int init_mparams(void) {
         ((MCHUNK_SIZE      & (MCHUNK_SIZE-SIZE_T_ONE))      != 0) ||
         ((gsize            & (gsize-SIZE_T_ONE))            != 0) ||
         ((psize            & (psize-SIZE_T_ONE))            != 0))
-      ABORT;
+      //ABORT;
     mparams.granularity = gsize;
     mparams.page_size = psize;
     mparams.mmap_threshold = DEFAULT_MMAP_THRESHOLD;
@@ -4599,7 +4602,7 @@ void* dlmalloc(size_t bytes) {
 
      The ugly goto's here ensure that postaction occurs along all paths.
   */
-
+    printf("malloc %d", bytes);
 #if USE_LOCKS
   ensure_initialization(); /* initialize in sys_alloc if not using locks */
 #endif
