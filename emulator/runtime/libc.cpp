@@ -1302,14 +1302,15 @@ void* libc::s_fread(void*)
 	void* buffer = (void*)emulator::get_r0();
 	int size = emulator::get_r1();
 	int count = emulator::get_r2();
-
+	if (buffer)
+	{
+		value = (int)fread(buffer, size, count, fp);
+	}
 #ifdef _MSC_VER
 	printf("fread(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",  buffer, size, count, fp, value);
 #else
 	printf(RED "fread(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, buffer, size, count, fp, value);
 #endif
-
-	value = (int)fread(buffer, size, count, fp);
 
 	emulator::update_cpu_model();
 
@@ -1326,13 +1327,13 @@ void* libc::s_fseek(void*)
 	int offset = emulator::get_r1();
 	int start = emulator::get_r2();
 
+	value = (int)fseek(fp, offset, start);
+
 #ifdef _MSC_VER
 	printf("fseek(0x%x,0x%x,0x%x)-> 0x%x\n",  fp, offset, start, value);
 #else
 	printf(RED "fseek(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fp, offset, start, value);
 #endif
-
-	value = (int)fseek(fp, offset, start);
 
 	emulator::update_cpu_model();
 

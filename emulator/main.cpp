@@ -438,6 +438,27 @@ void usage()
     printf("usage: emulator sopath (arm|thumb)\n");
 }
 
+int baidu_protect_init(soinfo* si)
+{
+	uc_err err;
+	int size = 1000;
+	int base = si->base;
+
+	void* addr = sys_malloc(size);
+	err = uc_mem_write(g_uc, base+0x14874, &addr, 4);
+
+	addr = sys_malloc(size);
+	err = uc_mem_write(g_uc, base + 0x14878, &addr, 4);
+
+	addr = sys_malloc(size);
+	err = uc_mem_write(g_uc, base + 0x14884, &addr, 4);
+
+	err = uc_mem_write(g_uc, base + 0x1487c, &size, 4);
+	err = uc_mem_write(g_uc, base + 0x14888, &size, 4);
+
+	return 1;
+}
+
 int main(int argc, char* argv[])
 {
     const char* p = 0;
@@ -505,6 +526,7 @@ int main(int argc, char* argv[])
     uint64_t addr =0 ;
     // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
     emu->init_jvm();
+	baidu_protect_init(si);
     //emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
     emu->dispose();

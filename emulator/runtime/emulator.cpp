@@ -33,6 +33,7 @@ extern soinfo* solist;
 uc_engine* emulator::uc = 0;
 uc_context* emulator::context = 0;
 soinfo* emulator::helper_info = 0;
+soinfo* emulator::module_info = 0;
 int emulator::show_disasm = 0;
 
 unsigned int emulator::v_pc =0;
@@ -225,8 +226,8 @@ Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d || crc32 == 0x23398d9a
-		|| crc32 == 0xa719deaf || crc32 == 0x4d2ec1c8)//snprint sscanf sprintf
+	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d || crc32 == 0x23398d9a //snprint sscanf sprintf
+		|| crc32 == 0xa719deaf || crc32 == 0x4d2ec1c8)
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
 		if(sym_addr)
@@ -506,6 +507,8 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     {
         printf("Failed on uc_emu_start() with error returned: %u\n", err);
     }
+
+	module_info = si;
 }
 
 int emulator::init_stack()

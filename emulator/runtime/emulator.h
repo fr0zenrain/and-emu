@@ -120,6 +120,7 @@ private:
     uc_hook trace_inter;
     uc_hook trace_unmap;
 	libc* c;
+	static soinfo* module_info;
 };
 
 #endif
