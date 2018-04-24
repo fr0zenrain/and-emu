@@ -1,6 +1,5 @@
 #include "base.h"
 
-
 void* s_memcpy(void* dst,void* src,size_t n)
 {
     if ((((unsigned int) dst) | ((unsigned int) dst) | n) & (sizeof(unsigned int) - 1)) {

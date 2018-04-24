@@ -577,9 +577,9 @@ static int open_library_on_path(const char* name, const char* const paths[]) {
 			continue;
 		}
 #ifdef _MSC_VER
-			int fd = s_open(name, O_RDONLY| _O_BINARY);
+			int fd = s_open(buf, O_RDONLY| _O_BINARY);
 #else
-			int fd = s_open(name, O_RDONLY | O_CLOEXEC);
+			int fd = s_open(buf, O_RDONLY | O_CLOEXEC);
 #endif 
 		if (fd != -1) {
 			return fd;
@@ -1077,7 +1077,7 @@ void soinfo::CallFunction(const char* function_name,
     unsigned int pc = (int)function;
     pc = pc&1?pc-1:pc;
 
-    emulator::get_emulator()->start_emulator(pc,this);
+    //emulator::get_emulator()->start_emulator(pc,this);
 
 	debug_printf("[ Done calling %s @ %p for '%s' ]\n", function_name,function, name);
 
@@ -1189,7 +1189,7 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 		if (!relocating_linker) {
 			debug_printf( "missing PT_DYNAMIC in \"%s\"\n", si->name);
 		}
-		return false;
+		//return false;
 	} else {
 		if (!relocating_linker) {
 			debug_printf( "dynamic = %p\n", si->dynamic);
@@ -1347,15 +1347,15 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	if (si->nbucket == 0) {
 		debug_printf("empty/missing DT_HASH in \"%s\" (built with --hash-style=gnu?)\n",
 				si->name);
-		return false;
+		//return false;
 	}
 	if (si->strtab == 0) {
 		debug_printf("empty/missing DT_STRTAB in \"%s\"\n", si->name);
-		return false;
+		//return false;
 	}
 	if (si->symtab == 0) {
 		debug_printf( "empty/missing DT_SYMTAB in \"%s\"\n", si->name);
-		return false;
+		//return false;
 	}
 
 	// If this is the main executable, then load all of the libraries from LD_PRELOAD now.

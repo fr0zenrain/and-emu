@@ -10,6 +10,7 @@
 #include "jvm/jvm.h"
 #include "runtime/emulator.h"
 #include "runtime/runtime.h"
+#include "ctype.h"
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
@@ -17,6 +18,10 @@
 #pragma comment(lib,"unicorn_staload.lib")
 //#pragma comment(lib,"capstone.lib")
 uc_engine* g_uc;
+
+int g_armmode = 0;
+int g_emu_init = 0;
+int g_show_ins = 0;
 
 static void hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
@@ -428,44 +433,84 @@ int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 	return 1;
 }
 
+void usage()
+{
+    printf("usage: emulator sopath (arm|thumb)\n");
+}
+
 int main(int argc, char* argv[])
 {
-    if(argc < 3)
+    const char* p = 0;
+    char path[260]={0};
+
+    unsigned int clock = 0;
+    unsigned int seconds =0;
+    unsigned int mseconds = 0; 
+    unsigned int minutes = 0;
+
+    if(argc < 2 )
     {
-        printf("usage: emulator sopath (arm|thumb)\n");
+        usage();
         return 0;
     }
 
-    emulator* emu = NULL;
-
-    if(stricmp(argv[2],"arm"))
+    for (int i = 1; i < argc; i++ ) 
     {
-        emu = emulator::get_emulator(UC_MODE_ARM);
+        p = argv[i];
+
+        if (*p == '/' || *p == '-' ) 
+        {
+            p++;
+
+            switch (toupper(*p)) 
+            {
+            case 'A':
+            case 'a':
+                g_armmode = true;
+                break;
+            case 'V':
+            case 'v':
+                g_show_ins = true;
+                break;
+            case 'I':
+            case 'i':
+                g_emu_init = true;
+                break;
+            default:
+                usage();
+               // return 0;
+            }
+        }
     }
 
-    else if(stricmp(argv[2],"thumb"))
+    for (int i = 1; i < argc; i ++) 
     {
-        emu = emulator::get_emulator(UC_MODE_THUMB);
+        p = argv[i];
+        if (*p == '-')	// skip option
+            continue;	
+        strncpy(path,p,256);
     }
 
-	//soinfo* si = load_android_so("libsgmainso-6.0.71.so");
-	//soinfo* si = load_android_so("libsgmainso-5.1.38.so");
+    emulator* emu = emulator::get_emulator(g_armmode?UC_MODE_ARM:UC_MODE_THUMB);
+
+    //soinfo* si = load_android_so("libsgmainso-6.0.71.so");
+    //soinfo* si = load_android_so("libsgmainso-5.1.38.so");
     //soinfo* si = load_android_so("libsecuritysdk-2.6.24.so");
-    soinfo* si = load_android_so(argv[1]);
-	//soinfo* si = load_android_so("libutil.so");
+    soinfo* si = load_android_so(path);
+    //soinfo* si = load_android_so("libutil.so");
     //soinfo* si = load_android_so("libjiagu.so");
     //soinfo* si = load_android_so("libbaiduprotect.so");
-	//soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
-	void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
+    //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
+    void* JNI_OnLoad = s_dlsym(si,"JNI_OnLoad");
     uint64_t addr =0 ;
-   // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
+    // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
     emu->init_jvm();
-	//emu->set_breakpoint(si->base + 0x342d);
+    //emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad-1,si);
     emu->dispose();
 
-	delete emu;
+    delete emu;
 
-	return 0;
+    return 1;
 }
 

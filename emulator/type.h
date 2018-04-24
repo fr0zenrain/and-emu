@@ -319,11 +319,11 @@ struct sockaddr_in {
 #endif
 
 #ifdef _MSC_VER
-
+/*
 struct timespec {
-	long	tv_sec;			/* seconds */
-	long	tv_nsec;		/* nanoseconds */
-};
+	long	tv_sec;			
+	long	tv_nsec;		
+};*/
 
 #ifndef RLIMIT_NOFILE
 #define RLIMIT_NOFILE		7	/* max number of open files */

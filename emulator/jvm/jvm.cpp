@@ -362,7 +362,7 @@ int PopLocalFrame()
 }
 int NewGlobalRef() 
 {
-	int ret = 0;
+	int ret = 1;
 	unsigned int env = emulator::get_r0();
     unsigned int clazz = emulator::get_r1();
 
@@ -3358,9 +3358,21 @@ int ReleaseStringChars()
 int NewStringUTF() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr();
+	char buffer[256]={0};
+    uc_err err;
+	unsigned int env = emulator::get_r0();
+    unsigned int str_addr = emulator::get_r1();
+    unsigned int lr = emulator::get_lr();
+
+    if(str_addr)
+    {
+        for(int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc,str_addr+i,&buffer[i],1);
+            if(buffer[i] == 0)
+                break;
+        }
+    }
 
 	if(lr &1)
 		lr -= 1;
@@ -3400,7 +3412,9 @@ int GetStringUTFChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+	unsigned int env = emulator::get_r0();
+	unsigned int js = emulator::get_r1();
+    unsigned int cp = emulator::get_r2();
 	unsigned int lr = emulator::get_lr(); 
 	if(lr &1) 
 		lr -= 1; 

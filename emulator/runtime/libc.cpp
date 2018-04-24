@@ -544,14 +544,35 @@ void* libc::s_write(void*)
     int value = 0;
     char buf[512] ={0};
     int fd = emulator::get_r0();
-    unsigned int addr = emulator::get_r1();
-    int size = emulator::get_r2();
+    int size = emulator::get_r1();
+	unsigned int addr = emulator::get_r2();
 
+	if (fd == 1)
+	{
+		if (addr)
+		{
+			for (int i = 0; i < 256; i++)
+			{
+				err = uc_mem_read(g_uc, addr + i, &buf[i], 1);
+				if (buf[i] == 0)
+					break;
+			}
+		}
+		
 #ifdef _MSC_VER
-    printf("write(0x%x,0x%x,0x%x)-> 0x%x\n", fd, addr, size, value);
+		printf("write(0x%x,%s,0x%x)-> 0x%x\n", fd, buf, size, value);
 #else
-    printf(RED "write(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd, addr, size, value);
+		printf(RED "write(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd, addr, size, value);
 #endif
+	}
+	else 
+	{
+#ifdef _MSC_VER
+		printf("write(0x%x,0x%x,0x%x)-> 0x%x\n", fd, addr, size, value);
+#else
+		printf(RED "write(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd, addr, size, value);
+#endif
+	}
 
     emulator::update_cpu_model();
 
@@ -1250,6 +1271,11 @@ void* libc::s_fopen(void*)
         strcat(cur_dir,path);
         value = (int)fopen(cur_dir,mode);
     }
+	else if (strncmp(path, "/system", 7) == 0)
+	{
+		strcat(cur_dir, path);
+		value = (int)fopen(cur_dir, mode);
+	}
 	else
 	{
 		value = 0;
@@ -1272,11 +1298,18 @@ void* libc::s_fread(void*)
 	uc_err err;
 	int value = 0;
 
+	FILE* fp = (FILE*)emulator::get_r3();
+	void* buffer = (void*)emulator::get_r0();
+	int size = emulator::get_r1();
+	int count = emulator::get_r2();
+
 #ifdef _MSC_VER
-	printf("fread()-> 0x%x\n",  value);
+	printf("fread(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",  buffer, size, count, fp, value);
 #else
-	printf(RED "fread()-> 0x%x\n" RESET, value);
+	printf(RED "fread(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, buffer, size, count, fp, value);
 #endif
+
+	value = (int)fread(buffer, size, count, fp);
 
 	emulator::update_cpu_model();
 
@@ -1289,11 +1322,17 @@ void* libc::s_fseek(void*)
 	uc_err err;
 	int value = 0;
 
+	FILE* fp = (FILE*)emulator::get_r0();
+	int offset = emulator::get_r1();
+	int start = emulator::get_r2();
+
 #ifdef _MSC_VER
-	printf("fseek()-> 0x%x\n",  value);
+	printf("fseek(0x%x,0x%x,0x%x)-> 0x%x\n",  fp, offset, start, value);
 #else
-	printf(RED "fseek()-> 0x%x\n" RESET, value);
+	printf(RED "fseek(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fp, offset, start, value);
 #endif
+
+	value = (int)fseek(fp, offset, start);
 
 	emulator::update_cpu_model();
 
@@ -1499,20 +1538,35 @@ void* libc::s_kill(void*)
 
 void* libc::s_realloc(void*)
 {
-    uc_err err;
-    int value = 0;
+	uc_err err;
+	unsigned int ptr = emulator::get_r0();
+	int new_size = emulator::get_r1();
+	unsigned int addr = (unsigned int)sys_malloc(new_size);
+	unsigned char value = 0;
+
+	if (addr && ptr)
+	{
+		for (int i = 0; i < 256; i++)
+		{
+			err = uc_mem_read(g_uc, ptr + i, &value, 1);
+			err = uc_mem_write(g_uc, addr + i, &value, 1);
+			if (err)
+				break;
+		}
+	}
+
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-    printf("realloc()-> 0x%x\n",  value);
+	printf("realloc(0x%x,0x%x) ->0x%x\n", ptr, new_size, addr);
 #else
-    printf(RED "realloc()-> 0x%x\n" RESET, value);
+	printf(RED "realloc(0x%x,0x%x) ->0x%x\n" RESET, ptr, size, addr);
 #endif
 
-    emulator::update_cpu_model();
-
-    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
-    return 0;
+	uc_reg_write(g_uc, UC_ARM_REG_R0, &addr);
+	return 0;
 }
+
 void* libc::s_atoi(void*)
 {
     uc_err err;
@@ -2105,12 +2159,62 @@ void* libc::s_setenv(void*)
 	return 0;
 }
 
+void* libc::s_getopt(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("getopt()-> 0x%x\n", value);
+#else
+	printf(RED "getopt()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+	return 0;
+}
+
+void* libc::s__cxa_finalize(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("__cxa_finalize()-> 0x%x\n", value);
+#else
+	printf(RED "getopt()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+	return 0;
+}
+
+void* libc::s__cxa_exit(void*)
+{
+	uc_err err;
+	int value = 0;
+
+#ifdef _MSC_VER
+	printf("__cxa_exit()-> 0x%x\n", value);
+#else
+	printf(RED "getopt()-> 0x%x\n" RESET, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+	return 0;
+}
 symbols g_syms[] = 
 {
-	{0x46c5242d,"__cxa_finalize",0},
-	{0x4b3bddf7,"__cxa_exit",0},
-	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
-	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
+	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
+	{0x4b3bddf7,"__cxa_exit",(void*)libc::s__cxa_exit,1},
+	//{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
+	//{0x4d2ec1c8,"free",(void*)libc::s_free,1},
 	{0x8463960a,"memset",(void*)libc::s_memset,0},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
 	{0x84e4836b,"mmap",(void*)libc::sys_mmap,1,0xc0},
@@ -2194,6 +2298,7 @@ symbols g_syms[] =
 	{0x86e389a9,"pread",(void*)libc::s_pread,1,},
 	{0x80ec372a,"memmove",(void*)libc::s_memmove,1,},
 	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,1,},
+	{0x2a601179,"getopt",(void*)libc::s_getopt,1,},
 
 };
 

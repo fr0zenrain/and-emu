@@ -126,12 +126,15 @@ public:
 	static void* s_pread(void*);
 	static void* s_memmove(void*);
 	static void* s_setenv(void*);
+	static void* s_getopt(void*);
 	static void* sys_mmap(int type);
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);
 	static void* sys_dlclose(void*);
 	static void* sys_mprotect(void*);
-
+	static void* sys_realloc(void*);
+	static void* s__cxa_exit(void*);
+	static void* s__cxa_finalize(void*);
 };
 
 
