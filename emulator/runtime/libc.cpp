@@ -2231,12 +2231,29 @@ void* libc::s_printf(void*)
     return 0;
 }
 
+void* libc::s_srand(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("srand()-> 0x%x\n", value);
+#else
+    printf(RED "srand()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
 	{0x4b3bddf7,"__cxa_exit",(void*)libc::s__cxa_exit,1},
-	//{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
-	//{0x4d2ec1c8,"free",(void*)libc::s_free,1},
+	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
+	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
 	{0x8463960a,"memset",(void*)libc::s_memset,0},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
 	{0x84e4836b,"mmap",(void*)libc::sys_mmap,1,0xc0},
@@ -2321,7 +2338,8 @@ symbols g_syms[] =
 	{0x80ec372a,"memmove",(void*)libc::s_memmove,1,},
 	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,1,},
 	{0x2a601179,"getopt",(void*)libc::s_getopt,1,},
-    {0x23398d9a,"printf",(void*)libc::s_printf,1,0xff},
+    {0xd21739f1,"printf",(void*)libc::s_printf,1,0xff},
+	{0x41d2476a,"srand",(void*)libc::s_srand,1,},
 
 };
 
