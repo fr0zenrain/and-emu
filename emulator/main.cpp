@@ -372,8 +372,16 @@ static int hook_mem_access(uc_engine *uc, uc_mem_type type, uint64_t addr, int s
 
 soinfo* load_android_so(const char* path)
 {
-	soinfo* handle = (soinfo*)s_dlopen(path,0);
+    uc_err err;
 
+	soinfo* handle = (soinfo*)s_dlopen(path,0);
+    printf("[+] dump got\n");
+    int * buf = (int*)malloc(handle->plt_rel_count*4);
+    err = uc_mem_read(g_uc, (uint64_t)handle->plt_got, buf, handle->plt_rel_count*4);
+    for (int i = 0; i < handle->plt_rel_count; i++){
+        printf("0x%x -> %s\n", buf[i], emulator::get_symbols(buf[i]));
+    }
+    free(buf);
 	return handle;
 }
 
@@ -531,7 +539,6 @@ int main(int argc, char* argv[])
     //emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad,si);
     emu->dispose();
-
     delete emu;
 
     return 1;

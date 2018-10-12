@@ -202,11 +202,33 @@ int emulator::init_symbols()
         g_syms[i].vaddr |= g_syms[i].model;
         symbol_map[i].vaddr |= g_syms[i].model;
         g_svc_map.insert(std::make_pair(g_syms[i].number,g_syms[i].func));
+        printf("[+] %s 0x%x\n", g_syms[i].name, g_syms[i].vaddr);
     }
 
     qsort(symbol_map,g_sym_cnt,sizeof(symbols_map),hash_compare);
 
     return 1;
+}
+
+const char* emulator::get_symbols(int vaddr)
+{
+    static const char * unknow = "";
+    if (vaddr == 0){
+        return unknow;
+    }
+
+    if (vaddr > FUNCTION_VIRTUAL_ADDRESS)
+    {
+        for(int i = 0; i < g_sym_cnt;i++)
+        {
+            if (g_syms[i].vaddr == vaddr)
+            {
+                unknow = g_syms[i].name;
+                break;
+            }
+        }
+    }
+    return unknow;
 }
 
 unsigned int emulator::get_helper_symbols(const char* name)

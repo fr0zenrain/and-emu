@@ -29,6 +29,7 @@ set(SOURCEFILES
         emulator/jvm/alloc.cpp
         emulator/jvm/utfstring.cpp
         emulator/jvm/jni.cpp
+        emulator/hexdump.cpp
         )
 
 add_subdirectory(capstone)

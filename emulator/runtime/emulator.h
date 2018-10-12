@@ -42,6 +42,7 @@ public:
     ~emulator();
 
     static int init_symbols();
+	static const char* get_symbols(int vaddr);
     static Elf32_Sym* get_symbols(const char* name,unsigned int hash);
     static int dispatch();
     static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);

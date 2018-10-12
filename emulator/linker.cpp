@@ -311,9 +311,6 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
 			if (strcmp((char*)si->tmp_strtab + s->st_name, name))
 				continue;
 
-				debug_printf("%s %x\n", (char*)si->tmp_strtab + s->st_name, s->st_value);
-
-
 			/* only concern ourselves with global and weak symbol definitions */
 			switch (ELF32_ST_BIND(s->st_info)) {
 			case STB_GLOBAL:
