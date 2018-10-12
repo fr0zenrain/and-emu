@@ -311,6 +311,9 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
 			if (strcmp((char*)si->tmp_strtab + s->st_name, name))
 				continue;
 
+				debug_printf("%s %x\n", (char*)si->tmp_strtab + s->st_name, s->st_value);
+
+
 			/* only concern ourselves with global and weak symbol definitions */
 			switch (ELF32_ST_BIND(s->st_info)) {
 			case STB_GLOBAL:
@@ -1181,8 +1184,8 @@ bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader) {
 	/* Extract dynamic section */
 	size_t dynamic_count;
 	Elf32_Word dynamic_flags;
-	Elf32_Phdr* phdr1 = (Elf32_Phdr*)malloc(0x1000-0x34);
-	uc_mem_read(g_uc,base+0x34,phdr1,0x1000-0x34);
+	Elf32_Phdr* phdr1 = (Elf32_Phdr*)malloc(0x1000);
+	uc_mem_read(g_uc,base+0x34,phdr1,0x1000);
 	phdr_table_get_dynamic_section(phdr1, phnum, base, &si->dynamic,
 			&dynamic_count, &dynamic_flags, reader);
 	if (si->dynamic == NULL) {

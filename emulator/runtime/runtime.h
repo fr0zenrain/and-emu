@@ -131,12 +131,15 @@ public:
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);
 	static void* sys_dlclose(void*);
+    static void* sys_dladdr(void*);
 	static void* sys_mprotect(void*);
 	static void* sys_realloc(void*);
 	static void* s__cxa_exit(void*);
 	static void* s__cxa_finalize(void*);
 	static void* s_printf(void*);
 	static void* s_srand(void*);
+	static void* s_srand48(void*);
+    static void* s_lrand48(void*);
 };
 
 

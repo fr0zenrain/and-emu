@@ -4630,17 +4630,15 @@ int DeleteWeakGlobalRef()
 int ExceptionCheck() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
 
 #ifdef _MSC_VER
-	printf("ExceptionCheck(\"%s\")\n",buffer);
+	printf("ExceptionCheck()\n");
 #else
-	printf(RED "ExceptionCheck(\"%s\")\n" RESET, buffer);
-#endif 
+	printf(RED "ExceptionCheck()\n" RESET);
+#endif
+	emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 

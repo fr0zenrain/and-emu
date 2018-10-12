@@ -254,6 +254,26 @@ void* libc::sys_dlclose(void*)
 	return 0;
 }
 
+void* libc::sys_dladdr(void*)
+{
+    uc_err err;
+    int value = 1;
+    unsigned int addr = emulator::get_r0();
+    unsigned int dlinfo = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("dladdr(0x%x,0x%x)-> 0x%x\n",addr, dlinfo, value);
+#else
+    printf(RED "dladdr(0x%x,0x%x)-> 0x%x\n" RESET,addr, dlinfo, value);
+#endif
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+    emulator::update_cpu_model();
+
+    return 0;
+}
+
+
 void* libc::s__system_property_get(void*)
 {
 	int ret = 0;
@@ -1365,12 +1385,13 @@ void* libc::s_fclose(void*)
 void* libc::s_time(void*)
 {
 	uc_err err;
-	int value = time(0);
+	long seed = emulator::get_r0();
+	int value = time((time_t*)seed);
 
 #ifdef _MSC_VER
-	printf("time()-> 0x%x\n",  value);
+	printf("time(%x)-> 0x%x\n", seed, value);
 #else
-	printf(RED "time()-> 0x%x\n" RESET, value);
+	printf(RED "time(%x)-> 0x%x\n" RESET, seed, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2101,18 +2122,28 @@ void* libc::s_pread(void*)
 
 void* libc::s_memmove(void*)
 {
-	uc_err err;
-	int value = 0;
+    uc_err err;
+    int size = emulator::get_r2();
+    unsigned int src = emulator::get_r1();
+    unsigned int dst = emulator::get_r0();
+
+    void* ptr = malloc(size);
+    if(ptr)
+    {
+        err = uc_mem_read(g_uc,src,ptr,size);
+        err = uc_mem_write(g_uc,dst,ptr,size);
+        free(ptr);
+    }
 
 #ifdef _MSC_VER
-	printf("memmove()-> 0x%x\n",  value);
+    printf("memove(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
 #else
-	printf(RED "memmove()-> 0x%x\n" RESET, value);
+    printf(RED "memove(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,dst,src,size,dst);
 #endif
 
 	emulator::update_cpu_model();
 
-	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&dst);
 	return 0;
 }
 
@@ -2248,6 +2279,42 @@ void* libc::s_srand(void*)
     return 0;
 }
 
+void* libc::s_srand48(void*)
+{
+    uc_err err;
+    int value = 0;
+    int seed = emulator::get_r0();
+    srand48(seed);
+
+#ifdef _MSC_VER
+    printf("srand48(0x%x)\n", seed);
+#else
+    printf(RED "srand48(0x%x)\n" RESET, seed);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+void* libc::s_lrand48(void*)
+{
+    uc_err err;
+    int value = lrand48();
+
+#ifdef _MSC_VER
+    printf("lrand48()-> 0x%x\n", value);
+#else
+    printf(RED "lrand48()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2261,6 +2328,7 @@ symbols g_syms[] =
 	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,1},
 	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,1},
 	{0x48800e70,"dlclose",(void*)libc::sys_dlclose,1},
+    {0x0dbb3b8a,"dladdr",(void*)libc::sys_dladdr,1,},
 	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,1},
 	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,1},
 	{0xbc836fa7,"strdup",(void*)libc::s_strdup,1},
@@ -2340,7 +2408,8 @@ symbols g_syms[] =
 	{0x2a601179,"getopt",(void*)libc::s_getopt,1,},
     {0xd21739f1,"printf",(void*)libc::s_printf,1,0xff},
 	{0x41d2476a,"srand",(void*)libc::s_srand,1,},
-
+    {0xa55b4f5a,"srand48",(void*)libc::s_srand48,1,},
+    {0x34cda37d,"lrand48",(void*)libc::s_lrand48,1,},
 };
 
 
