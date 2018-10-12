@@ -258,8 +258,14 @@ void* libc::sys_dladdr(void*)
 {
     uc_err err;
     int value = 1;
+    Dl_info info;
     unsigned int addr = emulator::get_r0();
     unsigned int dlinfo = emulator::get_r1();
+    info.dli_fname =(char*)sys_malloc(128);
+    info.dli_fbase = (void*)emulator::get_main_module()->load_bias;
+
+    err = uc_mem_write(g_uc, (uint64_t)info.dli_fname, "libjiagu.so", 11);
+    err = uc_mem_write(g_uc, dlinfo, &info, sizeof(Dl_info));
 
 #ifdef _MSC_VER
     printf("dladdr(0x%x,0x%x)-> 0x%x\n",addr, dlinfo, value);
@@ -891,7 +897,7 @@ void* libc::s_raise(void*)
 void* libc::s_getpid(void*)
 {
     uc_err err;
-    int value = 1234;
+    int value = emulator::get_module_pid();
 
 #ifdef _MSC_VER
     printf("getpid()-> 0x%x\n",  value);
@@ -2321,9 +2327,8 @@ void* libc::s_strstr(void*)
 	char dst_buf[1024] = {0};
 	char src_buf[64] = {0};
 	int value = 0;
-    int dst = emulator::get_r0();
-	int src = emulator::get_r1();
-
+    unsigned int dst = emulator::get_r0();
+    unsigned int src = emulator::get_r1();
 	err = uc_mem_read(g_uc, dst, dst_buf, 1024);
 	err = uc_mem_read(g_uc, src, src_buf, 64);
 	char* ptr = strstr(dst_buf, src_buf);
@@ -2332,9 +2337,9 @@ void* libc::s_strstr(void*)
 	}
 
 #ifdef _MSC_VER
-    printf("strstr(\"%s\", \"%s\")-> 0x%x\n", dst, src, value);
+    printf("strstr(\"%s\", \"%s\")-> 0x%x\n", dst_buf, src_buf, value);
 #else
-    printf(RED "strstr(\"%s\", \"%s\")-> 0x%x\n" RESET, dst, src, value);
+    printf(RED "strstr(\"%s\", \"%s\")-> 0x%x\n" RESET, dst_buf, src_buf, value);
 #endif
 
     emulator::update_cpu_model();

@@ -35,6 +35,7 @@ uc_engine* emulator::uc = 0;
 uc_context* emulator::context = 0;
 soinfo* emulator::helper_info = 0;
 soinfo* emulator::module_info = 0;
+int emulator::main_pid = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -90,6 +91,7 @@ emulator::emulator(uc_mode mode)
     trace_inter = 0;
 	trace_unmap = 0;
     JNIEnv = 0;
+    main_pid = 1234;
 
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
@@ -475,6 +477,8 @@ void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *
 void emulator::start_emulator(unsigned int pc, soinfo * si)
 {
     uc_err err;
+    module_info = si;
+
     err=uc_reg_write(uc, UC_ARM_REG_PC, &pc);
 
     if(trace_code)
@@ -529,8 +533,6 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     {
         printf("Failed on uc_emu_start() with error returned: %u\n", err);
     }
-
-	module_info = si;
 }
 
 int emulator::init_stack()

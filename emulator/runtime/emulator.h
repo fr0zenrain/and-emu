@@ -98,6 +98,8 @@ public:
 	int process_breakpoint();
     int save_cpu_status();
     int restore_cpu_status();
+    static int get_module_pid(){return main_pid;}
+    static soinfo* get_main_module(){return module_info;}
 
 private:
     static emulator* instance;
@@ -121,6 +123,7 @@ private:
     uc_hook trace_inter;
     uc_hook trace_unmap;
 	libc* c;
+	static int main_pid;
 	static soinfo* module_info;
 };
 

@@ -369,6 +369,63 @@ static int hook_mem_access(uc_engine *uc, uc_mem_type type, uint64_t addr, int s
 	return 1;
 }
 
+int generate_proc_info(){
+    char buf[512] ={0};
+    char cur_dir[1024] ={0};
+	static const char* status = "Name:   com.baidu.search\n"
+			"State:  R (running)\n"
+			"Tgid:   7910\n"
+			"Pid:    1234\n"
+			"PPid:   510\n"
+			"TracerPid:      0\n"
+			"Uid:    2000    2000    2000    2000\n"
+			"Gid:    2000    2000    2000    2000\n"
+			"FDSize: 32\n"
+			"Groups: 1004 1007 1011 1015 1028 3001 3002 3003 3006\n"
+			"VmPeak:     3240 kB\n"
+			"VmSize:     3240 kB\n"
+			"VmLck:         0 kB\n"
+			"VmPin:         0 kB\n"
+			"VmHWM:      1268 kB\n"
+			"VmRSS:      1268 kB\n"
+			"VmData:     1152 kB\n"
+			"VmStk:       136 kB\n"
+			"VmExe:       160 kB\n"
+			"VmLib:      1412 kB\n"
+			"VmPTE:         6 kB\n"
+			"VmSwap:        0 kB\n"
+			"Threads:        1\n"
+			"SigQ:   0/11693\n"
+			"SigPnd: 0000000000000000\n"
+			"ShdPnd: 0000000000000000\n"
+			"SigBlk: 0000000000000000\n"
+			"SigIgn: 0000000000380000\n"
+			"SigCgt: 000000000801f4ff\n"
+			"CapInh: 0000000000000000\n"
+			"CapPrm: 0000000000000000\n"
+			"CapEff: 0000000000000000\n"
+			"CapBnd: fffffff0000000c0\n"
+			"Cpus_allowed:   f\n"
+			"Cpus_allowed_list:      0-3\n"
+			"voluntary_ctxt_switches:        36\n"
+			"nonvoluntary_ctxt_switches:     13";
+
+#ifndef _MSC_VER
+    getcwd(cur_dir,1024);
+#else
+    GetCurrentDirectory(1024,cur_dir);
+#endif
+    strcat(cur_dir,"/proc/self/status");
+    printf("%s\n",cur_dir);
+	FILE* fd = fopen(cur_dir, "wb");
+	if (fd)
+	{
+		fwrite(status, 1, strlen(status), fd);
+		fclose(fd);
+	}
+
+    return 1;
+}
 
 soinfo* load_android_so(const char* path)
 {
@@ -382,6 +439,7 @@ soinfo* load_android_so(const char* path)
         printf("%x: 0x%x -> %s\n", (int)handle->plt_got+i*4, buf[i], emulator::get_symbols(buf[i]));
     }
     free(buf);
+    generate_proc_info();
 	return handle;
 }
 
