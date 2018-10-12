@@ -2315,6 +2315,34 @@ void* libc::s_lrand48(void*)
     return 0;
 }
 
+void* libc::s_strstr(void*)
+{
+    uc_err err;
+	char dst_buf[1024] = {0};
+	char src_buf[64] = {0};
+	int value = 0;
+    int dst = emulator::get_r0();
+	int src = emulator::get_r1();
+
+	err = uc_mem_read(g_uc, dst, dst_buf, 1024);
+	err = uc_mem_read(g_uc, src, src_buf, 64);
+	char* ptr = strstr(dst_buf, src_buf);
+	if (ptr) {
+		value = dst + ptr - dst_buf;
+	}
+
+#ifdef _MSC_VER
+    printf("strstr(\"%s\", \"%s\")-> 0x%x\n", dst, src, value);
+#else
+    printf(RED "strstr(\"%s\", \"%s\")-> 0x%x\n" RESET, dst, src, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2410,6 +2438,7 @@ symbols g_syms[] =
 	{0x41d2476a,"srand",(void*)libc::s_srand,1,},
     {0xa55b4f5a,"srand48",(void*)libc::s_srand48,1,},
     {0x34cda37d,"lrand48",(void*)libc::s_lrand48,1,},
+    {0x52ff8a3f,"strstr",(void*)libc::s_strstr,1,},
 };
 
 

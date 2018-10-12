@@ -140,6 +140,7 @@ public:
 	static void* s_srand(void*);
 	static void* s_srand48(void*);
     static void* s_lrand48(void*);
+	static void* s_strstr(void*);
 };
 
 

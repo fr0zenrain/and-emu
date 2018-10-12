@@ -379,7 +379,7 @@ soinfo* load_android_so(const char* path)
     int * buf = (int*)malloc(handle->plt_rel_count*4);
     err = uc_mem_read(g_uc, (uint64_t)handle->plt_got, buf, handle->plt_rel_count*4);
     for (int i = 0; i < handle->plt_rel_count; i++){
-        printf("0x%x -> %s\n", buf[i], emulator::get_symbols(buf[i]));
+        printf("%x: 0x%x -> %s\n", (int)handle->plt_got+i*4, buf[i], emulator::get_symbols(buf[i]));
     }
     free(buf);
 	return handle;
