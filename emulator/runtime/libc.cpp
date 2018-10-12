@@ -254,6 +254,28 @@ void* libc::sys_dlclose(void*)
 	return 0;
 }
 
+void* libc::sys_dlsym(void*)
+{
+	uc_err err;
+	int value = 0;
+	char buf[256] = {0};
+	unsigned int addr = emulator::get_r0();
+	unsigned int sym = emulator::get_r1();
+	err = uc_mem_read(g_uc, sym, buf, 256);
+
+#ifdef _MSC_VER
+	printf("dlsym(0x%x, \"%s\")-> 0x%x\n",addr,buf, value);
+#else
+	printf(RED "dlsym(0x%x, \"%s\")-> 0x%x\n" RESET,addr,buf, value);
+#endif
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
+
+	emulator::update_cpu_model();
+
+	return 0;
+}
+
+
 void* libc::sys_dladdr(void*)
 {
     uc_err err;
@@ -2361,6 +2383,7 @@ symbols g_syms[] =
 	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,1},
 	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,1},
 	{0x48800e70,"dlclose",(void*)libc::sys_dlclose,1},
+	{0x40296778,"dlsym",(void*)libc::sys_dlsym,1},
     {0x0dbb3b8a,"dladdr",(void*)libc::sys_dladdr,1,},
 	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,1},
 	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,1},

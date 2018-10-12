@@ -331,7 +331,8 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
         if (strcmp(name, "dladdr") == 0 ||
             strcmp(name, "dlclose") == 0 ||
             strcmp(name, "dlsym") == 0 ||
-            strcmp(name, "dladdr") == 0){
+            strcmp(name, "dladdr") == 0 ||
+            strcmp(name, "dlopen") == 0){
             Elf32_Sym* sym = ((emulator*)si->emulator)->get_symbols(name, hash);
             sym->st_value += FUNCTION_VIRTUAL_ADDRESS;
             return sym;

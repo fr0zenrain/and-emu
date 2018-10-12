@@ -131,6 +131,7 @@ public:
 	static void* sys_cacheflush(int type);
 	static void* sys_dlopen(void*);
 	static void* sys_dlclose(void*);
+	static void* sys_dlsym(void*);
     static void* sys_dladdr(void*);
 	static void* sys_mprotect(void*);
 	static void* sys_realloc(void*);
