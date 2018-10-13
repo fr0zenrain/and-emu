@@ -174,13 +174,19 @@ void* libc::sys_mmap(int type)
 
 	if(addr == 0)
 	{
-		addr = (unsigned int)s_mmap(0,size,PROT_NONE,MAP_PRIVATE,fd, offset);
+        if (fd < -1){
+            fd = -1;
+        }
+		addr = (unsigned int)s_mmap(NULL,size,PROT_NONE,MAP_PRIVATE, fd, offset);
+		if (addr == -1){
+			printf("mmap failed %s\n", strerror(errno));
+		}
 	}
 
 #ifdef _MSC_VER
-	printf("mmap(0x%x,0x%x,0x%x,%d,0x%x)-> 0x%x\n",emulator::get_r0(),size,prot,fd,offset,addr);
+	printf("mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",addr,size,prot,fd,offset,addr);
 #else
-	printf(RED "mmap(0x%x,0x%x,0x%x,%d,0x%x)-> 0x%x\n" RESET,emulator::get_r0(),size,prot,fd,offset,addr);
+	printf(RED "mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,size,prot,fd,offset,addr);
 #endif
 
 	if(type == 0)
