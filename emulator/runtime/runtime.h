@@ -142,6 +142,8 @@ public:
 	static void* s_srand48(void*);
     static void* s_lrand48(void*);
 	static void* s_strstr(void*);
+    static void* s_strtol(void*);
+	static void* s_calloc(void*);
 };
 
 

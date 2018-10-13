@@ -416,7 +416,7 @@ int generate_proc_info(){
     GetCurrentDirectory(1024,cur_dir);
 #endif
     strcat(cur_dir,"/proc/self/status");
-    printf("%s\n",cur_dir);
+
 	FILE* fd = fopen(cur_dir, "wb");
 	if (fd)
 	{

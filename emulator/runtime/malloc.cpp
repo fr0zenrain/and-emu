@@ -3863,11 +3863,22 @@ static void* mmap_alloc(mstate m, size_t nb) {
       size_t offset = align_offset(chunk2mem(mm));
       size_t psize = mmsize - offset - MMAP_FOOT_PAD;
       mchunkptr p = (mchunkptr)(mm + offset);
-      p->prev_foot = offset;
-      p->head = psize;
+      //p->prev_foot = offset;
+      //p->head = psize;
+      unsigned int addr = (int)p + offsetof(malloc_chunk,prev_foot);
+      uc_err err = uc_mem_write(g_uc,addr,&offset, 4);
+      addr = (int)p + offsetof(malloc_chunk,head);
+      err = uc_mem_write(g_uc,addr,&psize, 4);
+
       mark_inuse_foot(m, p, psize);
-      chunk_plus_offset(p, psize)->head = FENCEPOST_HEAD;
-      chunk_plus_offset(p, psize+SIZE_T_SIZE)->head = 0;
+      //chunk_plus_offset(p, psize)->head = FENCEPOST_HEAD;
+      //chunk_plus_offset(p, psize+SIZE_T_SIZE)->head = 0;
+      addr = (int)p + psize + 4;
+      int value = FENCEPOST_HEAD;
+      err = uc_mem_write(g_uc,addr,&value, 4);
+      addr = (int)p + psize + SIZE_T_SIZE + 4;
+      value = 0;
+      err = uc_mem_write(g_uc,addr,&value, 4);
 
       if (m->least_addr == 0 || mm < m->least_addr)
         m->least_addr = mm;

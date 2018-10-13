@@ -20,10 +20,9 @@
 #include <errno.h>
 #endif
 
-
 extern uc_engine* g_uc;
 soinfo* libc::si =0;
-
+extern void* s_dlsym(void* handle, const char* symbol);
 
 void libc::init(emulator* emu)
 {
@@ -52,6 +51,25 @@ void* libc::s_malloc(void*)
 	return 0;
 }
 
+void* libc::s_calloc(void*)
+{
+    int count = emulator::get_r0();
+    int size = emulator::get_r1();
+    void* addr = sys_malloc(size*count);
+
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("calloc(0x%x, 0x%x) ->0x%x\n", count, size,addr);
+#else
+    printf(RED "calloc(0x%x, 0x%x) ->0x%p\n" RESET,count, size,addr);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+    return 0;
+}
+
+
 void* libc::s_free(void*)
 {
     unsigned int ptr = emulator::get_r0();
@@ -59,7 +77,7 @@ void* libc::s_free(void*)
 	emulator::update_cpu_model();
 	
 	if(ptr)
-		;//sys_free((void*)ptr); //FIXME free has a bug
+		sys_free((void*)ptr); //FIXME free has a bug
 
 #ifdef _MSC_VER
 	printf("free(0x%x)\n",ptr);
@@ -262,13 +280,14 @@ void* libc::sys_dlsym(void*)
 	unsigned int addr = emulator::get_r0();
 	unsigned int sym = emulator::get_r1();
 	err = uc_mem_read(g_uc, sym, buf, 256);
+    value = (int)s_dlsym((void*)addr, buf);
 
 #ifdef _MSC_VER
 	printf("dlsym(0x%x, \"%s\")-> 0x%x\n",addr,buf, value);
 #else
 	printf(RED "dlsym(0x%x, \"%s\")-> 0x%x\n" RESET,addr,buf, value);
 #endif
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
 	emulator::update_cpu_model();
 
@@ -546,9 +565,9 @@ void* libc::s_open(void*)
 	}
 
 #ifdef _MSC_VER
-	printf("open(\"%s\")-> 0x%x\n",buf,value);
+	printf("open(\"%s\", 0x%x)-> 0x%x\n",buf, mode, value);
 #else
-	printf(RED "open(\"%s\")-> 0x%x\n" RESET,buf,value);
+	printf(RED "open(\"%s\", 0x%x)-> 0x%x\n" RESET,buf,mode,value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1573,11 +1592,13 @@ void* libc::s_kill(void*)
 {
     uc_err err;
     int value = 0;
+    int pid = emulator::get_r0();
+    int sig = emulator::get_r1();
 
 #ifdef _MSC_VER
-    printf("kill()-> 0x%x\n",  value);
+    printf("kill(0x%x, 0x%x)-> 0x%x\n", pid, sig, value);
 #else
-    printf(RED "kill()-> 0x%x\n" RESET, value);
+    printf(RED "kill(0x%x, 0x%x)-> 0x%x\n" RESET, pid, sig, value);
 #endif
 
     emulator::update_cpu_model();
@@ -2011,16 +2032,6 @@ void* libc::s_strncpy(void*)
     unsigned int src = emulator::get_r1();
     int n = emulator::get_r2();
 
-    if(dst)
-    {
-        for(int i = 0; i < 512; i++)
-        {
-            err = uc_mem_read(g_uc,dst+i,&buf[i],1);
-            if(buf[i] == 0)
-                break;
-        }
-    }
-
     if(src)
     {
         for(int i = 0; i < 512; i++)
@@ -2031,14 +2042,13 @@ void* libc::s_strncpy(void*)
         }
     }
 
+    strncpy(buf,buf1,n);
+    err = uc_mem_write(g_uc,dst,buf,strlen(buf));
 #ifdef _MSC_VER
     printf("strncpy(\"%s\",\"%s\",0x%x)-> 0x%x\n", buf, buf1, n, dst);
 #else
     printf(RED "strncpy(\"%s\",\"%s\",0x%x)-> 0x%x\n" RESET, buf, buf1,n, dst);
 #endif
-
-    strncpy(buf,buf1,n);
-    err = uc_mem_write(g_uc,dst,buf,strlen(buf));
 
     emulator::update_cpu_model();
 
@@ -2370,11 +2380,36 @@ void* libc::s_strstr(void*)
     return 0;
 }
 
+void* libc::s_strtol(void*)
+{
+    uc_err err;
+    char dst_buf[1024] = {0};
+    unsigned int dst = emulator::get_r0();
+    unsigned int end_ptr = emulator::get_r1();
+    unsigned int base = emulator::get_r2();
+    err = uc_mem_read(g_uc, dst, dst_buf, 1024);
+    char* end_x = NULL;
+    int value = strtol(dst_buf, &end_x, base);
+
+#ifdef _MSC_VER
+    printf("strtol(\"%s\", %x, 0x%x)-> 0x%x\n", dst_buf, end_ptr, base, value);
+#else
+    printf(RED "strtol(\"%s\", %x, 0x%x)-> 0x%x\n" RESET, dst_buf, end_ptr, base, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
 	{0x4b3bddf7,"__cxa_exit",(void*)libc::s__cxa_exit,1},
 	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
+    {0x1c13e31d,"realloc",(void*)libc::s_realloc,1},
+    {0x9d13bfdf,"calloc",(void*)libc::s_calloc,1,},
 	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
 	{0x8463960a,"memset",(void*)libc::s_memset,0},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
@@ -2409,7 +2444,6 @@ symbols g_syms[] =
     {0x6692b54,"access",(void*)libc::s_access,1},
     {0xfab5b424,"abort",(void*)libc::s_abort,1},
     {0x900f6a6e,"strcat",(void*)libc::s_strcat,1},
-    {0x9d13bfdf,"calloc",(void*)libc::s_malloc,1},
 	{0x93f54eea,"pthread_mutex_init",(void*)libc::s_pthread_mutex_init,1},
     {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,1},
     {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,1},
@@ -2432,8 +2466,7 @@ symbols g_syms[] =
     {0xeb5e1d3e,"readdir",(void*)libc::s_readdir,1},
 	{0x7992dd03,"closedir",(void*)libc::s_closedir,1},
     {0x4638c890,"getppid",(void*)libc::s_getppid,1},
-    {0x7295669,"kill",(void*)libc::s_kill,1},
-    {0x1c13e31d,"realloc",(void*)libc::s_realloc,1},
+    {0x07295669,"kill",(void*)libc::s_kill,1},
     {0x272d2162,"atoi",(void*)libc::s_atoi,1},
     {0xec4281bf,"itoa",(void*)libc::s_itoa,1},
     {0x20b8ff21,"stat",(void*)libc::s_stat,1},
@@ -2467,6 +2500,7 @@ symbols g_syms[] =
     {0xa55b4f5a,"srand48",(void*)libc::s_srand48,1,},
     {0x34cda37d,"lrand48",(void*)libc::s_lrand48,1,},
     {0x52ff8a3f,"strstr",(void*)libc::s_strstr,1,},
+	{0x04896a43,"strtol",(void*)libc::s_strtol,1,},
 };
 
 
