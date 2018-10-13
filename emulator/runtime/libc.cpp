@@ -76,8 +76,8 @@ void* libc::s_free(void*)
 
 	emulator::update_cpu_model();
 	
-	if(ptr)
-		sys_free((void*)ptr); //FIXME free has a bug
+	//if(ptr)
+	//	sys_free((void*)ptr); //FIXME free has a bug
 
 #ifdef _MSC_VER
 	printf("free(0x%x)\n",ptr);

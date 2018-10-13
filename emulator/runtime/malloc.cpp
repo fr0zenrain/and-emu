@@ -4787,8 +4787,15 @@ void* dlmalloc(size_t bytes) {
       if (rsize >= MIN_CHUNK_SIZE) { /* split dv */
         mchunkptr r = gm->dv = chunk_plus_offset(p, nb);
         gm->dvsize = rsize;
-        set_size_and_pinuse_of_free_chunk(r, rsize);
-        set_size_and_pinuse_of_inuse_chunk(gm, p, nb);
+        //set_size_and_pinuse_of_free_chunk(r, rsize);
+        //set_size_and_pinuse_of_inuse_chunk(gm, p, nb);
+        int addr = (int)r + rsize;
+        uc_mem_write(g_uc, addr, &rsize, 4);
+        addr = (int)r + offsetof(malloc_chunk, head);
+        uc_mem_write(g_uc, addr, &rsize, 4);
+        addr = (int)p + offsetof(malloc_chunk, head);
+        int value = PINUSE_BIT|CINUSE_BIT;
+        uc_mem_write(g_uc, addr, &value, 4);
       }
       else { /* exhaust dv */
         size_t dvs = gm->dvsize;
@@ -5006,7 +5013,11 @@ void dlfree(void* mem) {
             else if (next == fm->dv) {
               size_t dsize = fm->dvsize += psize;
               fm->dv = p;
-              set_size_and_pinuse_of_free_chunk(p, dsize);
+              //set_size_and_pinuse_of_free_chunk(p, dsize);
+              int addr = (int)p + dsize;
+              uc_mem_write(g_uc, addr, &dsize, 4);
+              addr = (int)p + offsetof(malloc_chunk, head);
+              uc_mem_write(g_uc, addr, &dsize, 4);
               goto postaction;
             }
             else 

@@ -114,6 +114,7 @@ private:
     int load_library();
     int init_env_func(void* invoke, void* addr);
     int init_ret_stub();
+	static int get_module_base(int addr);
 	static unsigned int get_helper_symbols(const char* name);
 
     std::map<unsigned int,void*> signal_map;

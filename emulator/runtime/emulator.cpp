@@ -428,7 +428,11 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         int count = cs_disasm(handle,(unsigned char*) buf, 4, address, 0, &insn);
         if(count)
         {
-            int offset = (int)insn->address-si->base;
+            int offset = (int)insn->address - si->base;
+            if (offset > EMULATOR_MEMORY_START)
+            {
+               offset = insn->address;
+            }
             if(insn->size == 2)
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
@@ -718,6 +722,21 @@ int emulator::init_ret_stub()
     err = uc_mem_write(uc,(uint64_t)EMULATOR_PAUSE_ADDRESS,&svc_thumb,4);
 
     return 1;
+}
+
+int emulator::get_module_base(int addr)
+{
+    int base = 0;
+    soinfo * si = solist;
+    while (si){
+        if (addr > si->base && addr < si->base+si->size)
+        {
+            base = si->base;
+            break;
+        }
+        si = si->next;
+    }
+    return base;
 }
 
 int emulator::save_signal_handler(int sig,void* handler)
