@@ -20,9 +20,9 @@ struct soinfo;
 
 struct s_timeval {
 #ifdef _MSC_VER
-	unsigned __int64  tv_sec;     /* seconds */
+	long  tv_sec;     /* seconds */
 #else
-	long long      tv_sec;     /* seconds */
+	long  tv_sec;     /* seconds */
 #endif
 	int tv_usec;    /* microseconds */
 };

@@ -100,6 +100,8 @@ public:
     int restore_cpu_status();
     static int get_module_pid(){return main_pid;}
     static soinfo* get_main_module(){return module_info;}
+    static soinfo* get_fake_solist(){return fake_solist;}
+    static int init_fake_soinfolist();
 
 private:
     static emulator* instance;
@@ -110,6 +112,7 @@ private:
     unsigned int JNIEnv;
 	unsigned int JVM;
     int init_emulator();
+    int init_vectors();
     int init_stack();
     int load_library();
     int init_env_func(void* invoke, void* addr);
@@ -126,6 +129,7 @@ private:
 	libc* c;
 	static int main_pid;
 	static soinfo* module_info;
+	static soinfo* fake_solist;
 };
 
 #endif

@@ -244,9 +244,13 @@ void* libc::sys_dlopen(void*)
 				break;
 		}
 	}
-
-	si = (soinfo*)s_dlopen(buf,0);
-	
+    if (strcmp(buf,"libdl.so") == 0)
+    {
+        si = emulator::get_fake_solist();
+    }
+	else{
+        si = (soinfo*)s_dlopen(buf,0);
+    }
 #ifdef _MSC_VER
 	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,flags,si);
 #else
@@ -363,6 +367,7 @@ void* libc::s_gettimeofday(void*)
 	int value = 0;
 
     unsigned int addr = emulator::get_r0();
+	unsigned int tz = emulator::get_r1();
 
 	if(addr)
 	{
@@ -1489,8 +1494,7 @@ void* libc::s__stack_chk_fail(void*)
 
 void* libc::s__stack_chk_guard(void*)
 {
-
-	return 0;
+    return 0;
 }
 
 
