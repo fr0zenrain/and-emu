@@ -144,6 +144,13 @@ public:
 	static void* s_strstr(void*);
     static void* s_strtol(void*);
 	static void* s_calloc(void*);
+	static void* s_getenv(void*);
+    static void* s_pthread_cond_broadcast(void*);
+    static void* s_pthread_cond_wait(void*);
+    static void* s_fwrite(void*);
+    static void* s_strrchr(void*);
+    static void* s_memcmp(void*);
+	static void* s__aeabi_atexit(void*);
 };
 
 

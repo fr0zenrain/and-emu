@@ -2413,6 +2413,169 @@ void* libc::s_strtol(void*)
     return 0;
 }
 
+void* libc::s_getenv(void*)
+{
+    uc_err err;
+    char var[1024] = {0};
+    unsigned int addr = emulator::get_r0();
+    err = uc_mem_read(g_uc, addr, var, 1024);
+    unsigned int value = (unsigned int)sys_malloc(4);
+    err = uc_mem_write(g_uc, value, "0\x00\x00", 4);
+
+#ifdef _MSC_VER
+    printf("getenv(\"%s\")-> 0x%x\n", var, value);
+#else
+    printf(RED "getenv(\"%s\")-> 0x%x\n" RESET, var, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+void* libc::s_pthread_cond_broadcast(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int addr = emulator::get_r0();
+
+
+#ifdef _MSC_VER
+    printf("pthread_cond_broadcast(0x%x)-> 0x%x\n", addr, value);
+#else
+    printf(RED "pthread_cond_broadcast(0x%x)-> 0x%x\n" RESET, addr, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+void* libc::s_pthread_cond_wait(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int addr = emulator::get_r0();
+    unsigned int mutex = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("pthread_cond_wait(0x%x,0x%x)-> 0x%x\n", addr,mutex, value);
+#else
+    printf(RED "pthread_cond_wait(0x%x,0x%x)-> 0x%x\n" RESET, addr,mutex, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+void* libc::s_fwrite(void*)
+{
+    uc_err err;
+    char var[1024] = {0};
+    unsigned int buf_addr = emulator::get_r0();
+    unsigned int count = emulator::get_r1();
+    unsigned int size = emulator::get_r2();
+
+#ifdef _MSC_VER
+    printf("fwrite(\"%s\")-> 0x%x\n", var, size);
+#else
+    printf(RED "fwrite(\"%s\")-> 0x%x\n" RESET, var, size);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &size);
+    return 0;
+}
+
+void* libc::s_strrchr(void*)
+{
+    uc_err err;
+    char buf[1024] = {0};
+    unsigned int buf_addr = emulator::get_r0();
+    unsigned int var = emulator::get_r1();
+
+    int value = 0;
+    err = uc_mem_read(g_uc, buf_addr, buf, 1024);
+    char* ptr = strrchr(buf, var);
+    if (ptr) {
+        value = buf_addr + ptr - buf;
+    }
+
+#ifdef _MSC_VER
+    printf("strrchr(\"%s\",0x%x)-> 0x%x\n", buf, var, value);
+#else
+    printf(RED "strrchr(\"%s\",0x%x)-> 0x%x\n" RESET, buf, var, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+void* libc::s_memcmp(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned char buf[512] ={0};
+    unsigned char buf1[512] ={0};
+
+    unsigned int addr = emulator::get_r0();
+    unsigned int addr1 = emulator::get_r1();
+    int size = emulator::get_r2();
+
+    if(addr)
+    {
+        err = uc_mem_read(g_uc,addr,buf,512);
+    }
+
+    if(addr1)
+    {
+        err = uc_mem_read(g_uc,addr1,buf1,512);
+    }
+
+    value = memcmp(buf,buf1,size);
+
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("memcmp(0x%x,0x%x,0x%x)-> 0x%x\n",addr,addr1,size,value);
+#else
+    printf(RED "memcmp(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,addr1,size,value);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+    return 0;
+}
+
+void* libc::s__aeabi_atexit(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int addr = emulator::get_r0();
+    unsigned int addr1 = emulator::get_r1();
+	unsigned int addr2 = emulator::get_r2();
+
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("__aeabi_atexit(0x%x,0x%x,0x%x)-> 0x%x\n",addr,addr1,addr2,value);
+#else
+    printf(RED "__aeabi_atexit(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,addr1,addr2,value);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2511,6 +2674,13 @@ symbols g_syms[] =
     {0x34cda37d,"lrand48",(void*)libc::s_lrand48,1,},
     {0x52ff8a3f,"strstr",(void*)libc::s_strstr,1,},
 	{0x04896a43,"strtol",(void*)libc::s_strtol,1,},
+    {0x1db8ca5c,"getenv",(void*)libc::s_getenv,1,},
+    {0xca3b2c4d,"pthread_cond_broadcast",(void*)libc::s_pthread_cond_broadcast,1,},
+    {0xeaa33ee8,"pthread_cond_wait",(void*)libc::s_pthread_cond_wait,1,},
+    {0xd426c0a6,"fwrite",(void*)libc::s_fwrite,1,},
+    {0xcbc50561,"strrchr",(void*)libc::s_strrchr,1,},
+    {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,1,},
+    {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,1,},
 };
 
 
