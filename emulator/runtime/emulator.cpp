@@ -116,11 +116,13 @@ emulator::emulator(uc_mode mode)
     //set return address
     uintptr_t lr = EMULATOR_PAUSE_ADDRESS;
     lr |= 1;
+
     err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
     err=uc_reg_write(uc, UC_ARM_REG_R0, &JNIEnv);
     //void* object = sys_malloc(0x1000);
     //err=uc_reg_write(uc, UC_ARM_REG_R1, &object);
     //err = uc_context_alloc(uc, &context);
+    init_jvm();
 }
 
 int emulator::dispose()
@@ -158,6 +160,7 @@ int emulator::init_emulator()
     init_stack();
     load_library();
     init_ret_stub();
+
 	return 1;
 }
 
@@ -730,7 +733,7 @@ int emulator::init_jvm()
     {
         return 0;
     }
-
+    printf("JNIENV 0x%x\n", env);
     void* native_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(native_interface == 0)
     {

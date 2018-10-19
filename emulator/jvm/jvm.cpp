@@ -3389,16 +3389,15 @@ int GetStringUTFLength()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+	unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
 	printf("GetStringUTFLength(\"%s\")\n",buffer);
 #else
 	printf(RED "GetStringUTFLength(\"%s\")\n" RESET, buffer); 
-#endif 
+#endif
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -3407,25 +3406,23 @@ int GetStringUTFLength()
 }
 int GetStringUTFChars() 
 {
-	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0();
-	unsigned int js = emulator::get_r1();
-    unsigned int cp = emulator::get_r2();
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+    int ret = 0;
+    unsigned int env = emulator::get_r0();
+	unsigned int jstr_addr = emulator::get_r1();
+	unsigned int cstr_addr = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
-	printf("GetStringUTFChars(\"%s\")\n",buffer);
+    printf("GetStringUTFChars(0x%x,0x%x,0x%x)\n",env, jstr_addr,cstr_addr,ret);
 #else
-	printf(RED "GetStringUTFChars(\"%s\")\n" RESET, buffer); 
-#endif 
+    printf(RED "GetStringUTFChars(0x%x,0x%x,0x%x)\n" RESET, env, jstr_addr,cstr_addr,ret);
+#endif
+    emulator::update_cpu_model();
 
-	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
+    uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
 
-	return JNI_OK; 
+    return JNI_OK;
 }
 int ReleaseStringUTFChars() 
 {

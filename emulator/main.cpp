@@ -443,6 +443,16 @@ soinfo* load_android_so(const char* path)
 	return handle;
 }
 
+int make_export_func_call(emulator* emu, soinfo* si, const char* name){
+
+    unsigned int func = (unsigned int)s_dlsym(si, name);
+	unsigned int env = emu->get_global_jnienv();
+    uc_err err=uc_reg_write(g_uc, UC_ARM_REG_R0, &env);
+    emu->start_emulator((unsigned int)func,si);
+
+	return 1;
+}
+
 int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
 {
 	uc_hook trace1, trace2;
@@ -588,11 +598,13 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libjiagu.so");
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
+    //make_export_func_call(emu, si, "Java_com_aliyun_security_yunceng_android_sdk_umid_CheckHook_CheckHookByNative");
+
     unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
     JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;
     uint64_t addr =0 ;
     // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
-    emu->init_jvm();
+
 	baidu_protect_init(si);
     //emu->set_breakpoint(si->base + 0x342d);
     emu->start_emulator((unsigned int)JNI_OnLoad,si);

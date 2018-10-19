@@ -102,6 +102,7 @@ public:
     static soinfo* get_main_module(){return module_info;}
     static soinfo* get_fake_solist(){return fake_solist;}
     static int init_fake_soinfolist();
+    unsigned int get_global_jnienv(){return JNIEnv;}
 
 private:
     static emulator* instance;
