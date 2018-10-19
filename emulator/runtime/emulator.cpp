@@ -747,6 +747,7 @@ int emulator::init_jvm()
     uc_reg_write(uc, UC_ARM_REG_R1, &env);
     JNIEnv = (unsigned int)env;
     JVM = (unsigned int)jvm;
+    app_object = sys_malloc(8);
 
     return 1;
 }

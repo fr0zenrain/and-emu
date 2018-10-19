@@ -103,7 +103,7 @@ public:
     static soinfo* get_fake_solist(){return fake_solist;}
     static int init_fake_soinfolist();
     unsigned int get_global_jnienv(){return JNIEnv;}
-
+	void* get_app_object(){return app_object;}
 private:
     static emulator* instance;
     static uc_context* context;
@@ -112,6 +112,7 @@ private:
     static symbols_map* symbol_map;
     unsigned int JNIEnv;
 	unsigned int JVM;
+	void* app_object;
     int init_emulator();
     int init_vectors();
     int init_stack();

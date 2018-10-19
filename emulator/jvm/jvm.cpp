@@ -628,8 +628,7 @@ int GetMethodID()
         }
     }
 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetMethodID(0x%x,0x%x,\"%s\",\"%s\")\n",env,classz,name,sig);
@@ -648,8 +647,7 @@ int CallObjectMethod()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("CallObjectMethod(\"%s\")\n",buffer);
@@ -3371,8 +3369,7 @@ int NewStringUTF()
         }
     }
 
-	if(lr &1)
-		lr -= 1;
+    emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("NewStringUTF(\"%s\")\n",buffer);
@@ -3390,7 +3387,12 @@ int GetStringUTFLength()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0();
+    unsigned int str = emulator::get_r1();
 	unsigned int lr = emulator::get_lr();
+    if (str){
+        uc_mem_read(g_uc, str, buffer, 256);
+	    ret = strlen(buffer);
+    }
 
 #ifdef _MSC_VER
 	printf("GetStringUTFLength(\"%s\")\n",buffer);
@@ -3407,15 +3409,23 @@ int GetStringUTFLength()
 int GetStringUTFChars() 
 {
     int ret = 0;
-    unsigned int env = emulator::get_r0();
+	char buffer[256]={0};
+	unsigned int env = emulator::get_r0();
 	unsigned int jstr_addr = emulator::get_r1();
 	unsigned int cstr_addr = emulator::get_r2();
     unsigned int lr = emulator::get_lr();
+	if (jstr_addr){
+		uc_mem_read(g_uc, jstr_addr, buffer, 256);
+	}
+
+	if(cstr_addr){
+		uc_mem_write(g_uc, cstr_addr, buffer, strlen(buffer));
+	}
 
 #ifdef _MSC_VER
-    printf("GetStringUTFChars(0x%x,0x%x,0x%x)\n",env, jstr_addr,cstr_addr,ret);
+    printf("GetStringUTFChars(0x%x,%s,0x%x)\n",env, buffer,cstr_addr,ret);
 #else
-    printf(RED "GetStringUTFChars(0x%x,0x%x,0x%x)\n" RESET, env, jstr_addr,cstr_addr,ret);
+    printf(RED "GetStringUTFChars(0x%x,%s,0x%x)\n" RESET, env, buffer,cstr_addr,ret);
 #endif
     emulator::update_cpu_model();
 
@@ -3450,8 +3460,7 @@ int GetArrayLength()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetArrayLength(\"%s\")\n",buffer);
@@ -3710,8 +3719,7 @@ int GetByteArrayElements()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetByteArrayElements(\"%s\")\n",buffer);
@@ -3870,8 +3878,7 @@ int ReleaseByteArrayElements()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("ReleaseByteArrayElements(\"%s\")\n",buffer);
@@ -4720,6 +4727,45 @@ int GetObjectRefType()
 	return JNI_OK; 
 }
 
+int AttachCurrentThread()
+{
+	int ret = 0;
+	char buffer[256]={0};
+	unsigned int env = emulator::get_r0();
+	unsigned int lr = emulator::get_lr();
+	emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+	printf("AttachCurrentThread(\"%s\")\n",buffer);
+#else
+	printf(RED "AttachCurrentThread(\"%s\")\n" RESET, buffer);
+#endif
+
+	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
+
+	return JNI_OK;
+}
+
+int DetachCurrentThread()
+{
+    int ret = 0;
+    char buffer[256]={0};
+    unsigned int env = emulator::get_r0();
+    unsigned int lr = emulator::get_lr();
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("DetachCurrentThread(\"%s\")\n",buffer);
+#else
+    printf(RED "DetachCurrentThread(\"%s\")\n" RESET, buffer);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
+
+    return JNI_OK;
+}
 
 
 func_info g_invoke_func[] ={
@@ -4727,8 +4773,8 @@ func_info g_invoke_func[] ={
 	0,
 	0,
 	0,
-	0,
-	0,
+    AttachCurrentThread,
+    DetachCurrentThread,
 	GetEnv,
 	0,
 	0
