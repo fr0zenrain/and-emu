@@ -3417,9 +3417,9 @@ int GetStringUTFChars()
 	}
 
 #ifdef _MSC_VER
-    printf("GetStringUTFChars(0x%x,%s,0x%x) -> 0x%x\n",env, buffer,copy, ret);
+    printf("GetStringUTFChars(0x%x,\"%s\",0x%x) -> 0x%x\n",env, buffer,copy, ret);
 #else
-    printf(RED "GetStringUTFChars(0x%x,%s,0x%x) -> 0x%x\n" RESET, env, buffer,copy, ret);
+    printf(RED "GetStringUTFChars(0x%x,\"%s\",0x%x) -> 0x%x\n" RESET, env, buffer,copy, ret);
 #endif
     emulator::update_cpu_model();
 
@@ -3455,15 +3455,21 @@ int ReleaseStringUTFChars()
 int GetArrayLength() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
+    int tp = 0;
+	unsigned int env = emulator::get_r0();
+    unsigned int arr = emulator::get_r1();
+    unsigned int lr = emulator::get_lr();
+	if (arr){
+		uc_mem_read(g_uc, arr, &ret, 4);
+        uc_mem_read(g_uc, arr, &tp, 4);
+	}
+
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetArrayLength(\"%s\")\n",buffer);
+	printf("GetArrayLength(0x%x) -> 0x%x\n", arr, ret);
 #else
-	printf(RED "GetArrayLength(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetArrayLength(0x%x) -> 0x%x\n" RESET, arr, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3494,15 +3500,21 @@ int NewObjectArray()
 int GetObjectArrayElement() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr();
+    int tp = 0;
+	unsigned int env = emulator::get_r0();
+    unsigned int arr_obj = emulator::get_r1();
+    int index = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
+    uc_mem_read(g_uc, arr_obj+4, &tp, 4);
+
+    uc_mem_read(g_uc, arr_obj+8+index*4,&ret, 4);
+
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetObjectArrayElement(\"%s\")\n",buffer);
+	printf("GetObjectArrayElement(0x%x,0x%x,0x%x) -> 0x%x\n",env, arr_obj, index, ret);
 #else
-	printf(RED "GetObjectArrayElement(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetObjectArrayElement(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, env, arr_obj, index,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);

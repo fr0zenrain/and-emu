@@ -55,4 +55,7 @@ public:
 
 };
 
+#define JTYPE_INT     0
+#define JTYPE_STRING  1
+
 #endif

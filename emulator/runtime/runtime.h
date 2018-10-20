@@ -152,6 +152,7 @@ public:
     static void* s_memcmp(void*);
 	static void* s__aeabi_atexit(void*);
 	static void* s__aeabi_memclr4(void*);
+    static void* s__android_log_print(void*);
 };
 
 

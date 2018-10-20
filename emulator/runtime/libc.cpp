@@ -2606,6 +2606,43 @@ void* libc::s__aeabi_memclr4(void*)
     return 0;
 }
 
+void* libc::s__android_log_print(void*)
+{
+    uc_err err;
+    unsigned char value = 1;
+    char tag_buffer[64] = {0};
+	char fmt_buffer[256] = {0};
+    unsigned int level = emulator::get_r0();
+    unsigned int tag = emulator::get_r1();
+	unsigned int format = emulator::get_r2();
+	int data = emulator::get_r3();
+
+    for(int i = 0; i < 64; i++)
+    {
+        err = uc_mem_read(g_uc,tag+i,&tag_buffer[i],1);
+        if(tag_buffer[i] == 0)
+            break;
+    }
+
+	for(int i = 0; i < 256; i++)
+	{
+		err = uc_mem_read(g_uc,format+i,&fmt_buffer[i],1);
+		if(fmt_buffer[i] == 0)
+			break;
+	}
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("__android_log_print(0x%x,\"%s\",\"%s\", 0x%x)  -> 0x%x\n",level,tag_buffer,fmt_buffer, data,value);
+#else
+    printf(RED "__android_log_print(0x%x,\"%s\",\"%s\", 0x%x)  -> 0x%x \n" RESET,level,tag_buffer,fmt_buffer, data,value);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2713,6 +2750,7 @@ symbols g_syms[] =
     {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,1,},
     {0x5747d5ed,"atol",(void*)libc::s_atoi,1,},
     {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,1,},
+    {0x6c845282,"__android_log_print",(void*)libc::s__android_log_print,1,},
 };
 
 

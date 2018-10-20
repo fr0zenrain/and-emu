@@ -443,6 +443,56 @@ soinfo* load_android_so(const char* path)
 	return handle;
 }
 
+
+unsigned int make_jstring_object(const char* data){
+    int size = strlen(data);
+    unsigned int addr = (unsigned int)sys_malloc(size);
+    if (addr){
+        uc_mem_write(g_uc,addr, data, size);
+    }
+    return addr;
+}
+
+unsigned int make_jintarray(int a1, int a2){
+    int size = 8;
+    int cnt = 2;
+    int tp = JTYPE_INT;
+    unsigned int addr = (unsigned int)sys_malloc(size+8);
+    if (addr){
+
+        uc_mem_write(g_uc,addr, &cnt, 4);
+        uc_mem_write(g_uc,addr+4, &tp, 4);
+        uc_mem_write(g_uc,addr+8, &a1, 4);
+        uc_mem_write(g_uc,addr+12, &a2, 4);
+    }
+    return addr;
+}
+
+unsigned int make_jstringarray(const char* s1, const char* s2){
+    int size = 8;
+    int cnt = 2;
+    int tp = JTYPE_STRING;
+    unsigned int addr = (unsigned int)sys_malloc(size+8);
+    if (addr){
+
+        uc_mem_write(g_uc,addr, &cnt, 4);
+        uc_mem_write(g_uc,addr+4, &tp, 4);
+        int len = strlen(s1);
+        unsigned int s1_addr = (unsigned int)sys_malloc(len+1);
+        if (s1_addr){
+            uc_mem_write(g_uc,s1_addr, s1, len);
+            uc_mem_write(g_uc,addr+8, &s1_addr, 4);
+        }
+        len = strlen(s2);
+        unsigned int s2_addr = (unsigned int)sys_malloc(len+1);
+        if (s2_addr){
+            uc_mem_write(g_uc,s2_addr, s2, len);
+            uc_mem_write(g_uc,addr+12, &s2_addr, 4);
+        }
+    }
+    return addr;
+}
+
 int make_export_func_call(emulator* emu, soinfo* si, const char* name){
 
     unsigned int func = (unsigned int)s_dlsym(si, name);
@@ -452,17 +502,15 @@ int make_export_func_call(emulator* emu, soinfo* si, const char* name){
     unsigned int obj = (unsigned int)emu->get_app_object();
     uc_reg_write(g_uc, UC_ARM_REG_R1, &obj);
 
-    unsigned int arg2 = (unsigned int)sys_malloc(64);
+    unsigned int arg2 = make_jstringarray("hello","world");
 
     if (arg2){
-        uc_mem_write(g_uc,arg2, "arg2", 5);
         uc_reg_write(g_uc, UC_ARM_REG_R2, &arg2);
     }
 
-    unsigned int arg3 = (unsigned int)sys_malloc(1024);
+    unsigned int arg3 = make_jstringarray("hello","world");
     if (arg3){
-        uc_mem_write(g_uc,arg3, "c4ca4238a0b,923820dcc509a,6f75849b", 32);
-        uc_reg_write(g_uc, UC_ARM_REG_R2, &arg3);
+        uc_reg_write(g_uc, UC_ARM_REG_R3, &arg3);
     }
 	//unsigned int arg4 = 1;
 	//uc_reg_write(g_uc, UC_ARM_REG_R4, &arg4);
@@ -475,62 +523,6 @@ int make_export_func_call(emulator* emu, soinfo* si, const char* name){
 
     emu->start_emulator((unsigned int)func,si);
 
-	return 1;
-}
-
-int start_vm(uc_engine* uc,soinfo* si,void* JNI_OnLoad)
-{
-	uc_hook trace1, trace2;
-	uc_hook trace3, trace4;
-	uc_hook trace5,trace6;
-    uc_hook trace7;
-
-	uintptr_t lr = EMULATOR_MEMORY_START;
-	uintptr_t pc = (uintptr_t)JNI_OnLoad;     // R2 register
-	int cpsr=0x800d0030;
-
-	uc_err err;
-
-	err=uc_reg_write(g_uc, UC_ARM_REG_PC, &pc);
-
-	err=uc_reg_write(uc, UC_ARM_REG_LR, &lr);
-	//err=uc_reg_write(uc, UC_ARM_REG_CPSR, &cpsr);
-	if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
-	//err=uc_reg_write(uc, UC_ARM_REG_SPSR, &cpsr);
-
-	// tracing all basic blocks with customized callback
-	//err=uc_hook_add(uc, &trace1, UC_HOOK_BLOCK, (void*)hook_block, NULL, JNI_OnLoad, 0);
-
-	// tracing one instruction at ADDRESS with customized callback
-	//err=uc_hook_add(uc, &trace2, UC_HOOK_CODE, (void*)hook_code, si, 1,1);
-	//err=uc_hook_add(uc, &trace4, UC_HOOK_INTR, (void*)hook_inter, NULL, JNI_OnLoad, 0);
-
-	/*err=uc_hook_add(uc, &trace5, UC_HOOK_MEM_UNMAPPED|UC_HOOK_MEM_FETCH_INVALID, (void*)hook_unmap, NULL, JNI_OnLoad, 0);
-
-	err=uc_hook_add(uc, &trace6, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, (void*)hook_mem_access, NULL, JNI_OnLoad, 0);
-
-    err=uc_hook_add(uc, &trace7, UC_HOOK_MEM_INVALID, (void*)hook_mem_access, NULL, JNI_OnLoad, 0);*/
-
-    /*if(si->init_func)
-	{
-		uc_err err = uc_emu_start(uc, (uint64_t)si->init_func, (uint64_t)si->init_func+10, 0, 0);
-		if (err) {
-			printf("Failed on uc_emu_start() with error returned: %u\n", err);
-			return 0;
-		}
-	}
-*/
-	if(JNI_OnLoad)
-	{
-		err = uc_emu_start(uc, (uint64_t)JNI_OnLoad, (uint64_t)JNI_OnLoad+0xffffff, 0, 0);
-		if (err) {
-			printf("Failed on uc_emu_start() with error returned: %u\n", err);
-			return 0;
-		}
-	}
-
-	
-	uc_close(uc);
 	return 1;
 }
 
@@ -624,7 +616,7 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 
-    make_export_func_call(emu, si, "Java_com_aliyun_security_yunceng_android_sdk_umid_UMID_getNativeUUID");
+    make_export_func_call(emu, si, "jni_dns_resolv");
 
     unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
     JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;
