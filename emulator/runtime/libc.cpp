@@ -124,9 +124,9 @@ void* libc::s__aeabi_memset(void*)
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-    printf("s__aeabi_memset(0x%x,0x%x,0x%x)  -> 0x%x\n",addr,size,value,addr);
+    printf("__aeabi_memset(0x%x,0x%x,0x%x)  -> 0x%x\n",addr,size,value,addr);
 #else
-    printf(RED "s__aeabi_memset(0x%x,0x%x,0x%x)  -> 0x%x \n" RESET,addr,size,value,addr);
+    printf(RED "__aeabi_memset(0x%x,0x%x,0x%x)  -> 0x%x \n" RESET,addr,size,value,addr);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
@@ -150,9 +150,9 @@ void* libc::s__aeabi_memcpy(void*)
 	}
 
 #ifdef _MSC_VER
-	printf("s__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
+	printf("__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
 #else
-	printf(RED "s__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,dst,src,size,dst);
+	printf(RED "__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,dst,src,size,dst);
 #endif
 
 	emulator::update_cpu_model();
@@ -2016,12 +2016,17 @@ void* libc::s_rename(void*)
 void* libc::s_remove(void*)
 {
 	uc_err err;
+    char path[256] = {0};
+	unsigned int path_addr = emulator::get_r0();
 	int value = 0;
+    if (path_addr){
+        uc_mem_read(g_uc, path_addr, path, 256);
+    }
 
 #ifdef _MSC_VER
-	printf("remove()-> 0x%x\n",  value);
+	printf("remove(\"%s\")-> 0x%x\n",  path, value);
 #else
-	printf(RED "remove()-> 0x%x\n" RESET, value);
+	printf(RED "remove(\"%s\")-> 0x%x\n" RESET, path, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2576,6 +2581,31 @@ void* libc::s__aeabi_atexit(void*)
     return 0;
 }
 
+void* libc::s__aeabi_memclr4(void*)
+{
+    uc_err err;
+	unsigned char value = 0;
+    unsigned int addr = emulator::get_r0();
+    int size = emulator::get_r1();
+
+    for(int i = 0; i < size; i++)
+    {
+        err = uc_mem_write(g_uc,addr+i,&value,1);
+    }
+
+    emulator::update_cpu_model();
+
+#ifdef _MSC_VER
+    printf("__aeabi_memclr4(0x%x,0x%x)  -> 0x%x\n",addr,size,addr);
+#else
+    printf(RED "__aeabi_memclr4(0x%x,0x%x)  -> 0x%x \n" RESET,addr,size,addr);
+#endif
+
+    uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2681,6 +2711,8 @@ symbols g_syms[] =
     {0xcbc50561,"strrchr",(void*)libc::s_strrchr,1,},
     {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,1,},
     {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,1,},
+    {0x5747d5ed,"atol",(void*)libc::s_atoi,1,},
+    {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,1,},
 };
 
 

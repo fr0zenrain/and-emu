@@ -151,6 +151,7 @@ public:
     static void* s_strrchr(void*);
     static void* s_memcmp(void*);
 	static void* s__aeabi_atexit(void*);
+	static void* s__aeabi_memclr4(void*);
 };
 
 

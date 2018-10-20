@@ -246,8 +246,7 @@ int ExceptionOccurred()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("ExceptionOccurred(\"%s\")\n",buffer);
@@ -561,8 +560,7 @@ int GetObjectClass()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetObjectClass(\"%s\")\n",buffer);
@@ -1846,8 +1844,7 @@ int GetFieldID()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetFieldID(\"%s\")\n",buffer);
@@ -1866,8 +1863,7 @@ int GetObjectField()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetObjectField(\"%s\")\n",buffer);
@@ -3367,14 +3363,15 @@ int NewStringUTF()
             if(buffer[i] == 0)
                 break;
         }
+        ret = str_addr;
     }
 
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("NewStringUTF(\"%s\")\n",buffer);
+	printf("NewStringUTF(\"%s\") ->0x%x\n",buffer, str_addr);
 #else
-	printf(RED "NewStringUTF(\"%s\")\n" RESET, buffer); 
+	printf(RED "NewStringUTF(\"%s\")->0x%x\n" RESET, buffer, str_addr);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3395,9 +3392,9 @@ int GetStringUTFLength()
     }
 
 #ifdef _MSC_VER
-	printf("GetStringUTFLength(\"%s\")\n",buffer);
+	printf("GetStringUTFLength(\"%s\") -> 0x%x\n",buffer ,ret);
 #else
-	printf(RED "GetStringUTFLength(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetStringUTFLength(\"%s\") -> 0x%x\n" RESET, buffer ,ret);
 #endif
     emulator::update_cpu_model();
 
@@ -3412,20 +3409,17 @@ int GetStringUTFChars()
 	char buffer[256]={0};
 	unsigned int env = emulator::get_r0();
 	unsigned int jstr_addr = emulator::get_r1();
-	unsigned int cstr_addr = emulator::get_r2();
+	unsigned int copy = emulator::get_r2();
     unsigned int lr = emulator::get_lr();
 	if (jstr_addr){
 		uc_mem_read(g_uc, jstr_addr, buffer, 256);
-	}
-
-	if(cstr_addr){
-		uc_mem_write(g_uc, cstr_addr, buffer, strlen(buffer));
+        ret = jstr_addr;
 	}
 
 #ifdef _MSC_VER
-    printf("GetStringUTFChars(0x%x,%s,0x%x)\n",env, buffer,cstr_addr,ret);
+    printf("GetStringUTFChars(0x%x,%s,0x%x) -> 0x%x\n",env, buffer,copy, ret);
 #else
-    printf(RED "GetStringUTFChars(0x%x,%s,0x%x)\n" RESET, env, buffer,cstr_addr,ret);
+    printf(RED "GetStringUTFChars(0x%x,%s,0x%x) -> 0x%x\n" RESET, env, buffer,copy, ret);
 #endif
     emulator::update_cpu_model();
 
@@ -3438,15 +3432,19 @@ int ReleaseStringUTFChars()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int str_addr = emulator::get_r1();
+    unsigned int c_addr = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
+    if (str_addr){
+        uc_mem_read(g_uc, str_addr, buffer, 256);
+    }
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("ReleaseStringUTFChars(\"%s\")\n",buffer);
+	printf("ReleaseStringUTFChars(0x%x,\"%s\",0x%x)\n",env, buffer,c_addr);
 #else
-	printf(RED "ReleaseStringUTFChars(\"%s\")\n" RESET, buffer); 
+	printf(RED "ReleaseStringUTFChars(0x%x, \"%s\",0x%x)\n" RESET, env,buffer,c_addr);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3498,9 +3496,8 @@ int GetObjectArrayElement()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
+    emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetObjectArrayElement(\"%s\")\n",buffer);
