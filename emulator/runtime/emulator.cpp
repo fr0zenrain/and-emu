@@ -220,12 +220,12 @@ int emulator::init_symbols()
 
 const char* emulator::get_symbols(int vaddr)
 {
-    static const char * unknow = "";
+    const char * unknow = "";
     if (vaddr == 0){
         return unknow;
     }
 
-    if (vaddr > FUNCTION_VIRTUAL_ADDRESS)
+    if (vaddr > FUNCTION_VIRTUAL_ADDRESS && vaddr < FUNCTION_VIRTUAL_ADDRESS + 0x2000)
     {
         for(int i = 0; i < g_sym_cnt;i++)
         {
@@ -235,6 +235,9 @@ const char* emulator::get_symbols(int vaddr)
                 break;
             }
         }
+    }
+    else{
+        unknow = "*";
     }
     return unknow;
 }
@@ -733,7 +736,7 @@ int emulator::init_jvm()
     {
         return 0;
     }
-    printf("JNIENV 0x%x\n", env);
+    printf("JNIENV 0x%p\n", env);
     void* native_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(native_interface == 0)
     {
@@ -886,4 +889,18 @@ int emulator::init_fake_soinfolist(){
     err = uc_mem_write(g_uc, addr, &dvm, 4);
     fake_solist = dl;
     return 0;
+}
+int emulator::hook_got(soinfo* si)
+{
+    int * buf = (int*)malloc(si->plt_rel_count*4);
+    printf("dump got\n");
+    uc_err err = uc_mem_read(g_uc, (uint64_t)si->plt_got, buf, si->plt_rel_count*4);
+    for (int i = 0; i < si->plt_rel_count; i++){
+        const char * name = emulator::get_symbols(buf[i]);
+
+        printf("%x: 0x%x -> %s\n", (int)si->plt_got+i*4, buf[i], name);
+
+    }
+    free(buf);
+    return 1;
 }

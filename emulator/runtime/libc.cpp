@@ -120,7 +120,6 @@ void* libc::s__aeabi_memset(void*)
 	{
 		err = uc_mem_write(g_uc,addr+i,&value,1);
 	}
-
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
@@ -2253,9 +2252,9 @@ void* libc::s_getopt(void*)
     int opt = emulator::get_r2();
 
 #ifdef _MSC_VER
-	printf("getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n", argc, value);
+	printf("getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n", argc, argv, opt, value);
 #else
-	printf(RED "getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n" RESET, argc, value);
+	printf(RED "getopt(0x%x, 0x%x, 0x%x)-> 0x%x\n" RESET, argc, argv, opt, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2643,6 +2642,42 @@ void* libc::s__android_log_print(void*)
     return 0;
 }
 
+void* libc::s_strncasecmp(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("strncasecmp()-> 0x%x\n", value);
+#else
+    printf(RED "strncasecmp()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+
+void* libc::s__assert2(void*)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("__assert2()-> 0x%x\n", value);
+#else
+    printf(RED "__assert2()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
+
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
@@ -2751,6 +2786,9 @@ symbols g_syms[] =
     {0x5747d5ed,"atol",(void*)libc::s_atoi,1,},
     {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,1,},
     {0x6c845282,"__android_log_print",(void*)libc::s__android_log_print,1,},
+    {0x01e88f3f,"__assert2",(void*)libc::s__assert2,1,},
+    {0x46e76e7e,"___cxa_atexit",(void*)libc::s__cxa_exit,1},
+    {0xe96aff20,"strncasecmp",(void*)libc::s_strncasecmp,1},
 };
 
 

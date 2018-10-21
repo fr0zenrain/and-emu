@@ -3784,20 +3784,22 @@ int GetShortArrayElements()
 int GetIntArrayElements() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int int_addr = emulator::get_r1();
+    unsigned int force = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
+    unsigned int int_value = int_addr+8;
+
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetIntArrayElements(\"%s\")\n",buffer);
+	printf("GetIntArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n",env,int_addr,force,int_value);
 #else
-	printf(RED "GetIntArrayElements(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetIntArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,int_addr,force,int_value);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&int_value);
 
 	return JNI_OK; 
 }
@@ -3946,8 +3948,7 @@ int ReleaseIntArrayElements()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("ReleaseIntArrayElements(\"%s\")\n",buffer);

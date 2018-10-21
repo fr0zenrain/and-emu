@@ -104,6 +104,7 @@ public:
     static int init_fake_soinfolist();
     unsigned int get_global_jnienv(){return JNIEnv;}
 	void* get_app_object(){return app_object;}
+    static int hook_got(soinfo* si);
 private:
     static emulator* instance;
     static uc_context* context;
