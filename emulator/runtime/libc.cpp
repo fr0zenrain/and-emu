@@ -709,21 +709,21 @@ void* libc::s_sscanf(void*)
 	char buf[256] ={0};
 	char format[256] ={0};
 	unsigned int stack[10] ={0};
-	char arg0[256]={0};
-	char arg1[256]={0};
-	char arg2[256]={0};
-	char arg3[256]={0};
+	char r2_buf[256]={0};
+	char r3_buf[256]={0};
 	char arg4[256]={0};
 	char arg5[256]={0};
 	char arg6[256]={0};
 	char arg7[256]={0};
+	char arg8[256]={0};
+	char arg9[256]={0};
 
 	int value = 1;
+    int count = 0;
     unsigned int addr = emulator::get_r0();
     unsigned int addr_format = emulator::get_r1();
+    unsigned int r2_addr = emulator::get_r2();
     unsigned int r3_addr = emulator::get_r3();
-    unsigned int r4_addr = emulator::get_r4();
-
 
     if(addr)
 	{
@@ -757,13 +757,15 @@ void* libc::s_sscanf(void*)
 	for(int i = 0; i < 8; i++)
 	{
 		err = uc_mem_read(g_uc,emulator::get_sp()+i*4,&stack[i],4);
-		if(err != UC_ERR_OK)
+        count++;
+		if(stack[i] == 0)
 			break;
 	}
 
-	sscanf(buf,format,arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+	sscanf(buf,format,r2_buf, r3_buf, arg4, arg5, arg6, arg7, arg8, arg9);
 
-	err = uc_mem_write(g_uc,emulator::get_r2(),arg0,strlen(arg0));
+	err = uc_mem_write(g_uc,r2_addr,r2_buf,4);
+    err = uc_mem_write(g_uc,r3_addr,r3_buf,4);
 
     emulator::update_cpu_model();
 
@@ -2722,7 +2724,7 @@ symbols g_syms[] =
     {0x7d6b7a5f,"write",(void*)libc::s_write,1},
     {0x130181c4,"close",(void*)libc::s_close,1},
 	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,1,0x7d},
-	//{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
+	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
 	{0xa8ae7412,"strchr",(void*)libc::s_strchr,1,},
 	{0xe2d7f2a6,"strtoul",(void*)libc::s_strtoul,1,},
 	{0xd141afd3,"memcpy",(void*)libc::s__aeabi_memcpy,0,},

@@ -123,6 +123,7 @@ emulator::emulator(uc_mode mode)
     //err=uc_reg_write(uc, UC_ARM_REG_R1, &object);
     //err = uc_context_alloc(uc, &context);
     init_jvm();
+    map_fake_classes_dex();
 }
 
 int emulator::dispose()
@@ -259,7 +260,7 @@ Elf32_Sym* emulator::get_symbols(const char* name)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-	if(crc32 == 0xffa1e6f0 || crc32 ==0xbd2f3f6d || crc32 == 0x23398d9a //snprint sscanf sprintf
+	if(crc32 == 0xffa1e6f0 || crc32 == 0x23398d9a //snprint sscanf sprintf
 		)
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
@@ -903,4 +904,38 @@ int emulator::dump_got(soinfo* si)
     }
     free(buf);
     return 1;
+}
+
+int emulator::map_fake_classes_dex(){
+    int ret = 0;
+    FILE* fd = fopen("classes.dex", "rb");
+    if (fd == NULL){
+        printf("dex not found\n");
+        return 0;
+    }
+    fseek(fd, 0, SEEK_END);
+    int size = ftell(fd);
+    fseek(fd, 0, SEEK_SET);
+    classes_dex = (unsigned int)sys_malloc(size);
+    if (classes_dex == 0){
+        fclose(fd);
+        return 0;
+    }
+    void* buf = malloc(size);
+    if(buf){
+        fread(buf, 1, size, fd);
+        uc_mem_write(g_uc, classes_dex, buf, size);
+#ifdef _MSC_VER
+        printf("classes.dex load ok\n");
+#else
+        printf(RED "classes.dex load ok 0x%x\n" RESET, classes_dex);
+#endif
+
+        free(buf);
+        ret = 1;
+    }
+
+    fclose(fd);
+
+    return ret;
 }

@@ -122,6 +122,7 @@ private:
     int init_ret_stub();
 	static int get_module_base(int addr);
 	static unsigned int get_helper_symbols(const char* name);
+    int map_fake_classes_dex();
 
     std::map<unsigned int,void*> signal_map;
 	std::map<unsigned int,unsigned int> bp_list;
@@ -133,6 +134,7 @@ private:
 	static int main_pid;
 	static soinfo* module_info;
 	static soinfo* fake_solist;
+    unsigned int classes_dex;
 };
 
 #endif
