@@ -13,6 +13,8 @@
 #include "ctype.h"
 #ifndef _WIN32
 #include <sys/mman.h>
+#else
+#include "windows.h"
 #endif
 //#include "vld.h"
 #pragma comment(lib,"unicorn_staload.lib")
@@ -429,16 +431,8 @@ int generate_proc_info(){
 
 soinfo* load_android_so(const char* path)
 {
-    uc_err err;
-
 	soinfo* handle = (soinfo*)s_dlopen(path,0);
-    printf("[+] dump got\n");
-    int * buf = (int*)malloc(handle->plt_rel_count*4);
-    err = uc_mem_read(g_uc, (uint64_t)handle->plt_got, buf, handle->plt_rel_count*4);
-    for (int i = 0; i < handle->plt_rel_count; i++){
-        printf("%x: 0x%x -> %s\n", (int)handle->plt_got+i*4, buf[i], emulator::get_symbols(buf[i]));
-    }
-    free(buf);
+    emulator::dump_got(handle);
     generate_proc_info();
 	return handle;
 }
@@ -495,14 +489,14 @@ unsigned int make_jstringarray(const char* s1, const char* s2){
 
 int make_export_func_call(emulator* emu, soinfo* si, const char* name){
 
-    unsigned int func = (unsigned int)s_dlsym(si, name);
+    //unsigned int func = (unsigned int)s_dlsym(si, name);
 	unsigned int env = emu->get_global_jnienv();
     uc_err err=uc_reg_write(g_uc, UC_ARM_REG_R0, &env);
 
     unsigned int obj = (unsigned int)emu->get_app_object();
     uc_reg_write(g_uc, UC_ARM_REG_R1, &obj);
 
-    unsigned int arg2 = make_jstringarray("hello","world");
+    unsigned int arg2 = make_jintarray(0x11001,2);
 
     if (arg2){
         uc_reg_write(g_uc, UC_ARM_REG_R2, &arg2);
@@ -514,14 +508,15 @@ int make_export_func_call(emulator* emu, soinfo* si, const char* name){
     }
 	//unsigned int arg4 = 1;
 	//uc_reg_write(g_uc, UC_ARM_REG_R4, &arg4);
-    unsigned int arg4 = (unsigned int)sys_malloc(1024);
+    unsigned int sp = 0;
+    unsigned int arg4 = make_jstringarray("hello","world");
     if (arg4){
-        uc_mem_write(g_uc,arg4, "arg4", 5);
-        unsigned int sp = uc_reg_read(g_uc, UC_ARM_REG_SP, &sp);
+        uc_reg_read(g_uc, UC_ARM_REG_R4, &sp);
+        uc_reg_read(g_uc, UC_ARM_REG_SP, &sp);
         uc_mem_write(g_uc,sp, &arg4, 4);
     }
 
-    emu->start_emulator((unsigned int)func,si);
+    emu->start_emulator((unsigned int)si->base+0x862d,si);
 
 	return 1;
 }
@@ -616,13 +611,12 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 
-    make_export_func_call(emu, si, "jni_dns_resolv");
+    //make_export_func_call(emu, si, "jni_dns_resolv");
 
     unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
     JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;
     uint64_t addr =0 ;
-    // uc_virt_to_phys(g_uc,(uint64_t*)&addr,(uint64_t)si->base);
-
+    //uc_reg_write(g_uc, UC_ARM_REG_R2, &addr);
 	baidu_protect_init(si);
 
     emu->start_emulator((unsigned int)JNI_OnLoad,si);

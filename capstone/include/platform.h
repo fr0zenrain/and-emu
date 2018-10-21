@@ -42,7 +42,7 @@ typedef unsigned short uint16_t;
 typedef unsigned int   uint32_t;
 typedef signed long long   int64_t;
 typedef unsigned long long uint64_t;
-
+#ifndef _WIN32
 #define INT8_MIN         (-127i8 - 1)
 #define INT16_MIN        (-32767i16 - 1)
 #define INT32_MIN        (-2147483647i32 - 1)
@@ -55,6 +55,7 @@ typedef unsigned long long uint64_t;
 #define UINT16_MAX       0xffffui16
 #define UINT32_MAX       0xffffffffui32
 #define UINT64_MAX       0xffffffffffffffffui64
+#endif
 #endif
 
 #define __PRI_8_LENGTH_MODIFIER__ "hh"

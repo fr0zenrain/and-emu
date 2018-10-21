@@ -265,7 +265,6 @@ void* libc::sys_dlopen(void*)
 
 void* libc::sys_dlclose(void*)
 {
-	uc_err err;
 	int value = 0;
 	unsigned int addr = emulator::get_r0();
 
@@ -660,7 +659,6 @@ void* libc::s_write(void*)
 
 void* libc::s_close(void*)
 {
-    uc_err err;
     int value = 0;
     unsigned int fd = emulator::get_r0();
 
@@ -2336,7 +2334,9 @@ void* libc::s_srand48(void*)
     uc_err err;
     int value = 0;
     int seed = emulator::get_r0();
+#ifndef _WIN32
     srand48(seed);
+#endif
 
 #ifdef _MSC_VER
     printf("srand48(0x%x)\n", seed);
@@ -2353,8 +2353,10 @@ void* libc::s_srand48(void*)
 void* libc::s_lrand48(void*)
 {
     uc_err err;
-    int value = lrand48();
-
+	int value = 0;
+#ifndef _WIN32
+    value = lrand48();
+#endif
 #ifdef _MSC_VER
     printf("lrand48()-> 0x%x\n", value);
 #else
@@ -2560,7 +2562,6 @@ void* libc::s_memcmp(void*)
 
 void* libc::s__aeabi_atexit(void*)
 {
-    uc_err err;
     int value = 0;
 
     unsigned int addr = emulator::get_r0();
