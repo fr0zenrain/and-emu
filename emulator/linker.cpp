@@ -300,7 +300,7 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
 
 	if(si->emu)
 	{
-		return ((emulator*)si->emulator)->get_symbols(name,hash);
+		return ((emulator*)si->emulator)->get_symbols(name);
 	}
 
 	if(si->base)	
@@ -333,7 +333,7 @@ static Elf32_Sym* soinfo_elf_lookup(soinfo* si, unsigned hash,const char* name)
             strcmp(name, "dlsym") == 0 ||
             strcmp(name, "dladdr") == 0 ||
             strcmp(name, "dlopen") == 0){
-            Elf32_Sym* sym = ((emulator*)si->emulator)->get_symbols(name, hash);
+            Elf32_Sym* sym = ((emulator*)si->emulator)->get_symbols(name);
             sym->st_value += FUNCTION_VIRTUAL_ADDRESS;
             return sym;
         }
@@ -772,6 +772,24 @@ int do_dlclose(soinfo* si) {
 	return result;
 }
 
+const char* need_hook_function[] = {
+    "__android_log_print",
+};
+
+unsigned int hook_special_func(const char* name, unsigned int sym_addr){
+    unsigned int addr = sym_addr;
+    for (int i = 0; i < sizeof(need_hook_function) / sizeof(need_hook_function[i]); i++)
+    {
+        if (strcmp(need_hook_function[i], name) == 0){
+            Elf32_Sym* sym = emulator::get_symbols(name);
+            addr =sym->st_value + FUNCTION_VIRTUAL_ADDRESS;
+            debug_printf("hook %s with 0x%x\n", name, addr);
+            return addr;
+        }
+    }
+    return sym_addr;
+}
+
 /* TODO: don't use unsigned for addrs below. It works, but is not
  * ideal. They should probably be either uint32_t, Elf32_Addr, or unsigned
  * long.
@@ -886,6 +904,10 @@ static int soinfo_relocate(soinfo* si, Elf32_Rel* rel_addr, unsigned count,
 		/* TODO: This is ugly. Split up the relocations by arch into
 		 * different files.
 		 */
+		//hook special func
+        if (sym_name && sym_addr){
+            sym_addr = hook_special_func(sym_name, sym_addr);
+        }
 		switch (type) {
 #if defined(ANDROID_ARM_LINKER)
 		case R_ARM_JUMP_SLOT:

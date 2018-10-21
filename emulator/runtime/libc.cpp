@@ -2677,6 +2677,22 @@ void* libc::s__assert2(void*)
     return 0;
 }
 
+void* libc::s_uncompress(void *)
+{
+    uc_err err;
+    int value = 0;
+
+#ifdef _MSC_VER
+    printf("uncompress()-> 0x%x\n", value);
+#else
+    printf(RED "uncompress()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc, UC_ARM_REG_R0, &value);
+    return 0;
+}
 
 symbols g_syms[] = 
 {
@@ -2789,6 +2805,7 @@ symbols g_syms[] =
     {0x01e88f3f,"__assert2",(void*)libc::s__assert2,1,},
     {0x46e76e7e,"___cxa_atexit",(void*)libc::s__cxa_exit,1},
     {0xe96aff20,"strncasecmp",(void*)libc::s_strncasecmp,1},
+    {0x4b5d70ec,"uncompress",(void*)libc::s_uncompress,1},
 };
 
 

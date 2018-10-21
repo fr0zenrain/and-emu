@@ -255,7 +255,7 @@ unsigned int emulator::get_helper_symbols(const char* name)
 }
 
 
-Elf32_Sym* emulator::get_symbols(const char* name,unsigned int hash)
+Elf32_Sym* emulator::get_symbols(const char* name)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
@@ -890,7 +890,7 @@ int emulator::init_fake_soinfolist(){
     fake_solist = dl;
     return 0;
 }
-int emulator::hook_got(soinfo* si)
+int emulator::dump_got(soinfo* si)
 {
     int * buf = (int*)malloc(si->plt_rel_count*4);
     printf("dump got\n");

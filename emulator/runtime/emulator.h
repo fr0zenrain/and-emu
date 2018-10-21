@@ -43,7 +43,7 @@ public:
 
     static int init_symbols();
 	static const char* get_symbols(int vaddr);
-    static Elf32_Sym* get_symbols(const char* name,unsigned int hash);
+    static Elf32_Sym* get_symbols(const char* name);
     static int dispatch();
     static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);
 	int dispose();
@@ -104,7 +104,7 @@ public:
     static int init_fake_soinfolist();
     unsigned int get_global_jnienv(){return JNIEnv;}
 	void* get_app_object(){return app_object;}
-    static int hook_got(soinfo* si);
+    static int dump_got(soinfo* si);
 private:
     static emulator* instance;
     static uc_context* context;
