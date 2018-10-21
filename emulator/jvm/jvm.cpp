@@ -520,8 +520,7 @@ int NewObjectV()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("NewObjectV(\"%s\")\n",buffer);
@@ -3568,8 +3567,7 @@ int NewByteArray()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("NewByteArray(\"%s\")\n",buffer);
@@ -4207,8 +4205,7 @@ int SetByteArrayRegion()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("SetByteArrayRegion(\"%s\")\n",buffer);
