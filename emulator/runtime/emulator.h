@@ -23,6 +23,7 @@ using namespace std;
 #define JVM_INTERFACE_ADDRESS  0x20001000
 #define EMULATOR_MEMORY_START 0x40000000
 #define EMULATOR_PAUSE_ADDRESS  0x80000000
+#define EMULATOR_STACK_BASE 0xbeb00000
 
 class libc;
 struct soinfo;

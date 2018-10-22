@@ -57,5 +57,7 @@ public:
 
 #define JTYPE_INT     0
 #define JTYPE_STRING  1
+#define JTYPE_BYTE    2
+#define JTYPE_OBJECT  3
 
 #endif

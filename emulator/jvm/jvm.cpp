@@ -2,6 +2,7 @@
 #include "../runtime/emulator.h"
 #include "../../include/unicorn/unicorn.h"
 #include "jni.h"
+#include "java.h"
 #include <string>
 #include <map>
 using namespace std;
@@ -50,7 +51,7 @@ int DefineClass()
 
 int FindClass()
 {
-	int ret = 1;
+	unsigned int ret = 1;
 	uc_err err;
 	char buffer[256] ={0};
 	unsigned int env = emulator::get_r0();
@@ -65,13 +66,13 @@ int FindClass()
 				break;
 		}
 	}
-
+    ret = (unsigned int)get_class(buffer);
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("FindClass(0x%x,\"%s\")\n",env, buffer);
+	printf("FindClass(0x%x,\"%s\") -> 0x%x\n",env, buffer, ret);
 #else
-	printf(RED "FindClass(0x%x,\"%s\")\n" RESET,env, buffer);
+	printf(RED "FindClass(0x%x,\"%s\") -> 0x%x\n" RESET,env, buffer, ret);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret);
@@ -556,14 +557,15 @@ int GetObjectClass()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+	unsigned int env = emulator::get_r0();
+	unsigned int obj = emulator::get_r1();
 	unsigned int lr = emulator::get_lr(); 
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetObjectClass(\"%s\")\n",buffer);
+	printf("GetObjectClass(0x%x,0x%x) -> 0x%x\n", env, obj, ret);
 #else
-	printf(RED "GetObjectClass(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetObjectClass(0x%x,0x%x) -> 0x%x\n" RESET, env, obj, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3722,15 +3724,21 @@ int GetBooleanArrayElements()
 int GetByteArrayElements() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
+    int tp = 0;
+	unsigned int env = emulator::get_r0();
+	unsigned int arr_addr = emulator::get_r1();
+    unsigned int copy = emulator::get_r2();
+	unsigned int lr = emulator::get_lr();
+
+    uc_mem_read(g_uc, arr_addr+4, &tp, 4);
+    uc_mem_read(g_uc, arr_addr+8, &ret, 4);
+
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetByteArrayElements(\"%s\")\n",buffer);
+	printf("GetByteArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n",env,arr_addr,copy,ret);
 #else
-	printf(RED "GetByteArrayElements(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetByteArrayElements(0x%x,0x%x,0x%x) ->0x%x\n" RESET, env,arr_addr,copy,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);

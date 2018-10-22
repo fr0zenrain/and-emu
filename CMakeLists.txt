@@ -28,6 +28,7 @@ set(SOURCEFILES
         emulator/jvm/func.cpp
         emulator/jvm/alloc.cpp
         emulator/jvm/utfstring.cpp
+        emulator/jvm/java.cpp
         emulator/jvm/jni.cpp
         emulator/hexdump.cpp
         )

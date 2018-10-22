@@ -7,6 +7,7 @@
 #include "../jvm/jvm.h"
 #include "runtime.h"
 #include "../dlfcn.h"
+#include "../jvm/java.h"
 #include <map>
 using namespace std;
 
@@ -124,6 +125,7 @@ emulator::emulator(uc_mode mode)
     //err = uc_context_alloc(uc, &context);
     init_jvm();
     map_fake_classes_dex();
+    init_java_class();
 }
 
 int emulator::dispose()
@@ -260,7 +262,7 @@ Elf32_Sym* emulator::get_symbols(const char* name)
 {
     int len = strlen(name);
     int crc32 = getcrc32(name,len);
-	if(crc32 == 0xffa1e6f0 || crc32 == 0x23398d9a //snprint sscanf sprintf
+	if(crc32 == 0xffa1e6f0 || crc32 == 0x23398d9a //snprint  sprintf
 		)
 	{
 		unsigned int sym_addr = get_helper_symbols(name);
@@ -586,7 +588,7 @@ int emulator::init_vectors()
 
 int emulator::init_stack()
 {
-    unsigned int stack_base = 0xbeb00000;
+    unsigned int stack_base = EMULATOR_STACK_BASE;
     unsigned int sp = 0xbef00000;
     //0xbeb00000--0xbef00000
     uc_err err = uc_mem_map(uc,stack_base,sp - stack_base + 0x100000,UC_PROT_READ|UC_PROT_WRITE);
