@@ -8,6 +8,7 @@
 #include "linker.h"
 #include "engine.h"
 #include "jvm/jvm.h"
+#include "jvm/java.h"
 #include "runtime/emulator.h"
 #include "runtime/runtime.h"
 #include "ctype.h"
@@ -447,44 +448,63 @@ unsigned int make_jstring_object(const char* data){
     return addr;
 }
 
-unsigned int make_jintarray(int a1, int a2){
-    int size = 8;
-    int cnt = 2;
-    int tp = JTYPE_INT;
-    unsigned int addr = (unsigned int)sys_malloc(size+8);
+unsigned int make_objectarray(unsigned int object){
+    int size = 4;
+    int len = 1;
+    int tp = JTYPE_OBJECT;
+    unsigned int addr = (unsigned int)sys_malloc(12);
     if (addr){
 
-        uc_mem_write(g_uc,addr, &cnt, 4);
-        uc_mem_write(g_uc,addr+4, &tp, 4);
-        uc_mem_write(g_uc,addr+8, &a1, 4);
-        uc_mem_write(g_uc,addr+12, &a2, 4);
+        uc_mem_write(g_uc,addr, &tp, 4);
+        uc_mem_write(g_uc,addr+4, &len, 4);
+        uc_mem_write(g_uc,addr+8, &object, 4);
     }
     return addr;
 }
 
-unsigned int make_jstringarray(const char* s1, const char* s2){
-    int size = 8;
-    int cnt = 2;
-    int tp = JTYPE_STRING;
-    unsigned int addr = (unsigned int)sys_malloc(size+8);
-    if (addr){
+int make_ali_docommand_native(emulator* emu, soinfo* si){
+    uc_err err;
+    //unsigned int func = (unsigned int)s_dlsym(si, name);
+    unsigned int env = emu->get_global_jnienv();
+    err=uc_reg_write(g_uc, UC_ARM_REG_R0, &env);
 
-        uc_mem_write(g_uc,addr, &cnt, 4);
-        uc_mem_write(g_uc,addr+4, &tp, 4);
-        int len = strlen(s1);
-        unsigned int s1_addr = (unsigned int)sys_malloc(len+1);
-        if (s1_addr){
-            uc_mem_write(g_uc,s1_addr, s1, len);
-            uc_mem_write(g_uc,addr+8, &s1_addr, 4);
-        }
-        len = strlen(s2);
-        unsigned int s2_addr = (unsigned int)sys_malloc(len+1);
-        if (s2_addr){
-            uc_mem_write(g_uc,s2_addr, s2, len);
-            uc_mem_write(g_uc,addr+12, &s2_addr, 4);
-        }
+    unsigned int obj = (unsigned int)emu->get_app_object();
+    uc_reg_write(g_uc, UC_ARM_REG_R1, &obj);
+
+    unsigned int arg2 = 0x10401;
+
+    if (arg2){
+        uc_reg_write(g_uc, UC_ARM_REG_R2, &arg2);
     }
-    return addr;
+
+    unsigned int arg3 = make_intarray(0x2,0x11);
+    if (arg3){
+        uc_reg_write(g_uc, UC_ARM_REG_R3, &arg3);
+    }
+
+    unsigned int xxx = make_string_object("2197609");
+    unsigned int arg4=make_objectarray(xxx);
+
+    unsigned int sp = 0;
+    unsigned int arr1 = make_bytearray((unsigned char*)"abcdef11", 8);
+    unsigned int arg5 = make_objectarray(arr1);
+    if (arg5){
+
+        uc_reg_read(g_uc, UC_ARM_REG_SP, &sp);
+        uc_mem_write(g_uc,sp, &arg4, 4);
+
+        uc_mem_write(g_uc,sp+4, &arg5, 4);
+        unsigned int arr2 = make_bytearray((unsigned char*)"12345", 5);
+        unsigned int arg6 = make_objectarray(arr2);
+        unsigned int arg7 = make_objectarray(arg6);
+        err = uc_mem_write(g_uc,sp+8, &arg6, 4);
+        err = uc_mem_write(g_uc,sp+12, &arg7, 4);
+        err = uc_mem_write(g_uc,sp+16, &arg6, 4);
+    }
+
+    emu->start_emulator((unsigned int)si->base+0x772d,si);
+
+    return 1;
 }
 
 int make_export_func_call(emulator* emu, soinfo* si, const char* name){
@@ -496,20 +516,20 @@ int make_export_func_call(emulator* emu, soinfo* si, const char* name){
     unsigned int obj = (unsigned int)emu->get_app_object();
     uc_reg_write(g_uc, UC_ARM_REG_R1, &obj);
 
-    unsigned int arg2 = make_jintarray(0x11001,2);
+    unsigned int arg2 = make_intarray(0x10601,2);
 
     if (arg2){
         uc_reg_write(g_uc, UC_ARM_REG_R2, &arg2);
     }
 
-    unsigned int arg3 = make_jstringarray("hello","world");
+    unsigned int arg3 = make_stringarray("hello","world");
     if (arg3){
         uc_reg_write(g_uc, UC_ARM_REG_R3, &arg3);
     }
 	//unsigned int arg4 = 1;
 	//uc_reg_write(g_uc, UC_ARM_REG_R4, &arg4);
     unsigned int sp = 0;
-    unsigned int arg4 = make_jstringarray("hello","world");
+    unsigned int arg4 = make_stringarray("hello","world");
     if (arg4){
         uc_reg_read(g_uc, UC_ARM_REG_R4, &sp);
         uc_reg_read(g_uc, UC_ARM_REG_SP, &sp);
@@ -611,7 +631,7 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 
-    //make_export_func_call(emu, si, "jni_dns_resolv");
+    make_ali_docommand_native(emu, si);
 
     unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
     JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;

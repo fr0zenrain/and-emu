@@ -555,11 +555,29 @@ int NewObjectA()
 }
 int GetObjectClass() 
 {
-	int ret = 0;
-	char buffer[256]={0}; 
+	unsigned int ret = 0;
+    int tp = 0;
+    char buffer[256] = {0};
+    unsigned int class_name_addr;
+    unsigned int class_name;
 	unsigned int env = emulator::get_r0();
 	unsigned int obj = emulator::get_r1();
-	unsigned int lr = emulator::get_lr(); 
+	unsigned int lr = emulator::get_lr();
+
+    if(obj)
+    {
+        uc_mem_read(g_uc, obj, &tp, 4);
+        uc_mem_read(g_uc, obj+4, &class_name, 4);
+        uc_mem_read(g_uc, class_name, &class_name_addr, 4);
+        for(int i = 0; i < 256; i++)
+        {
+            uc_mem_read(g_uc,class_name_addr+i,&buffer[i],1);
+            if(buffer[i] == 0)
+                break;
+        }
+    }
+    ret = (unsigned int)get_class(buffer);
+
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
@@ -626,6 +644,7 @@ int GetMethodID()
         }
     }
 
+    ret = get_method((class_method*)classz, name, sig);
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
@@ -661,18 +680,21 @@ int CallObjectMethod()
 int CallObjectMethodV() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int obj = emulator::get_r1();
+    unsigned int mid = emulator::get_r2();
+    unsigned int arg = emulator::get_r3();
+    unsigned int lr = emulator::get_lr();
+
+    fCallObjectMethodV func = (fCallObjectMethodV)get_method_byhash(mid);
+    ret = func(env, obj, mid, arg);
 
 #ifdef _MSC_VER
-	printf("CallObjectMethodV(\"%s\")\n",buffer);
+	printf("CallObjectMethodV(0x%x,0x%x) -> 0x%x\n",env, mid, ret);
 #else
-	printf(RED "CallObjectMethodV(\"%s\")\n" RESET, buffer); 
-#endif 
-
+	printf(RED "CallObjectMethodV(0x%x,0x%x) -> 0x%x\n" RESET,  env, mid, ret);
+#endif
+	emulator::update_cpu_model();
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
 
@@ -3406,14 +3428,26 @@ int GetStringUTFLength()
 int GetStringUTFChars() 
 {
     int ret = 0;
+    int tp = 0;
+    int size = 0;
 	char buffer[256]={0};
+    unsigned int obj = 0;
+    unsigned int obj_data = 0;
 	unsigned int env = emulator::get_r0();
-	unsigned int jstr_addr = emulator::get_r1();
+	unsigned int str_addr = emulator::get_r1();
 	unsigned int copy = emulator::get_r2();
     unsigned int lr = emulator::get_lr();
-	if (jstr_addr){
-		uc_mem_read(g_uc, jstr_addr, buffer, 256);
-        ret = jstr_addr;
+    uc_mem_read(g_uc, str_addr, &tp, 4);
+	if (tp == JTYPE_STRING){
+		uc_mem_read(g_uc, str_addr+4, &size, 4);
+        uc_mem_read(g_uc, str_addr+8, &obj, 4);
+        if (obj){
+            uc_mem_read(g_uc, obj+4, &obj_data, 4);
+            if (obj_data){
+                uc_mem_read(g_uc, obj_data, buffer, size);
+                ret = obj_data;
+            }
+        }
 	}
 
 #ifdef _MSC_VER
@@ -3460,16 +3494,16 @@ int GetArrayLength()
     unsigned int arr = emulator::get_r1();
     unsigned int lr = emulator::get_lr();
 	if (arr){
-		uc_mem_read(g_uc, arr, &ret, 4);
-        uc_mem_read(g_uc, arr, &tp, 4);
+		uc_mem_read(g_uc, arr, &tp, 4);
+        uc_mem_read(g_uc, arr+4, &ret, 4);
 	}
 
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetArrayLength(0x%x) -> 0x%x\n", arr, ret);
+	printf("GetArrayLength(0x%x,0x%x) -> 0x%x\n", env, arr, ret);
 #else
-	printf(RED "GetArrayLength(0x%x) -> 0x%x\n" RESET, arr, ret);
+	printf(RED "GetArrayLength(0x%x,0x%x) -> 0x%x\n" RESET, env, arr, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3501,13 +3535,21 @@ int GetObjectArrayElement()
 {
 	int ret = 0;
     int tp = 0;
+    int size = 0;
+    unsigned int obj;
 	unsigned int env = emulator::get_r0();
     unsigned int arr_obj = emulator::get_r1();
     int index = emulator::get_r2();
     unsigned int lr = emulator::get_lr();
-    uc_mem_read(g_uc, arr_obj+4, &tp, 4);
-
-    uc_mem_read(g_uc, arr_obj+8+index*4,&ret, 4);
+    uc_mem_read(g_uc, arr_obj, &tp, 4);
+    if (tp == JTYPE_STRING){
+        uc_mem_read(g_uc, arr_obj+4, &size, 4);
+        uc_mem_read(g_uc, arr_obj+8, &ret, 4);
+    }
+    else if (tp == JTYPE_OBJECT){
+        uc_mem_read(g_uc, arr_obj+4, &size, 4);
+        uc_mem_read(g_uc, arr_obj+8, &ret, 4);
+    }
 
     emulator::update_cpu_model();
 
@@ -3725,13 +3767,21 @@ int GetByteArrayElements()
 {
 	int ret = 0;
     int tp = 0;
+    int size = 0;
 	unsigned int env = emulator::get_r0();
 	unsigned int arr_addr = emulator::get_r1();
     unsigned int copy = emulator::get_r2();
 	unsigned int lr = emulator::get_lr();
 
-    uc_mem_read(g_uc, arr_addr+4, &tp, 4);
-    uc_mem_read(g_uc, arr_addr+8, &ret, 4);
+    uc_mem_read(g_uc, arr_addr, &tp, 4);
+    if (tp == JTYPE_BYTEARRAY){
+	    unsigned int obj_addr = 0;
+        uc_mem_read(g_uc, arr_addr+4, &size, 4);
+        uc_mem_read(g_uc, arr_addr+8, &obj_addr, 4);
+	    if (obj_addr){
+		    uc_mem_read(g_uc, obj_addr+4, &ret, 4);
+	    }
+    }
 
 	emulator::update_cpu_model();
 
@@ -3892,14 +3942,16 @@ int ReleaseByteArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
+	unsigned int env = emulator::get_r0();
+    unsigned int arr = emulator::get_r1();
+    unsigned int value = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("ReleaseByteArrayElements(\"%s\")\n",buffer);
+	printf("ReleaseByteArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n",env,arr, value, ret);
 #else
-	printf(RED "ReleaseByteArrayElements(\"%s\")\n" RESET, buffer); 
+	printf(RED "ReleaseByteArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,arr, value, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -3951,14 +4003,16 @@ int ReleaseIntArrayElements()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+	unsigned int arr = emulator::get_r0();
+	unsigned int ele = emulator::get_r1();
+    unsigned int mode = emulator::get_r2();
 	unsigned int lr = emulator::get_lr(); 
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("ReleaseIntArrayElements(\"%s\")\n",buffer);
+	printf("ReleaseIntArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n",arr,ele,mode,ret);
 #else
-	printf(RED "ReleaseIntArrayElements(\"%s\")\n" RESET, buffer); 
+	printf(RED "ReleaseIntArrayElements(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, arr,ele,mode,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);

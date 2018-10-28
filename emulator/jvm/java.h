@@ -20,4 +20,10 @@ public:
 
 void init_java_class();
 void* get_class(const char* name);
-unsigned int make_object();
+unsigned int make_object(const char* object_class, unsigned int object_data);
+unsigned int make_string_object(const char* data);
+unsigned int get_method(class_method* method, const char* name, const char* sig);
+void* get_method_byhash(unsigned int hash);
+unsigned int make_bytearray(unsigned char* data, int size);
+unsigned int make_intarray(int a, int b);
+unsigned int make_stringarray(const char* s1, const char* s2);

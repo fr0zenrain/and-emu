@@ -445,6 +445,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
             {
                offset = insn->address;
             }
+
             if(insn->size == 2)
                 printf("%08x[0x%04x]:\t%x\t%s\t%s\n", (int)address,offset,*(unsigned short*)buf, insn->mnemonic, insn->op_str);
             else
@@ -466,6 +467,11 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
     err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    if (pc == 0x404b0eb4){
+        char buf[0x200] = {0};
+        uc_mem_read(g_uc, 0xbeefeee0+0x40, buf, 0x200);
+        print_hex_dump_bytes(buf, 0x200);
+    }
     //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
 }
 
@@ -589,7 +595,7 @@ int emulator::init_vectors()
 int emulator::init_stack()
 {
     unsigned int stack_base = EMULATOR_STACK_BASE;
-    unsigned int sp = 0xbef00000;
+    unsigned int sp = EMULATOR_STACK_BOTTOM;
     //0xbeb00000--0xbef00000
     uc_err err = uc_mem_map(uc,stack_base,sp - stack_base + 0x100000,UC_PROT_READ|UC_PROT_WRITE);
     if(err != UC_ERR_OK)

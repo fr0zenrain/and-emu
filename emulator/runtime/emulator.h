@@ -24,6 +24,7 @@ using namespace std;
 #define EMULATOR_MEMORY_START 0x40000000
 #define EMULATOR_PAUSE_ADDRESS  0x80000000
 #define EMULATOR_STACK_BASE 0xbeb00000
+#define EMULATOR_STACK_BOTTOM (0xbef00000-0x1000)
 
 class libc;
 struct soinfo;

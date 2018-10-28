@@ -59,5 +59,9 @@ public:
 #define JTYPE_STRING  1
 #define JTYPE_BYTE    2
 #define JTYPE_OBJECT  3
+#define JTYPE_ARRAY   4
+#define JTYPE_BYTEARRAY   5
+
+typedef unsigned int (*fCallObjectMethodV)(unsigned int, unsigned int, unsigned int, unsigned int);
 
 #endif
