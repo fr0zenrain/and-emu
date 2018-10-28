@@ -107,6 +107,7 @@ public:
     unsigned int get_global_jnienv(){return JNIEnv;}
 	void* get_app_object(){return app_object;}
     static int dump_got(soinfo* si);
+	static unsigned int get_pkg_name(){ return pkg_name;}
 private:
     static emulator* instance;
     static uc_context* context;
@@ -122,6 +123,7 @@ private:
     int load_library();
     int init_env_func(void* invoke, void* addr);
     int init_ret_stub();
+    int init_package_name(const char* pkg_name);
 	static int get_module_base(int addr);
 	static unsigned int get_helper_symbols(const char* name);
     int map_fake_classes_dex();
@@ -137,6 +139,7 @@ private:
 	static soinfo* module_info;
 	static soinfo* fake_solist;
     unsigned int classes_dex;
+	static unsigned int pkg_name;
 };
 
 #endif

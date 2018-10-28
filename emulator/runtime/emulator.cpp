@@ -39,6 +39,7 @@ soinfo* emulator::module_info = 0;
 soinfo* emulator::fake_solist = 0;
 
 int emulator::main_pid = 0;
+unsigned int emulator::pkg_name = 0;
 
 unsigned int emulator::v_pc =0;
 unsigned int emulator::v_lr =0;
@@ -126,6 +127,7 @@ emulator::emulator(uc_mode mode)
     init_jvm();
     map_fake_classes_dex();
     init_java_class();
+    init_package_name("com.kuaiying.load");
 }
 
 int emulator::dispose()
@@ -946,4 +948,18 @@ int emulator::map_fake_classes_dex(){
     fclose(fd);
 
     return ret;
+}
+
+int emulator::init_package_name(const char* name){
+    int size = strlen(name);
+    pkg_name = make_string_object(name);
+    if (pkg_name == 0){
+        return 0;
+    }
+#ifdef _MSC_VER
+    printf("init package name : %s\n", name);
+#else
+    printf(RED "init package name : %s\n" RESET, name);
+#endif
+    return 1;
 }

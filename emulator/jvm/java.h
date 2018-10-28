@@ -21,6 +21,7 @@ class android_os{
 
 public:
     static unsigned int get_sdk_int();
+    static unsigned int get_pkg_name();
 };
 
 

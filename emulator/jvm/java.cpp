@@ -10,6 +10,7 @@ std::map<std::string, void*> g_class_map;
 
 const char* java_lang_class = "java/lang/Class";
 const char* java_lang_System = "java/lang/System";
+const char* java_lang_String = "java/lang/String";
 const char* android_os_Build_VERSION = "android/os/Build$VERSION";
 const char* android_app_ActivityThread= "android/app/ActivityThread";
 const char* com_stub_StubApp = "com/stub/StubApp";
@@ -28,8 +29,9 @@ const char* com_taobao_wireless_security_adapter_common_SPUtility2 =
         "com/taobao/wireless/security/adapter/common/SPUtility2";
 
 class_method java_lang_class_method[]= {
+        {0x8c960769, "<init>([BLjava/lang/String;)V",(void*)java_class::java_lang_class_get_name},
         {0x2551d904, "getName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
-        {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
+        {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)android_os::get_pkg_name},
         {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)java_class::java_lang_class_get_name},
         {0x957deaca, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
 };
@@ -45,10 +47,13 @@ class_method android_app_ActivityThread_method[]= {
 
 class_method com_stub_StubApp_method[]= {
         {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)stub_app::get_app_context},
+        {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)stub_app::get_app_context},
 };
 
 java_class_type java_method[]= {
         {java_lang_class, java_lang_class_method},
+        {java_lang_String, java_lang_class_method},
+        {java_lang_System, java_lang_class_method},
         {com_taobao_wireless_security_adapter_JNICLibrary, java_lang_class_method},
         {com_taobao_wireless_security_adapter_datacollection_DeviceInfoCapturer, java_lang_class_method},
         {com_taobao_wireless_security_adapter_datareport_DataReportJniBridge, java_lang_class_method},
@@ -75,6 +80,9 @@ unsigned int android_os::get_sdk_int(){
     return 19;
 }
 
+unsigned int android_os::get_pkg_name(){
+    return emulator::get_pkg_name();
+}
 
 void init_java_class(){
 
@@ -90,7 +98,7 @@ void* get_class(const char* name){
     if (iter != g_class_map.end()){
         return iter->second;
     }
-    return 0;
+    return (void*)1;
 }
 
 unsigned int get_field(class_method* method, const char* name, const char* sig){
@@ -122,7 +130,7 @@ unsigned int get_method(class_method* method, const char* name, const char* sig)
 
 void* get_method_byhash(unsigned int hash)
 {
-    void* func = NULL;
+    void* func = (void*)1;
     for (int i = 0; i < sizeof(java_lang_class_method)/ sizeof(java_lang_class_method[i]); i++){
         if (hash == java_lang_class_method[i].method_id){
             func = java_lang_class_method[i].fake_method;
@@ -141,7 +149,7 @@ void* get_method_byhash(unsigned int hash)
 
 void* get_field_byhash(unsigned int hash)
 {
-    void* func = NULL;
+    void* func = (void*)1;
     for (int i = 0; i < sizeof(android_os_Build_VERSION_method)/ sizeof(android_os_Build_VERSION_method[i]); i++){
         if (hash == android_os_Build_VERSION_method[i].method_id){
             func = android_os_Build_VERSION_method[i].fake_method;
@@ -190,26 +198,6 @@ unsigned int make_string_object(const char* data){
     return addr;
 }
 
-unsigned int make_bytearray(unsigned char* data, int size){
-
-    int tp = JTYPE_BYTEARRAY;
-    unsigned int addr = (unsigned int)sys_malloc(12);
-    if (addr == 0){
-        return 0;
-    }
-    unsigned int data_addr = (unsigned int)sys_malloc(size);
-    if (data_addr){
-        uc_mem_write(g_uc,addr, &tp, 4);
-        uc_mem_write(g_uc,addr+4, &size, 4);
-        uc_mem_write(g_uc,data_addr, data, size);
-        unsigned int obj_addr = (unsigned int)make_object("java/lang/ByteArray", data_addr);
-        if (addr){
-            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
-        }
-    }
-    return addr;
-}
-
 unsigned int make_intarray(int a, int b){
 
     int tp = JTYPE_ARRAY;
@@ -250,6 +238,26 @@ unsigned int make_stringarray(const char* s1, const char* s2){
         }
         uc_mem_write(g_uc,addr+8, &saddr, 4);
 
+    }
+    return addr;
+}
+
+unsigned int make_bytearray(unsigned char* data, int size){
+
+    int tp = JTYPE_BYTEARRAY;
+    unsigned int addr = (unsigned int)sys_malloc(12);
+    if (addr == 0){
+        return 0;
+    }
+    unsigned int data_addr = (unsigned int)sys_malloc(size);
+    if (data_addr){
+        uc_mem_write(g_uc,addr, &tp, 4);
+        uc_mem_write(g_uc,addr+4, &size, 4);
+        uc_mem_write(g_uc,data_addr, data, size);
+        unsigned int obj_addr = (unsigned int)make_object("java/lang/ByteArray", data_addr);
+        if (addr){
+            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
+        }
     }
     return addr;
 }

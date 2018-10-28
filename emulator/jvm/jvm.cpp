@@ -982,8 +982,7 @@ int CallIntMethod()
 }
 int CallIntMethodV() 
 {
-	int ret = 0;
-	char buffer[256]={0}; 
+	int ret = 1;
 	unsigned int env = emulator::get_r0();
     unsigned int obj = emulator::get_r1();
     unsigned int mid = emulator::get_r2();
@@ -991,9 +990,9 @@ int CallIntMethodV()
     unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
-	printf("CallIntMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env, obj,mid, arg, buffer);
+	printf("CallIntMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env, obj,mid, arg, ret);
 #else
-	printf(RED "CallIntMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env, obj,mid, arg,buffer);
+	printf(RED "CallIntMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env, obj,mid, arg,ret);
 #endif 
     emulator::update_cpu_model();
 
@@ -2853,16 +2852,18 @@ int CallStaticVoidMethodV()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int obj = emulator::get_r1();
+    unsigned int mid = emulator::get_r2();
+    unsigned int arg = emulator::get_r3();
+    unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
-	printf("CallStaticVoidMethodV(\"%s\")\n",buffer);
+	printf("CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env,obj,mid,arg);
 #else
-	printf(RED "CallStaticVoidMethodV(\"%s\")\n" RESET, buffer); 
-#endif 
+	printf(RED "CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,obj,mid,arg);
+#endif
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -2936,17 +2937,16 @@ int GetStaticFieldID()
 int GetStaticObjectField() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
     unsigned int classz = emulator::get_r1(); 
-    unsigned int field_addr = emulator::get_r2(); 
+    unsigned int fid = emulator::get_r2();
 	unsigned int lr = emulator::get_lr(); 
 
 
 #ifdef _MSC_VER
-	printf("GetStaticObjectField(\"%s\")\n",buffer);
+	printf("GetStaticObjectField(0x%x,0x%x,0x%x) -> 0x%x\n", env,classz,fid, ret);
 #else
-	printf(RED "GetStaticObjectField(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetStaticObjectField(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,classz,fid, ret);
 #endif 
     emulator::update_cpu_model();
 
@@ -4715,9 +4715,9 @@ int ExceptionCheck()
 	unsigned int lr = emulator::get_lr(); 
 
 #ifdef _MSC_VER
-	printf("ExceptionCheck()\n");
+	printf("ExceptionCheck(0x%x)\n",env);
 #else
-	printf(RED "ExceptionCheck()\n" RESET);
+	printf(RED "ExceptionCheck(0x%x)\n" RESET,env);
 #endif
 	emulator::update_cpu_model();
 

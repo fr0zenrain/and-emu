@@ -438,16 +438,6 @@ soinfo* load_android_so(const char* path)
 	return handle;
 }
 
-
-unsigned int make_jstring_object(const char* data){
-    int size = strlen(data);
-    unsigned int addr = (unsigned int)sys_malloc(size);
-    if (addr){
-        uc_mem_write(g_uc,addr, data, size);
-    }
-    return addr;
-}
-
 unsigned int make_objectarray(unsigned int object){
     int size = 4;
     int len = 1;
@@ -631,7 +621,7 @@ int main(int argc, char* argv[])
     //soinfo* si = load_android_so("libbaiduprotect.so");
     //soinfo* si = load_android_so("libsgsecuritybodyso-5.1.15.so");
 
-    make_ali_docommand_native(emu, si);
+    //make_ali_docommand_native(emu, si);
 
     unsigned int JNI_OnLoad = (unsigned int)s_dlsym(si,"JNI_OnLoad");
     JNI_OnLoad = (g_armmode && JNI_OnLoad&1)? JNI_OnLoad-1:JNI_OnLoad;
