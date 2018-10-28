@@ -289,6 +289,10 @@ void* libc::sys_dlsym(void*)
 	unsigned int sym = emulator::get_r1();
 	err = uc_mem_read(g_uc, sym, buf, 256);
     value = (int)s_dlsym((void*)addr, buf);
+	if (value == 0){
+        Elf32_Sym* sym = emulator::get_symbols(buf);
+        value = sym->st_value + FUNCTION_VIRTUAL_ADDRESS;
+    }
 
 #ifdef _MSC_VER
 	printf("dlsym(0x%x, \"%s\")-> 0x%x\n",addr,buf, value);
@@ -343,7 +347,7 @@ void* libc::s__system_property_get(void*)
 		ret = get_prop(name,value);
 		if(ret)
 		{
-			uc_mem_write(g_uc,value_addr,value,ret);
+			uc_mem_write(g_uc,value_addr,value,ret+1);
 		}
 	}
 #ifdef _MSC_VER

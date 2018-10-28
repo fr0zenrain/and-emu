@@ -63,5 +63,5 @@ public:
 #define JTYPE_BYTEARRAY   5
 
 typedef unsigned int (*fCallObjectMethodV)(unsigned int, unsigned int, unsigned int, unsigned int);
-
+typedef unsigned int (*call_field)();
 #endif

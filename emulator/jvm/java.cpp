@@ -9,6 +9,12 @@ extern uc_engine* g_uc;
 std::map<std::string, void*> g_class_map;
 
 const char* java_lang_class = "java/lang/Class";
+const char* java_lang_System = "java/lang/System";
+const char* android_os_Build_VERSION = "android/os/Build$VERSION";
+const char* android_app_ActivityThread= "android/app/ActivityThread";
+const char* com_stub_StubApp = "com/stub/StubApp";
+const char* android_content_Context = "android/content/Contex";
+const char* com_qihoo_util_QHDialog = "com/qihoo/util/QHDialog";
 const char* com_taobao_wireless_security_adapter_datacollection_DeviceInfoCapturer =
         "com/taobao/wireless/security/adapter/datacollection/DeviceInfoCapturer";
 const char* com_taobao_wireless_security_adapter_JNICLibrary = "com/taobao/wireless/security/adapter/JNICLibrary";
@@ -20,10 +26,26 @@ const char* com_taobao_wireless_security_adapter_common_HttpUtil =
         "com/taobao/wireless/security/adapter/common/HttpUtil";
 const char* com_taobao_wireless_security_adapter_common_SPUtility2 =
         "com/taobao/wireless/security/adapter/common/SPUtility2";
+
 class_method java_lang_class_method[]= {
         {0x2551d904, "getName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
+        {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
+        {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)java_class::java_lang_class_get_name},
+        {0x957deaca, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
 };
 
+class_method android_os_Build_VERSION_method[] = {
+        {0x9cdc0e8a, "SDK_INTI",(void*)android_os::get_sdk_int},
+        {0x82ebc47e, "CONNECTIVITY_SERVICELjava/lang/String;",(void*)android_os::get_sdk_int},
+};
+
+class_method android_app_ActivityThread_method[]= {
+
+};
+
+class_method com_stub_StubApp_method[]= {
+        {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)stub_app::get_app_context},
+};
 
 java_class_type java_method[]= {
         {java_lang_class, java_lang_class_method},
@@ -33,11 +55,24 @@ java_class_type java_method[]= {
         {com_taobao_wireless_security_adapter_dynamicupdatelib_DynamicUpdateLibAdapter, java_lang_class_method},
         {com_taobao_wireless_security_adapter_common_HttpUtil, java_lang_class_method},
         {com_taobao_wireless_security_adapter_common_SPUtility2, java_lang_class_method},
+        {android_app_ActivityThread, android_app_ActivityThread_method},
+        {com_stub_StubApp, java_lang_class_method},
+        {android_os_Build_VERSION, android_os_Build_VERSION_method},
+        {com_qihoo_util_QHDialog, java_lang_class_method},
+        {android_content_Context,java_lang_class_method}
 };
 
 
-int java_class::java_lang_class_get_name(){
+unsigned int java_class::java_lang_class_get_name(){
     return 1;
+}
+
+unsigned int stub_app::get_app_context(){
+    return 1;
+}
+
+unsigned int android_os::get_sdk_int(){
+    return 19;
 }
 
 
@@ -48,13 +83,23 @@ void init_java_class(){
     for (int i = 0; i < sizeof(java_method)/ sizeof(java_method[i]); i++){
         g_class_map.insert(std::make_pair(java_method[i].class_name, java_method[i].fake_method));
     }
-
 }
 
 void* get_class(const char* name){
     std::map<std::string, void*>::iterator iter = g_class_map.find(name);
     if (iter != g_class_map.end()){
         return iter->second;
+    }
+    return 0;
+}
+
+unsigned int get_field(class_method* method, const char* name, const char* sig){
+    unsigned int hash = crc32(name,strlen(name), 0);
+    hash = crc32(sig,strlen(sig), hash);
+    for (int i = 0; i < sizeof(android_os_Build_VERSION_method)/ sizeof(android_os_Build_VERSION_method[i]); i++){
+        if (hash == android_os_Build_VERSION_method[i].method_id){
+            return hash;
+        }
     }
     return 0;
 }
@@ -67,7 +112,11 @@ unsigned int get_method(class_method* method, const char* name, const char* sig)
             return hash;
         }
     }
-
+    for (int i = 0; i < sizeof(com_stub_StubApp_method)/ sizeof(com_stub_StubApp_method[i]); i++){
+        if (hash == com_stub_StubApp_method[i].method_id){
+            return hash;
+        }
+    }
     return 0;
 }
 
@@ -77,6 +126,25 @@ void* get_method_byhash(unsigned int hash)
     for (int i = 0; i < sizeof(java_lang_class_method)/ sizeof(java_lang_class_method[i]); i++){
         if (hash == java_lang_class_method[i].method_id){
             func = java_lang_class_method[i].fake_method;
+            break;
+        }
+    }
+    for (int i = 0; i < sizeof(com_stub_StubApp_method)/ sizeof(com_stub_StubApp_method[i]); i++){
+        if (hash == com_stub_StubApp_method[i].method_id){
+            func = com_stub_StubApp_method[i].fake_method;
+            break;
+        }
+    }
+
+    return func;
+}
+
+void* get_field_byhash(unsigned int hash)
+{
+    void* func = NULL;
+    for (int i = 0; i < sizeof(android_os_Build_VERSION_method)/ sizeof(android_os_Build_VERSION_method[i]); i++){
+        if (hash == android_os_Build_VERSION_method[i].method_id){
+            func = android_os_Build_VERSION_method[i].fake_method;
             break;
         }
     }
