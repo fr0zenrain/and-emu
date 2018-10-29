@@ -2859,9 +2859,9 @@ int CallStaticVoidMethodV()
     unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
-	printf("CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env,obj,mid,arg);
+	printf("CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env,obj,mid,arg,ret);
 #else
-	printf(RED "CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,obj,mid,arg);
+	printf(RED "CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,obj,mid,arg,ret);
 #endif
     emulator::update_cpu_model();
 

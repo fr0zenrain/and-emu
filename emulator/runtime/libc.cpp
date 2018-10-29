@@ -141,19 +141,31 @@ void* libc::s__aeabi_memcpy(void*)
     unsigned int src = emulator::get_r1();
     unsigned int dst = emulator::get_r0();
 
-	void* ptr = malloc(size);
-	if(ptr)
+    unsigned char* src_buf = (unsigned char*)malloc(size+1);
+	if(src_buf)
 	{
-		err = uc_mem_read(g_uc,src,ptr,size);
-		err = uc_mem_write(g_uc,dst,ptr,size);
-		free(ptr);
+        memset(src_buf, 0, size+1);
+		err = uc_mem_read(g_uc,src,src_buf,size);
+        err = uc_mem_write(g_uc,dst,src_buf,size);
 	}
 
+    if (emulator::is_data_printable(src_buf, size) ) {
 #ifdef _MSC_VER
-	printf("__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
+        printf("__aeabi_memcpy(\"%s\",\"%s\",0x%x)-> 0x%x\n",src_buf,src_buf,size,dst);
 #else
-	printf(RED "__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,dst,src,size,dst);
+        printf(RED "__aeabi_memcpy(\"%s\",\"%s\",0x%x)-> 0x%x\n" RESET, src_buf, src_buf, size, dst);
 #endif
+    }else{
+#ifdef _MSC_VER
+        printf("__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n",dst,src,size,dst);
+#else
+        printf(RED "__aeabi_memcpy(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, dst, src, size, dst);
+#endif
+        print_hex_dump_bytes(src_buf,0x10);
+    }
+
+    if(src_buf)
+        free(src_buf);
 
 	emulator::update_cpu_model();
 
@@ -509,9 +521,9 @@ void* libc::s_strncmp(void*)
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("strncmp(%s,%s,0x%x)-> 0x%x\n",buf,buf1,size,value);
+	printf("strncmp(\"%s\",\"%s\",0x%x)-> 0x%x\n",buf,buf1,size,value);
 #else
-	printf(RED "strncmp(%s,%s,0x%x)-> 0x%x\n" RESET,buf,buf1,size,value);
+	printf(RED "strncmp(\"%s\",\"%s\",0x%x)-> 0x%x\n" RESET,buf,buf1,size,value);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -983,44 +995,53 @@ void* libc::s_getpid(void*)
     return 0;
 }
 
-void* libc::s_strcpy(void*)
-{
+void* libc::s_strcpy(void*) {
     uc_err err;
     int value = 0;
 
-    char buf[512] ={0};
-    char buf1[512] ={0};
+    char buf[512] = {0};
+    char buf1[512] = {0};
 
     unsigned int dst = emulator::get_r0();
     unsigned int src = emulator::get_r1();
 
-    if(dst)
-    {
-        for(int i = 0; i < 512; i++)
-        {
-            err = uc_mem_read(g_uc,dst+i,&buf[i],1);
-            if(buf[i] == 0)
+    if (dst) {
+        for (int i = 0; i < 512; i++) {
+            err = uc_mem_read(g_uc, dst + i, &buf[i], 1);
+            if (buf[i] == 0)
                 break;
         }
     }
 
-    if(src)
-    {
-        for(int i = 0; i < 512; i++)
-        {
-            err = uc_mem_read(g_uc,src+i,&buf1[i],1);
-            if(buf1[i] == 0)
+    if (src) {
+        for (int i = 0; i < 512; i++) {
+            err = uc_mem_read(g_uc, src + i, &buf1[i], 1);
+            if (buf1[i] == 0)
                 break;
         }
     }
-    strcpy(buf,buf1);
-    err = uc_mem_write(g_uc,dst,buf,strlen(buf));
-
+    int len = strlen(buf1);
+    if (emulator::is_data_printable((unsigned char*)buf, len) ||
+            emulator::is_data_printable((unsigned char*)buf1, len))
+    {
 #ifdef _MSC_VER
-    printf("strcpy(%s,%s)-> 0x%x\n", buf, buf1, dst);
+    printf("strcpy(\"%s\",\"%s\")-> 0x%x\n", buf, buf1, dst);
 #else
-    printf(RED "strcpy(%s,%s)-> 0x%x\n" RESET, buf, buf1, dst);
+    printf(RED "strcpy(\"%s\",\"%s\")-> 0x%x\n" RESET, buf, buf1, dst);
 #endif
+    }
+    else{
+#ifdef _MSC_VER
+        printf("strcpy(0x%x,0x%x)-> 0x%x\n", dst, src, dst);
+#else
+        printf(RED "strcpy(0x%x,0x%x)-> 0x%x\n" RESET, dst, src, dst);
+#endif
+        print_hex_dump_bytes(buf,0x10);
+        print_hex_dump_bytes(buf1,0x10);
+    }
+
+    strcpy(buf, buf1);
+    err = uc_mem_write(g_uc, dst, buf, strlen(buf));
 
     emulator::update_cpu_model();
 
@@ -2571,12 +2592,23 @@ void* libc::s_memcmp(void*)
     value = memcmp(buf,buf1,size);
 
     emulator::update_cpu_model();
-
+    if (emulator::is_data_printable(buf, size) ||
+            emulator::is_data_printable(buf1, size)){
 #ifdef _MSC_VER
-    printf("memcmp(0x%x,0x%x,0x%x)-> 0x%x\n",addr,addr1,size,value);
+        printf("memcmp(\"%s\",\"%s\",0x%x)-> %d\n",buf,buf1,size,value);
 #else
-    printf(RED "memcmp(0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,addr1,size,value);
+        printf(RED "memcmp(\"%s\",\"%s\",0x%x)-> %d\n" RESET, buf, buf1, size, value);
 #endif
+    }
+    else {
+#ifdef _MSC_VER
+        printf("memcmp(0x%x,0x%x,0x%x)-> %d\n",addr,addr1,size,value);
+#else
+        printf(RED "memcmp(0x%x,0x%x,0x%x)-> %d\n" RESET, addr, addr1, size, value);
+        print_hex_dump_bytes(buf,0x10);
+        print_hex_dump_bytes(buf1,0x10);
+#endif
+    }
 
     uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 

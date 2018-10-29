@@ -963,3 +963,15 @@ int emulator::init_package_name(const char* name){
 #endif
     return 1;
 }
+
+int emulator::is_data_printable(unsigned char* buf, int size)
+{
+    int ret = 1;
+    for(int i = 0; i < size; i++){
+        if (!isprint(buf[i])){
+            ret = 0;
+            break;
+        }
+    }
+    return ret;
+}

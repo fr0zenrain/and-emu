@@ -108,6 +108,7 @@ public:
 	void* get_app_object(){return app_object;}
     static int dump_got(soinfo* si);
 	static unsigned int get_pkg_name(){ return pkg_name;}
+	static int is_data_printable(unsigned char*  buf, int size);
 private:
     static emulator* instance;
     static uc_context* context;
