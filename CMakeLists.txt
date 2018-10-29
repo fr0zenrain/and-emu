@@ -34,6 +34,8 @@ set(SOURCEFILES
         )
 
 add_subdirectory(capstone)
+add_subdirectory(zlib)
 
 add_executable(emulator ${SOURCEFILES})
 target_link_libraries(emulator capstone)
+target_link_libraries(emulator zlib)

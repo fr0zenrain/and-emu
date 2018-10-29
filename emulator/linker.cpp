@@ -775,6 +775,7 @@ int do_dlclose(soinfo* si) {
 const char* need_hook_function[] = {
     "__android_log_print",
     "sscanf",
+    "uncompress",
 };
 
 unsigned int hook_special_func(const char* name, unsigned int sym_addr){
@@ -784,7 +785,11 @@ unsigned int hook_special_func(const char* name, unsigned int sym_addr){
         if (strcmp(need_hook_function[i], name) == 0){
             Elf32_Sym* sym = emulator::get_symbols(name);
             addr =sym->st_value + FUNCTION_VIRTUAL_ADDRESS;
-            debug_printf("hook %s with 0x%x\n", name, addr);
+#ifdef _MSC_VER
+            printf("hook %s with 0x%x\n",name, addr);
+#else
+            printf(RED "hook %s with 0x%x\n" RESET,name, addr);
+#endif
             return addr;
         }
     }

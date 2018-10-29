@@ -9,6 +9,7 @@
 #include "time.h"
 #include "ctype.h"
 #include "dirent_win.h"
+#include "zlib.h"
 
 #ifdef _MSC_VER
 #include "io.h"
@@ -285,20 +286,36 @@ void* libc::sys_dlsym(void*)
 	uc_err err;
 	int value = 0;
 	char buf[256] = {0};
+    Elf32_Sym* sym = NULL;
 	unsigned int addr = emulator::get_r0();
-	unsigned int sym = emulator::get_r1();
-	err = uc_mem_read(g_uc, sym, buf, 256);
+	unsigned int sym_addr = emulator::get_r1();
+	err = uc_mem_read(g_uc, sym_addr, buf, 256);
     value = (int)s_dlsym((void*)addr, buf);
 	if (value == 0){
-        Elf32_Sym* sym = emulator::get_symbols(buf);
+        sym = emulator::get_symbols(buf);
         value = sym->st_value + FUNCTION_VIRTUAL_ADDRESS;
     }
 
 #ifdef _MSC_VER
-	printf("dlsym(0x%x, \"%s\")-> 0x%x\n",addr,buf, value);
+    printf("dlsym(0x%x, \"%s\")-> 0x%x\n",addr,buf, value);
 #else
-	printf(RED "dlsym(0x%x, \"%s\")-> 0x%x\n" RESET,addr,buf, value);
+    printf(RED "dlsym(0x%x, \"%s\")-> 0x%x\n" RESET,addr,buf, value);
 #endif
+
+    if(value)
+    {
+        //hook for performance
+        if (strcmp(buf,"uncompress") == 0){
+            sym = emulator::get_symbols(buf);
+            value = sym->st_value + FUNCTION_VIRTUAL_ADDRESS;
+#ifdef _MSC_VER
+            printf("hook %s with 0x%x\n",buf, value);
+#else
+            printf(RED "hook %s with 0x%x\n" RESET,buf, value);
+#endif
+        }
+    }
+
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
 
 	emulator::update_cpu_model();
@@ -2687,12 +2704,31 @@ void* libc::s__assert2(void*)
 void* libc::s_uncompress(void *)
 {
     uc_err err;
-    int value = 0;
+    int value = Z_OK;
+    uLongf size = 0;
+    unsigned int dst_addr = emulator::get_r0();
+    unsigned int dst_size_addr = emulator::get_r1();
+    unsigned int src_addr = emulator::get_r2();
+    unsigned int src_size = emulator::get_r3();
+
+    if (dst_addr){
+        err = uc_mem_read(g_uc, dst_size_addr, &size, 4);
+        void* buf = malloc(size);
+        void* srcbuf = malloc(src_size);
+        if (buf && srcbuf){
+            err = uc_mem_read(g_uc, src_addr,srcbuf, src_size);
+            value = uncompress((Byte*)buf,&size,(Byte*)srcbuf,src_size);
+            err = uc_mem_write(g_uc, dst_addr,buf, size);
+            free(buf);
+            free(srcbuf);
+        }
+    }
+
 
 #ifdef _MSC_VER
-    printf("uncompress()-> 0x%x\n", value);
+    printf("uncompress(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n", dst_addr,dst_size_addr,src_addr,src_size,value);
 #else
-    printf(RED "uncompress()-> 0x%x\n" RESET, value);
+    printf(RED "uncompress(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, dst_addr,dst_size_addr,src_addr,src_size,value);
 #endif
 
     emulator::update_cpu_model();
