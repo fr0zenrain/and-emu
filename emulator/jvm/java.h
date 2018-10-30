@@ -14,7 +14,9 @@ struct java_class_type{
 class java_class{
 
 public:
-    static unsigned int java_lang_class_get_name();
+    static unsigned int java_lang_class_get_name(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
+    static unsigned int java_lang_class_get_Property(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
+    static unsigned int java_lang_class_get_Bytes(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
 };
 
 class android_os{
@@ -22,6 +24,20 @@ class android_os{
 public:
     static unsigned int get_sdk_int();
     static unsigned int get_pkg_name();
+    static unsigned int get_pkg_mgr();
+};
+
+
+class pkg_mgr{
+
+public:
+    static unsigned int get_pkg_info();
+};
+
+class sys_ctx{
+
+public:
+    static unsigned int get_app_context();
 };
 
 

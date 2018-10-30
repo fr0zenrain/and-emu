@@ -264,9 +264,9 @@ void* libc::sys_dlopen(void*)
         si = (soinfo*)s_dlopen(buf,0);
     }
 #ifdef _MSC_VER
-	printf("dlopen(%s,0x%x)-> 0x%x\n",buf,flags,si);
+	printf("dlopen(\"%s\",0x%x)-> 0x%x\n",buf,flags,si);
 #else
-	printf(RED "dlopen(%s,0x%x)-> 0x%x\n" RESET,buf,flags,si);
+	printf(RED "dlopen(\"%s\",0x%x)-> 0x%x\n" RESET,buf,flags,si);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&si);

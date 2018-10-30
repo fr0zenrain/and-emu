@@ -15,6 +15,7 @@ const char* android_os_Build_VERSION = "android/os/Build$VERSION";
 const char* android_app_ActivityThread= "android/app/ActivityThread";
 const char* com_stub_StubApp = "com/stub/StubApp";
 const char* android_content_Context = "android/content/Contex";
+const char* android_content_pm_PackageInfo = "android/content/pm/PackageInfo";
 const char* com_qihoo_util_QHDialog = "com/qihoo/util/QHDialog";
 const char* com_taobao_wireless_security_adapter_datacollection_DeviceInfoCapturer =
         "com/taobao/wireless/security/adapter/datacollection/DeviceInfoCapturer";
@@ -31,8 +32,11 @@ const char* com_taobao_wireless_security_adapter_common_SPUtility2 =
 class_method java_lang_class_method[]= {
         {0x8c960769, "<init>([BLjava/lang/String;)V",(void*)java_class::java_lang_class_get_name},
         {0x2551d904, "getName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
+        {0xaa3cd9e8, "getBytes(Ljava/lang/String;)[B",(void*)java_class::java_lang_class_get_Bytes},
+        {0xe3e84c88, "getProperty(Ljava/lang/String;)Ljava/lang/String;",(void*)java_class::java_lang_class_get_Property},
         {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)android_os::get_pkg_name},
-        {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)java_class::java_lang_class_get_name},
+        {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)sys_ctx::get_app_context},
+        {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)android_os::get_pkg_mgr},
         {0x957deaca, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
 };
 
@@ -46,8 +50,7 @@ class_method android_app_ActivityThread_method[]= {
 };
 
 class_method com_stub_StubApp_method[]= {
-        {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)stub_app::get_app_context},
-        {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)stub_app::get_app_context},
+        {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)sys_ctx::get_app_context},
 };
 
 java_class_type java_method[]= {
@@ -64,16 +67,92 @@ java_class_type java_method[]= {
         {com_stub_StubApp, java_lang_class_method},
         {android_os_Build_VERSION, android_os_Build_VERSION_method},
         {com_qihoo_util_QHDialog, java_lang_class_method},
-        {android_content_Context,java_lang_class_method}
+        {android_content_Context,java_lang_class_method},
+        {android_content_pm_PackageInfo, java_lang_class_method}
 };
 
 
-unsigned int java_class::java_lang_class_get_name(){
+unsigned int java_class::java_lang_class_get_name
+        (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg){
     return 1;
 }
 
-unsigned int stub_app::get_app_context(){
-    return 1;
+unsigned int java_class::java_lang_class_get_Property
+        (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg_addr){
+    char buf[256] = {0};
+    int tp = 0;
+    int size = 0;
+    unsigned int arg = 0;
+    unsigned int result = 0;
+    unsigned int str_addr = 0;
+    unsigned int obj_addr = 0;
+    if (arg_addr){
+        uc_mem_read(g_uc, arg_addr, &arg, 4);
+        uc_mem_read(g_uc, arg, &tp, 4);
+        uc_mem_read(g_uc, arg+4, &size, 4);
+        uc_mem_read(g_uc, arg+8, &obj_addr, 4);
+        if (tp == JTYPE_STRING && obj_addr){
+
+            uc_mem_read(g_uc, obj_addr+4, &str_addr, 4);
+            if (str_addr) {
+                uc_mem_read(g_uc, str_addr, buf, size);
+            }
+        }
+    }
+    if (strcmp(buf, "java.vm.version") == 0){
+        result = make_string_object("1.8.0_91");
+    }
+
+    return result;
+}
+
+unsigned int java_class::java_lang_class_get_Bytes
+        (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg_addr){
+    char buf[256] = {0};
+    int tp = 0;
+    int size = 0;
+    unsigned int arg = 0;
+    unsigned int result = 0;
+    unsigned int str_addr = 0;
+    unsigned int obj_addr = 0;
+    if (arg_addr){
+        uc_mem_read(g_uc, obj, &tp, 4);
+        uc_mem_read(g_uc, obj+4, &size, 4);
+        uc_mem_read(g_uc, obj+8, &obj_addr, 4);
+        if (tp == JTYPE_STRING && obj_addr){
+
+            uc_mem_read(g_uc, obj_addr+4, &str_addr, 4);
+            if (str_addr) {
+                uc_mem_read(g_uc, str_addr, buf, size);
+            }
+        }
+    }
+    result = make_bytearray((unsigned char*)buf, size);
+
+    return result;
+}
+
+unsigned int sys_ctx::get_app_context(){
+    void* p = new sys_ctx();
+    int size = 4;
+    int tp = JTYPE_OBJECT;
+    unsigned int addr = (unsigned int)sys_malloc(12);
+    if (addr == 0){
+        return 0;
+    }
+
+    unsigned int data_addr = (unsigned int)sys_malloc(size);
+    if (data_addr){
+        uc_mem_write(g_uc,addr, &tp, 4);
+        uc_mem_write(g_uc,addr+4, &size, 4);
+        uc_mem_write(g_uc,data_addr, &p, 4);
+        unsigned int obj_addr = (unsigned int)make_object("android.content.Context", data_addr);
+        if (addr){
+            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
+        }
+    }
+
+    return addr;
 }
 
 unsigned int android_os::get_sdk_int(){
@@ -82,6 +161,29 @@ unsigned int android_os::get_sdk_int(){
 
 unsigned int android_os::get_pkg_name(){
     return emulator::get_pkg_name();
+}
+
+unsigned int android_os::get_pkg_mgr(){
+    void* p = new pkg_mgr();
+    int size = 4;
+    int tp = JTYPE_OBJECT;
+    unsigned int addr = (unsigned int)sys_malloc(12);
+    if (addr == 0){
+        return 0;
+    }
+
+    unsigned int data_addr = (unsigned int)sys_malloc(size);
+    if (data_addr){
+        uc_mem_write(g_uc,addr, &tp, 4);
+        uc_mem_write(g_uc,addr+4, &size, 4);
+        uc_mem_write(g_uc,data_addr, &p, 4);
+        unsigned int obj_addr = (unsigned int)make_object("android.content.pm.PackageInfo", data_addr);
+        if (addr){
+            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
+        }
+    }
+
+    return addr;
 }
 
 void init_java_class(){

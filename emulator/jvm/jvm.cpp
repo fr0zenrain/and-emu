@@ -567,13 +567,18 @@ int GetObjectClass()
     if(obj)
     {
         uc_mem_read(g_uc, obj, &tp, 4);
-        uc_mem_read(g_uc, obj+4, &class_name, 4);
-        uc_mem_read(g_uc, class_name, &class_name_addr, 4);
-        for(int i = 0; i < 256; i++)
-        {
-            uc_mem_read(g_uc,class_name_addr+i,&buffer[i],1);
-            if(buffer[i] == 0)
-                break;
+	    if (tp == JTYPE_STRING){
+		    uc_mem_read(g_uc, obj+4, &class_name, 4);
+		    uc_mem_read(g_uc, class_name, &class_name_addr, 4);
+		    for(int i = 0; i < 256; i++)
+		    {
+			    uc_mem_read(g_uc,class_name_addr+i,&buffer[i],1);
+			    if(buffer[i] == 0)
+				    break;
+		    }
+	    }
+	    else if (tp == JTYPE_OBJECT) {
+
         }
     }
     ret = (unsigned int)get_class(buffer);
@@ -690,9 +695,9 @@ int CallObjectMethodV()
     ret = func(env, obj, mid, arg);
 
 #ifdef _MSC_VER
-	printf("CallObjectMethodV(0x%x,0x%x) -> 0x%x\n",env, mid, ret);
+	printf("CallObjectMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env, obj, mid, arg, ret);
 #else
-	printf(RED "CallObjectMethodV(0x%x,0x%x) -> 0x%x\n" RESET,  env, mid, ret);
+	printf(RED "CallObjectMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET,  env,obj, mid, arg, ret);
 #endif
 	emulator::update_cpu_model();
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2317,9 +2322,9 @@ int CallStaticObjectMethodV()
 
     ret = func(env, obj, mid, arg);
 #ifdef _MSC_VER
-	printf("CallStaticObjectMethodV(0x%x,0x%x,0x%x,0x%x)\n", env, obj, mid,arg);
+	printf("CallStaticObjectMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n", env, obj, mid,arg,ret);
 #else
-	printf(RED "CallStaticObjectMethodV(0x%x,0x%x,0x%x,0x%x)\n" RESET, env, obj, mid, arg);
+	printf(RED "CallStaticObjectMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env, obj, mid, arg,ret);
 #endif
     emulator::update_cpu_model();
 
@@ -2859,9 +2864,9 @@ int CallStaticVoidMethodV()
     unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
-	printf("CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env,obj,mid,arg,ret);
+	printf("CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x)\n",env,obj,mid,arg);
 #else
-	printf(RED "CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,obj,mid,arg,ret);
+	printf(RED "CallStaticVoidMethodV(0x%x,0x%x,0x%x,0x%x) \n" RESET, env,obj,mid,arg);
 #endif
     emulator::update_cpu_model();
 
@@ -3382,7 +3387,7 @@ int ReleaseStringChars()
 }
 int NewStringUTF() 
 {
-	int ret = 0;
+	unsigned int ret = 0;
 	char buffer[256]={0};
     uc_err err;
 	unsigned int env = emulator::get_r0();
@@ -3399,13 +3404,13 @@ int NewStringUTF()
         }
         ret = str_addr;
     }
-
+	ret = make_string_object(buffer);
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("NewStringUTF(\"%s\") ->0x%x\n",buffer, str_addr);
+	printf("NewStringUTF(\"%s\") ->0x%x\n",buffer, ret);
 #else
-	printf(RED "NewStringUTF(\"%s\")->0x%x\n" RESET, buffer, str_addr);
+	printf(RED "NewStringUTF(\"%s\")->0x%x\n" RESET, buffer, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
