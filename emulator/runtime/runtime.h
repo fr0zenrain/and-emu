@@ -164,6 +164,8 @@ public:
     static void* s_fstat(void*);
     static void* s_fsync(void*);
     static void* s_flock(void*);
+    static void* s_ftruncate(void*);
+
 };
 
 

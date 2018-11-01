@@ -580,6 +580,7 @@ int GetObjectClass()
 			    if(buffer[i] == 0)
 				    break;
 		    }
+            ret = (unsigned int)get_class(buffer);
 	    }
 	    else if (tp == JTYPE_OBJECT) {
             uc_mem_read(g_uc, obj+8, &obj_addr, 4);
@@ -589,7 +590,6 @@ int GetObjectClass()
             ret = (unsigned int)get_class_byptr(value);
         }
     }
-    ret = (unsigned int)get_class(buffer);
 
 	emulator::update_cpu_model();
 
@@ -759,14 +759,13 @@ int CallBooleanMethodV()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
 
 #ifdef _MSC_VER
 	printf("CallBooleanMethodV(\"%s\")\n",buffer);
 #else
 	printf(RED "CallBooleanMethodV(\"%s\")\n" RESET, buffer); 
 #endif 
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -1877,15 +1876,41 @@ int CallNonvirtualVoidMethodA()
 int GetFieldID() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
+    uc_err err;
+    char name[256] = {0};
+	char sig[256]={0};
+	unsigned int env = emulator::get_r0();
+    unsigned int clz = emulator::get_r1();
+    unsigned int name_addr = emulator::get_r2();
+    unsigned int sig_addr = emulator::get_r3();
+
+    if(name_addr)
+    {
+        for(int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc,name_addr+i,&name[i],1);
+            if(name[i] == 0)
+                break;
+        }
+    }
+
+    if(sig_addr)
+    {
+        for(int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc,sig_addr+i,&sig[i],1);
+            if(sig[i] == 0)
+                break;
+        }
+    }
+	ret = get_field((class_method*)clz, name, sig);
+    unsigned int lr = emulator::get_lr();
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("GetFieldID(\"%s\")\n",buffer);
+    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n" env,clz,name,sig,ret);
 #else
-	printf(RED "GetFieldID(\"%s\")\n" RESET, buffer); 
+    printf(RED "GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n" RESET, env,clz,name,sig,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1895,7 +1920,7 @@ int GetFieldID()
 }
 int GetObjectField() 
 {
-	int ret = 0;
+	int ret = 1;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
@@ -2078,14 +2103,14 @@ int SetObjectField()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+
 
 #ifdef _MSC_VER
 	printf("SetObjectField(\"%s\")\n",buffer);
 #else
 	printf(RED "SetObjectField(\"%s\")\n" RESET, buffer); 
 #endif 
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 

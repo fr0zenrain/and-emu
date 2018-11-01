@@ -2809,9 +2809,9 @@ void* libc::s_adler32(void*)
     unsigned int len = emulator::get_r2();
 
 #ifdef _MSC_VER
-    printf("adler32(0x%x,0x%x,0x%x)-> 0x%x\n", old,buf_addr,len, value);
+    printf("adler32(0x%x,0x%x,0x%x) -> 0x%x\n", old,buf_addr,len, value);
 #else
-    printf(RED "adler32(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, old,buf_addr,len, value);
+    printf(RED "adler32(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, old,buf_addr,len, value);
 #endif
 
     emulator::update_cpu_model();
@@ -2854,7 +2854,7 @@ void* libc::s_fcntl(void*)
     unsigned int fd = emulator::get_r0();
     unsigned int cmd = emulator::get_r1();
     unsigned int arg = emulator::get_r2();
-    value = fd;
+    value = fd+1;
 
 #ifdef _MSC_VER
     printf("fcntl(0x%x,0x%x,0x%x)-> 0x%x\n", fd,cmd, arg,value);
@@ -2880,6 +2880,26 @@ void* libc::s_fstat(void*)
     printf("fstat(0x%x,0x%x)-> 0x%x\n", fd,st_addr,value);
 #else
     printf(RED "fstat(0x%x,0x%x)-> 0x%x\n" RESET, fd,st_addr, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_ftruncate(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int fd = emulator::get_r0();
+    unsigned int length = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("ftruncate(0x%x,0x%x)-> 0x%x\n", fd,length,value);
+#else
+    printf(RED "ftruncate(0x%x,0x%x)-> 0x%x\n" RESET, fd,length, value);
 #endif
 
     emulator::update_cpu_model();
@@ -3067,7 +3087,7 @@ symbols g_syms[] =
 	{0xffd7bcfd,"fmodf",(void*)libc::s_adler32,0,1},
 	{0xb6f073a7,"ceil",(void*)libc::s_adler32,0,1},
 	{0x87b422b5,"pow",(void*)libc::s_adler32,0,1},
-	{0xf17d3769,"ftruncate",(void*)libc::s_adler32,0,1},
+	{0xf17d3769,"ftruncate",(void*)libc::s_ftruncate,0,1},
 	{0xedcc388d,"lseek64",(void*)libc::s_adler32,0,1},
 	{0xf75d4228,"ftell",(void*)libc::s_adler32,0,1},
 	{0x6b5b291a,"_ctype_",(void*)libc::s_adler32,1,1},

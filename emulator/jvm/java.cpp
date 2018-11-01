@@ -37,12 +37,20 @@ class_method java_lang_class_method[]= {
         {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)virtual_app::get_pkg_name},
         {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)virtual_app::get_app_context},
         {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)virtual_app::get_pkg_mgr},
-        {0x957deaca, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
+        {0xeaaa9dd2, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
+        {0x7798befa, "currentActivityThread()Landroid/app/ActivityThread;",(void*)java_class::java_lang_class_get_name},
+        {0x6b796368, "add(Ljava/lang/Object;)Z",(void*)java_class::java_lang_class_get_name},
 };
 
 class_method android_os_Build_VERSION_method[] = {
         {0x9cdc0e8a, "SDK_INTI",(void*)virtual_app::get_sdk_int},
         {0x82ebc47e, "CONNECTIVITY_SERVICELjava/lang/String;",(void*)virtual_app::get_sdk_int},
+        {0xa3101789, "mPackageInfoLandroid/app/LoadedApk;",(void*)virtual_app::get_sdk_int},
+        {0xbeda5d5d, "mOuterContextLandroid/content/Context;",(void*)virtual_app::get_sdk_int},
+        {0x83849696, "mApplicationLandroid/app/Application;",(void*)virtual_app::get_sdk_int},
+        {0x8450b515, "mBoundApplicationLandroid/app/ActivityThread$AppBindData;",(void*)virtual_app::get_sdk_int},
+        {0x6cc7e40f, "mInitialApplicationLandroid/app/Application;",(void*)virtual_app::get_sdk_int},
+        {0x2e44ada5, "mAllApplicationsLjava/util/ArrayList;",(void*)virtual_app::get_sdk_int},
 };
 
 class_method android_app_ActivityThread_method[]= {
