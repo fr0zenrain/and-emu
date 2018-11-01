@@ -560,6 +560,9 @@ int GetObjectClass()
     char buffer[256] = {0};
     unsigned int class_name_addr;
     unsigned int class_name;
+    int size = 0;
+    void* value;
+    unsigned int obj_addr;
 	unsigned int env = emulator::get_r0();
 	unsigned int obj = emulator::get_r1();
 	unsigned int lr = emulator::get_lr();
@@ -567,6 +570,7 @@ int GetObjectClass()
     if(obj)
     {
         uc_mem_read(g_uc, obj, &tp, 4);
+        uc_mem_read(g_uc, obj+4, &size, 4);
 	    if (tp == JTYPE_STRING){
 		    uc_mem_read(g_uc, obj+4, &class_name, 4);
 		    uc_mem_read(g_uc, class_name, &class_name_addr, 4);
@@ -578,7 +582,11 @@ int GetObjectClass()
 		    }
 	    }
 	    else if (tp == JTYPE_OBJECT) {
-
+            uc_mem_read(g_uc, obj+8, &obj_addr, 4);
+            uc_mem_read(g_uc, obj_addr, &class_name, 4);
+            uc_mem_read(g_uc,obj_addr+4,&class_name_addr,4);
+            uc_mem_read(g_uc,class_name_addr,&value,4);
+            ret = (unsigned int)get_class_byptr(value);
         }
     }
     ret = (unsigned int)get_class(buffer);

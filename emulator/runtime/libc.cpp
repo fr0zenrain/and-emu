@@ -10,6 +10,7 @@
 #include "ctype.h"
 #include "dirent_win.h"
 #include "zlib.h"
+#include <sys/stat.h>
 
 #ifdef _MSC_VER
 #include "io.h"
@@ -2769,118 +2770,321 @@ void* libc::s_uncompress(void *)
     return 0;
 }
 
+void* libc::s_mkdir(void*)
+{
+    uc_err err;
+    int value = 0;
+    char buf[512] = {0};
+    unsigned int dirp = emulator::get_r0();
+    int mode = emulator::get_r1();
+
+    for(int i = 0; i < 512; i++)
+    {
+        err = uc_mem_read(g_uc,dirp+i,&buf[i],1);
+        if(buf[i] == 0)
+            break;
+    }
+
+    //value = mkdir((DIRX*)dirp, mode);
+
+#ifdef _MSC_VER
+    printf("mkdir(\"%s\",0x%o)-> 0x%x\n", buf,mode, value);
+#else
+    printf(RED "mkdir(\"%s\",0x%o)-> 0x%x\n" RESET, buf, mode, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_adler32(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int old = emulator::get_r0();
+    unsigned int buf_addr = emulator::get_r1();
+    unsigned int len = emulator::get_r2();
+
+#ifdef _MSC_VER
+    printf("adler32(0x%x,0x%x,0x%x)-> 0x%x\n", old,buf_addr,len, value);
+#else
+    printf(RED "adler32(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, old,buf_addr,len, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_chmod(void*)
+{
+	uc_err err;
+	int value = 0;
+    char path[256] = {0};
+
+	unsigned int buf_addr = emulator::get_r0();
+	unsigned int mode = emulator::get_r1();
+    for(int i = 0; i < 256; i++)
+    {
+        err = uc_mem_read(g_uc,buf_addr+i,&path[i],1);
+        if(path[i] == 0)
+            break;
+    }
+#ifdef _MSC_VER
+	printf("chmod(\"%s\",%o)-> 0x%x\n", path,mode, value);
+#else
+	printf(RED "chmod(\"%s\",%o)-> 0x%x\n" RESET, path,mode, value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
+
+void* libc::s_fcntl(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int fd = emulator::get_r0();
+    unsigned int cmd = emulator::get_r1();
+    unsigned int arg = emulator::get_r2();
+    value = fd;
+
+#ifdef _MSC_VER
+    printf("fcntl(0x%x,0x%x,0x%x)-> 0x%x\n", fd,cmd, arg,value);
+#else
+    printf(RED "fcntl(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd,cmd, arg, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_fstat(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int fd = emulator::get_r0();
+    unsigned int st_addr = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("fstat(0x%x,0x%x)-> 0x%x\n", fd,st_addr,value);
+#else
+    printf(RED "fstat(0x%x,0x%x)-> 0x%x\n" RESET, fd,st_addr, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_fsync(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int fd = emulator::get_r0();
+
+#ifdef _MSC_VER
+    printf("fsync(0x%x)-> 0x%x\n", fd,value);
+#else
+    printf(RED "fsync(0x%x)-> 0x%x\n" RESET, fd, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_flock(void*)
+{
+    uc_err err;
+    int value = 0;
+
+    unsigned int fd = emulator::get_r0();
+    unsigned int op = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("flock(0x%x,0x%x)-> 0x%x\n", fd,op,value);
+#else
+    printf(RED "flock(0x%x,0x%x)-> 0x%x\n" RESET, fd, op,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
-	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,1},
-	{0x4b3bddf7,"__cxa_exit",(void*)libc::s__cxa_exit,1},
-	{0xa719deaf,"malloc",(void*)libc::s_malloc,1},
-    {0x1c13e31d,"realloc",(void*)libc::s_realloc,1},
-    {0x9d13bfdf,"calloc",(void*)libc::s_calloc,1,},
-	{0x4d2ec1c8,"free",(void*)libc::s_free,1},
-	{0x8463960a,"memset",(void*)libc::s_memset,0},
-	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,1},
-	{0x84e4836b,"mmap",(void*)libc::sys_mmap,1,0xc0},
-	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,1,0xf0002},
-	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,1},
-	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,1},
-	{0x48800e70,"dlclose",(void*)libc::sys_dlclose,1},
-	{0x40296778,"dlsym",(void*)libc::sys_dlsym,1},
-    {0x0dbb3b8a,"dladdr",(void*)libc::sys_dladdr,1,},
-	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,1},
-	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,1},
-	{0xbc836fa7,"strdup",(void*)libc::s_strdup,1},
-	{0x025d112d,"strlen",(void*)libc::s_strlen,1},
-	{0x4273782f,"strncmp",(void*)libc::s_strncmp,1},
-	{0xa47083a4,"open",(void*)libc::s_open,1,0x5},
-	{0x98574167,"read",(void*)libc::s_read,1},
-    {0x7d6b7a5f,"write",(void*)libc::s_write,1},
-    {0x130181c4,"close",(void*)libc::s_close,1},
-	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,1,0x7d},
-	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,1,},
-	{0xa8ae7412,"strchr",(void*)libc::s_strchr,1,},
-	{0xe2d7f2a6,"strtoul",(void*)libc::s_strtoul,1,},
-	{0xd141afd3,"memcpy",(void*)libc::s__aeabi_memcpy,0,},
-    {0xbb444062,"bsd_signal",(void*)libc::s_bsd_signal,0,},
-    {0xb8669b99,"raise",(void*)libc::s_raise,1,},
-    {0xbbad4c48,"getpid",(void*)libc::s_getpid,1,},
-    {0x3bd7e17b,"strcmp",(void*)libc::s_strcmp,1},
-    {0xbd6735c3,"strcpy",(void*)libc::s_strcpy,1},
-    {0x54cbeaf6,"__errno",(void*)libc::s__errno,1},
-    {0x82cf5a84,"strerror",(void*)libc::s_strerror,1},
-    {0x6692b54,"access",(void*)libc::s_access,1},
-    {0xfab5b424,"abort",(void*)libc::s_abort,1},
-    {0x900f6a6e,"strcat",(void*)libc::s_strcat,1},
-	{0x93f54eea,"pthread_mutex_init",(void*)libc::s_pthread_mutex_init,1},
-    {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,1},
-    {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,1},
-    {0x6f9c4cda,"lseek",(void*)libc::s_lseek,1},
+	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,0,1},
+	{0x4b3bddf7,"__cxa_exit",(void*)libc::s__cxa_exit,0,1},
+	{0xa719deaf,"malloc",(void*)libc::s_malloc,0,1},
+    {0x1c13e31d,"realloc",(void*)libc::s_realloc,0,1},
+    {0x9d13bfdf,"calloc",(void*)libc::s_calloc,0,1,},
+	{0x4d2ec1c8,"free",(void*)libc::s_free,0,1},
+	{0x8463960a,"memset",(void*)libc::s_memset,0,0},
+	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,0,1},
+	{0x84e4836b,"mmap",(void*)libc::sys_mmap,0,1,0xc0},
+	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,0,1,0xf0002},
+	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,0,1},
+	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,0,1},
+	{0x48800e70,"dlclose",(void*)libc::sys_dlclose,0,1},
+	{0x40296778,"dlsym",(void*)libc::sys_dlsym,0,1},
+    {0x0dbb3b8a,"dladdr",(void*)libc::sys_dladdr,0,1,},
+	{0xed89f56b,"__system_property_get",(void*)libc::s__system_property_get,0,1},
+	{0x36437e34,"gettimeofday",(void*)libc::s_gettimeofday,0,1},
+	{0xbc836fa7,"strdup",(void*)libc::s_strdup,0,1},
+	{0x025d112d,"strlen",(void*)libc::s_strlen,0,1},
+	{0x4273782f,"strncmp",(void*)libc::s_strncmp,0,1},
+	{0xa47083a4,"open",(void*)libc::s_open,0,1,0x5},
+	{0x98574167,"read",(void*)libc::s_read,0,1},
+    {0x7d6b7a5f,"write",(void*)libc::s_write,0,1},
+    {0x130181c4,"close",(void*)libc::s_close,0,1},
+	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,0,1,0x7d},
+	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,0,1,},
+	{0xa8ae7412,"strchr",(void*)libc::s_strchr,0,1,},
+	{0xe2d7f2a6,"strtoul",(void*)libc::s_strtoul,0,1,},
+	{0xd141afd3,"memcpy",(void*)libc::s__aeabi_memcpy,0,0,},
+    {0xbb444062,"bsd_signal",(void*)libc::s_bsd_signal,0,0,},
+    {0xb8669b99,"raise",(void*)libc::s_raise,0,1,},
+    {0xbbad4c48,"getpid",(void*)libc::s_getpid,0,1,},
+    {0x3bd7e17b,"strcmp",(void*)libc::s_strcmp,0,1},
+    {0xbd6735c3,"strcpy",(void*)libc::s_strcpy,0,1},
+    {0x54cbeaf6,"__errno",(void*)libc::s__errno,0,1},
+    {0x82cf5a84,"strerror",(void*)libc::s_strerror,0,1},
+    {0x6692b54,"access",(void*)libc::s_access,0,1},
+    {0xfab5b424,"abort",(void*)libc::s_abort,0,1},
+    {0x900f6a6e,"strcat",(void*)libc::s_strcat,0,1},
+	{0x93f54eea,"pthread_mutex_init",(void*)libc::s_pthread_mutex_init,0,1},
+    {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,0,1},
+    {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,0,1},
+    {0x6f9c4cda,"lseek",(void*)libc::s_lseek,0,1},
     //{0xffa1e6f0,"snprintf",(void*)libc::s_snprintf,1},
-    {0x1f9a630e,"pipe",(void*)libc::s_pipe,1},
-    {0xbbeb587a,"fork",(void*)libc::s_fork,1},
-	{0xe704856a,"sysconf",(void*)libc::s_sysconf,1},
-    {0x55642948,"fopen",(void*)libc::s_fopen,1},
-    {0x6943eb8b,"fread",(void*)libc::s_fread,1},
-    {0x252c547b,"fseek",(void*)libc::s_fseek,1},
-    {0xba4c3b3d,"fclose",(void*)libc::s_fclose,1},
-	{0x6f949845,"time",(void*)libc::s_time,1},
-	{0xd4f46c84,"sbrk",(void*)libc::s_sbrk,1},
-	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,1},
-	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,0},//var
+    {0x1f9a630e,"pipe",(void*)libc::s_pipe,0,1},
+    {0xbbeb587a,"fork",(void*)libc::s_fork,0,1},
+	{0xe704856a,"sysconf",(void*)libc::s_sysconf,0,1},
+    {0x55642948,"fopen",(void*)libc::s_fopen,0,1},
+    {0x6943eb8b,"fread",(void*)libc::s_fread,0,1},
+    {0x252c547b,"fseek",(void*)libc::s_fseek,0,1},
+    {0xba4c3b3d,"fclose",(void*)libc::s_fclose,0,1},
+	{0x6f949845,"time",(void*)libc::s_time,0,1},
+	{0xd4f46c84,"sbrk",(void*)libc::s_sbrk,0,1},
+	{0xfb59145a,"__stack_chk_fail",(void*)libc::s__stack_chk_fail,0,1},
+	{0x2bd12c2d,"__stack_chk_guard",(void*)libc::s__stack_chk_guard,1,0},//var
     //{0x4b19744b,"_Znaj",(void*)libc::s_malloc,1},
     //{0xc03584f5,"_ZdaPv",(void*)libc::s_free,1},
-	{0x247135bc,"opendir",(void*)libc::s_opendir,1},
-    {0xeb5e1d3e,"readdir",(void*)libc::s_readdir,1},
-	{0x7992dd03,"closedir",(void*)libc::s_closedir,1},
-    {0x4638c890,"getppid",(void*)libc::s_getppid,1},
-    {0x07295669,"kill",(void*)libc::s_kill,1},
-    {0x272d2162,"atoi",(void*)libc::s_atoi,1},
-    {0xec4281bf,"itoa",(void*)libc::s_itoa,1},
-    {0x20b8ff21,"stat",(void*)libc::s_stat,1},
-    {0x838f2101,"munmap",(void*)libc::s_munmap,1,0x5b},
-    {0xa7701c0,"pthread_create",(void*)libc::s_pthread_create,1},
-	{0x212b3e97,"pthread_key_create",(void*)libc::s_pthread_key_create,1},
-	{0x94efa2eb,"pthread_key_delete",(void*)libc::s_pthread_key_delete,1},
-	{0x8c79a112,"pthread_getspecific",(void*)libc::s_pthread_getspecific,1},
-	{0x9256165b,"pthread_setspecific",(void*)libc::s_pthread_setspecific,1},
-    {0x17b31dd8,"inotify_init",(void*)libc::s_inotify_init,1},
-    {0xafc21fc6,"inotify_add_watch",(void*)libc::s_inotify_add_watch,1},
-	{0xc2002e91,"inotify_rm_watch",(void*)libc::s_inotify_rm_watch,1},
-    {0xbae22ff5,"fgets",(void*)libc::s_fgets,1},
-    {0x4bf2eac0,"select",(void*)libc::s_select,1},
-    {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,1},
-	{0x740c95f5,"signal",(void*)libc::s_signal,1,},
-	{0xd99d544e,"rename",(void*)libc::s_rename,1},
-	{0x68801d30,"remove",(void*)libc::s_remove,1,},
-    {0xc4c3ac97,"strncpy",(void*)libc::s_strncpy,1,},
-	{0x9409840e,"exit",(void*)libc::s_exit,1,},
-	{0xbd668ea3,"getuid",(void*)libc::s_getuid,1,},
-	{0xdbc7b210,"unlink",(void*)libc::s_unlink,1,},
-	{0xe88f4f24,"madvise",(void*)libc::s_madvise,1,},
-	{0x9a1e494f,"puts",(void*)libc::s_puts,1,},
-	{0x86e389a9,"pread",(void*)libc::s_pread,1,},
-	{0x80ec372a,"memmove",(void*)libc::s_memmove,1,},
-	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,1,},
-	{0x2a601179,"getopt",(void*)libc::s_getopt,1,},
-    {0xd21739f1,"printf",(void*)libc::s_printf,1,0xff},
-	{0x41d2476a,"srand",(void*)libc::s_srand,1,},
-    {0xa55b4f5a,"srand48",(void*)libc::s_srand48,1,},
-    {0x34cda37d,"lrand48",(void*)libc::s_lrand48,1,},
-    {0x52ff8a3f,"strstr",(void*)libc::s_strstr,1,},
-	{0x04896a43,"strtol",(void*)libc::s_strtol,1,},
-    {0x1db8ca5c,"getenv",(void*)libc::s_getenv,1,},
-    {0xca3b2c4d,"pthread_cond_broadcast",(void*)libc::s_pthread_cond_broadcast,1,},
-    {0xeaa33ee8,"pthread_cond_wait",(void*)libc::s_pthread_cond_wait,1,},
-    {0xd426c0a6,"fwrite",(void*)libc::s_fwrite,1,},
-    {0xcbc50561,"strrchr",(void*)libc::s_strrchr,1,},
-    {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,1,},
-    {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,1,},
-    {0x5747d5ed,"atol",(void*)libc::s_atoi,1,},
-    {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,1,},
-    {0x6c845282,"__android_log_print",(void*)libc::s__android_log_print,1,},
-    {0x01e88f3f,"__assert2",(void*)libc::s__assert2,1,},
-    {0x46e76e7e,"___cxa_atexit",(void*)libc::s__cxa_exit,1},
-    {0xe96aff20,"strncasecmp",(void*)libc::s_strncasecmp,1},
-    {0x4b5d70ec,"uncompress",(void*)libc::s_uncompress,1},
+	{0x247135bc,"opendir",(void*)libc::s_opendir,0,1},
+    {0xeb5e1d3e,"readdir",(void*)libc::s_readdir,0,1},
+	{0x7992dd03,"closedir",(void*)libc::s_closedir,0,1},
+    {0x0e4d97e1,"mkdir",(void*)libc::s_mkdir,0,1},
+	{0xe032df8e,"readdir_r",(void*)libc::s_adler32,0,1},
+    {0x4638c890,"getppid",(void*)libc::s_getppid,0,1},
+    {0x07295669,"kill",(void*)libc::s_kill,0,1},
+    {0x272d2162,"atoi",(void*)libc::s_atoi,0,1},
+    {0xec4281bf,"itoa",(void*)libc::s_itoa,0,1},
+    {0x20b8ff21,"stat",(void*)libc::s_stat,0,1},
+    {0x838f2101,"munmap",(void*)libc::s_munmap,0,1,0x5b},
+    {0xa7701c0,"pthread_create",(void*)libc::s_pthread_create,0,1},
+	{0x212b3e97,"pthread_key_create",(void*)libc::s_pthread_key_create,0,1},
+	{0x94efa2eb,"pthread_key_delete",(void*)libc::s_pthread_key_delete,0,1},
+	{0x8c79a112,"pthread_getspecific",(void*)libc::s_pthread_getspecific,0,1},
+	{0x9256165b,"pthread_setspecific",(void*)libc::s_pthread_setspecific,0,1},
+    {0x17b31dd8,"inotify_init",(void*)libc::s_inotify_init,0,1},
+    {0xafc21fc6,"inotify_add_watch",(void*)libc::s_inotify_add_watch,0,1},
+	{0xc2002e91,"inotify_rm_watch",(void*)libc::s_inotify_rm_watch,0,1},
+    {0xbae22ff5,"fgets",(void*)libc::s_fgets,0,1},
+    {0x4bf2eac0,"select",(void*)libc::s_select,0,1},
+    {0x6eca641c,"strlcpy",(void*)libc::s_strlcpy,0,1},
+	{0x740c95f5,"signal",(void*)libc::s_signal,0,1,},
+	{0xd99d544e,"rename",(void*)libc::s_rename,0,1},
+	{0x68801d30,"remove",(void*)libc::s_remove,0,1,},
+    {0xc4c3ac97,"strncpy",(void*)libc::s_strncpy,0,1,},
+	{0x9409840e,"exit",(void*)libc::s_exit,0,1,},
+	{0xbd668ea3,"getuid",(void*)libc::s_getuid,0,1,},
+	{0xdbc7b210,"unlink",(void*)libc::s_unlink,0,1,},
+	{0xe88f4f24,"madvise",(void*)libc::s_madvise,0,1,},
+	{0x9a1e494f,"puts",(void*)libc::s_puts,0,1,},
+	{0x86e389a9,"pread",(void*)libc::s_pread,0,1,},
+	{0x80ec372a,"memmove",(void*)libc::s_memmove,0,1,},
+	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,0,1,},
+	{0x2a601179,"getopt",(void*)libc::s_getopt,0,1,},
+    {0xd21739f1,"printf",(void*)libc::s_printf,0,1,0xff},
+	{0x41d2476a,"srand",(void*)libc::s_srand,0,1,},
+    {0xa55b4f5a,"srand48",(void*)libc::s_srand48,0,1,},
+    {0x34cda37d,"lrand48",(void*)libc::s_lrand48,0,1,},
+    {0x52ff8a3f,"strstr",(void*)libc::s_strstr,0,1,},
+	{0x04896a43,"strtol",(void*)libc::s_strtol,0,1,},
+    {0x1db8ca5c,"getenv",(void*)libc::s_getenv,0,1,},
+    {0xca3b2c4d,"pthread_cond_broadcast",(void*)libc::s_pthread_cond_broadcast,0,1,},
+    {0xeaa33ee8,"pthread_cond_wait",(void*)libc::s_pthread_cond_wait,0,1,},
+	{0xcbe2d39a,"pthread_self",(void*)libc::s_adler32,1},
+	{0x5625b23b,"pthread_detach",(void*)libc::s_adler32,1},
+	{0xc3e99929,"pthread_once",(void*)libc::s_adler32,0,1},
+    {0xd426c0a6,"fwrite",(void*)libc::s_fwrite,0,1,},
+    {0xcbc50561,"strrchr",(void*)libc::s_strrchr,0,1,},
+    {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,0,1,},
+    {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,0,1,},
+    {0x5747d5ed,"atol",(void*)libc::s_atoi,0,1,},
+    {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,0,1,},
+    {0x6c845282,"__android_log_print",(void*)libc::s__android_log_print,0,1,},
+    {0x01e88f3f,"__assert2",(void*)libc::s__assert2,0,1,},
+    {0x46e76e7e,"___cxa_atexit",(void*)libc::s__cxa_exit,0,1},
+    {0xe96aff20,"strncasecmp",(void*)libc::s_strncasecmp,0,1},
+    {0x4b5d70ec,"uncompress",(void*)libc::s_uncompress,0,1},
+	{0x183bc090,"adler32",(void*)libc::s_adler32,0,1},
+	{0xa95113d1,"strtoull",(void*)libc::s_adler32,0,1},
+	{0x98c8322e,"pthread_join",(void*)libc::s_adler32,0,1},
+	{0xdd3f5f96,"fsync",(void*)libc::s_fsync,0,1},
+	{0x769b31e2,"flock",(void*)libc::s_flock,0,1},
+	{0xad65d22c,"waitpid",(void*)libc::s_adler32,0,1},
+	{0xb4dd5ab6,"fcntl",(void*)libc::s_fcntl,0,1},
+	{0xd1ac55cd,"fstat",(void*)libc::s_fstat,0,1},
+	{0x05e568bb,"socket",(void*)libc::s_adler32,0,1},
+	{0xccc0c5b8,"setpgid",(void*)libc::s_adler32,0,1},
+	{0xbc14749f,"execve",(void*)libc::s_adler32,0,1},
+	{0x228dadab,"creat",(void*)libc::s_adler32,0,1},
+	{0x74cff91f,"connect",(void*)libc::s_adler32,0,1},
+	{0xa7733acd,"send",(void*)libc::s_adler32,0,1},
+	{0x59d852ad,"recv",(void*)libc::s_adler32,0,1},
+	{0x377545a2,"gethostbyname",(void*)libc::s_adler32,0,1},
+	{0x887739b8,"uname",(void*)libc::s_adler32,0,1},
+	{0x0e97af36,"chmod",(void*)libc::s_chmod,0,1},
+	{0xd7bcfd99,"fmod",(void*)libc::s_adler32,0,1},
+	{0xbe45d62e,"floor",(void*)libc::s_adler32,0,1},
+	{0xffd7bcfd,"fmodf",(void*)libc::s_adler32,0,1},
+	{0xb6f073a7,"ceil",(void*)libc::s_adler32,0,1},
+	{0x87b422b5,"pow",(void*)libc::s_adler32,0,1},
+	{0xf17d3769,"ftruncate",(void*)libc::s_adler32,0,1},
+	{0xedcc388d,"lseek64",(void*)libc::s_adler32,0,1},
+	{0xf75d4228,"ftell",(void*)libc::s_adler32,0,1},
+	{0x6b5b291a,"_ctype_",(void*)libc::s_adler32,1,1},
+	{0xad0d2424,"_toupper_tab_",(void*)libc::s_adler32,1,1},
+	{0x0f0a0abf,"_tolower_tab_",(void*)libc::s_adler32,1,1},
+	{0xc488ee02,"memchr",(void*)libc::s_adler32,0,1},
+	{0xbc7554df,"strcasecmp",(void*)libc::s_adler32,0,1},
+	{0x9aedffe0,"strtok",(void*)libc::s_adler32,0,1},
+	{0xafabd35e,"crc32",(void*)libc::s_adler32,0,1},
+	{0xe2b06b05,"deflate",(void*)libc::s_adler32,0,1},
+	{0xe9a0fa06,"inflate",(void*)libc::s_adler32,0,1},
+	{0x3268dd21,"deflateInit_",(void*)libc::s_adler32,0,1},
+	{0xe91ec2be,"deflateBound",(void*)libc::s_adler32,0,1},
+	{0x7312b6b8,"deflateEnd",(void*)libc::s_adler32,0,1},
+	{0xfb8dfa93,"fnmatch",(void*)libc::s_adler32,0,1},
+	{0x85d3513b,"nanosleep",(void*)libc::s_adler32,0,1},
+	{0xea2b6159,"readlink",(void*)libc::s_adler32,0,1},
 };
 
 

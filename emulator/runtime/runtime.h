@@ -9,6 +9,7 @@ typedef struct _symbols{
 	unsigned int hash;
 	const char * name;
 	void* func;
+    int is_variable;//func is 0, variable is 1
 	unsigned int model;
 	int number;
 	unsigned int vaddr;
@@ -156,6 +157,13 @@ public:
 	static void* s__assert2(void*);
     static void* s_strncasecmp(void*);
     static void* s_uncompress(void*);
+	static void* s_mkdir(void*);
+	static void* s_adler32(void*);
+    static void* s_chmod(void*);
+    static void* s_fcntl(void*);
+    static void* s_fstat(void*);
+    static void* s_fsync(void*);
+    static void* s_flock(void*);
 };
 
 

@@ -7,7 +7,6 @@
 #include "../jvm/jvm.h"
 #include "runtime.h"
 #include "../dlfcn.h"
-#include "../jvm/java.h"
 #include <map>
 using namespace std;
 
@@ -761,7 +760,7 @@ int emulator::init_jvm()
     uc_reg_write(uc, UC_ARM_REG_R1, &env);
     JNIEnv = (unsigned int)env;
     JVM = (unsigned int)jvm;
-    app_object = sys_malloc(8);
+    init_app();
 
     return 1;
 }
@@ -974,4 +973,10 @@ int emulator::is_data_printable(unsigned char* buf, int size)
         }
     }
     return ret;
+}
+
+int emulator::init_app(){
+    virtual_app* app = new virtual_app();
+    app->init(this);
+    return 1;
 }

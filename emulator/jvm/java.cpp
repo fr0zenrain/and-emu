@@ -34,15 +34,15 @@ class_method java_lang_class_method[]= {
         {0x2551d904, "getName()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
         {0xaa3cd9e8, "getBytes(Ljava/lang/String;)[B",(void*)java_class::java_lang_class_get_Bytes},
         {0xe3e84c88, "getProperty(Ljava/lang/String;)Ljava/lang/String;",(void*)java_class::java_lang_class_get_Property},
-        {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)android_os::get_pkg_name},
-        {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)sys_ctx::get_app_context},
-        {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)android_os::get_pkg_mgr},
+        {0x0a0cfcb0, "getPackageName()Ljava/lang/String;",(void*)virtual_app::get_pkg_name},
+        {0x284522f2, "getAppContext()Landroid/content/Context;",(void*)virtual_app::get_app_context},
+        {0x373612a0, "getPackageManager()Landroid/content/pm/PackageManager;",(void*)virtual_app::get_pkg_mgr},
         {0x957deaca, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
 };
 
 class_method android_os_Build_VERSION_method[] = {
-        {0x9cdc0e8a, "SDK_INTI",(void*)android_os::get_sdk_int},
-        {0x82ebc47e, "CONNECTIVITY_SERVICELjava/lang/String;",(void*)android_os::get_sdk_int},
+        {0x9cdc0e8a, "SDK_INTI",(void*)virtual_app::get_sdk_int},
+        {0x82ebc47e, "CONNECTIVITY_SERVICELjava/lang/String;",(void*)virtual_app::get_sdk_int},
 };
 
 class_method android_app_ActivityThread_method[]= {
@@ -50,7 +50,7 @@ class_method android_app_ActivityThread_method[]= {
 };
 
 class_method com_stub_StubApp_method[]= {
-        {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)sys_ctx::get_app_context},
+        {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)virtual_app::get_app_context},
 };
 
 java_class_type java_method[]= {
@@ -132,60 +132,6 @@ unsigned int java_class::java_lang_class_get_Bytes
     return result;
 }
 
-unsigned int sys_ctx::get_app_context(){
-    void* p = new sys_ctx();
-    int size = 4;
-    int tp = JTYPE_OBJECT;
-    unsigned int addr = (unsigned int)sys_malloc(12);
-    if (addr == 0){
-        return 0;
-    }
-
-    unsigned int data_addr = (unsigned int)sys_malloc(size);
-    if (data_addr){
-        uc_mem_write(g_uc,addr, &tp, 4);
-        uc_mem_write(g_uc,addr+4, &size, 4);
-        uc_mem_write(g_uc,data_addr, &p, 4);
-        unsigned int obj_addr = (unsigned int)make_object("android.content.Context", data_addr);
-        if (addr){
-            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
-        }
-    }
-
-    return addr;
-}
-
-unsigned int android_os::get_sdk_int(){
-    return 19;
-}
-
-unsigned int android_os::get_pkg_name(){
-    return emulator::get_pkg_name();
-}
-
-unsigned int android_os::get_pkg_mgr(){
-    void* p = new pkg_mgr();
-    int size = 4;
-    int tp = JTYPE_OBJECT;
-    unsigned int addr = (unsigned int)sys_malloc(12);
-    if (addr == 0){
-        return 0;
-    }
-
-    unsigned int data_addr = (unsigned int)sys_malloc(size);
-    if (data_addr){
-        uc_mem_write(g_uc,addr, &tp, 4);
-        uc_mem_write(g_uc,addr+4, &size, 4);
-        uc_mem_write(g_uc,data_addr, &p, 4);
-        unsigned int obj_addr = (unsigned int)make_object("android.content.pm.PackageInfo", data_addr);
-        if (addr){
-            uc_mem_write(g_uc,addr+8, &obj_addr, 4);
-        }
-    }
-
-    return addr;
-}
-
 void init_java_class(){
 
     printf("init java class method\n");
@@ -202,6 +148,12 @@ void* get_class(const char* name){
     }
     return (void*)1;
 }
+
+void* get_class_byptr(void* obj){
+
+    return obj;
+}
+
 
 unsigned int get_field(class_method* method, const char* name, const char* sig){
     unsigned int hash = crc32(name,strlen(name), 0);

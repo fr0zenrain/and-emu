@@ -1,3 +1,5 @@
+#ifndef _JAVA_H__
+#define _JAVA_H__
 
 struct class_method{
     unsigned int method_id;
@@ -19,37 +21,28 @@ public:
     static unsigned int java_lang_class_get_Bytes(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
 };
 
-class android_os{
+class virtual_app{
 
 public:
+    virtual_app();
+    ~virtual_app();
+
+public:
+    int init(void* obj);
+    static unsigned int get_sys_ctx();
     static unsigned int get_sdk_int();
     static unsigned int get_pkg_name();
-    static unsigned int get_pkg_mgr();
+    static unsigned int get_pkg_mgr(void* p);
+    static unsigned int get_pkg_info(void* p);
+    static unsigned int get_app_context(void* p);
+private:
+    static unsigned int ctx;
+    static unsigned int mgr;
 };
-
-
-class pkg_mgr{
-
-public:
-    static unsigned int get_pkg_info();
-};
-
-class sys_ctx{
-
-public:
-    static unsigned int get_app_context();
-};
-
-
-class stub_app{
-
-public:
-    static unsigned int get_app_context();
-};
-
 
 void init_java_class();
 void* get_class(const char* name);
+void* get_class_byptr(void* obj);
 unsigned int make_object(const char* object_class, unsigned int object_data);
 unsigned int make_string_object(const char* data);
 unsigned int get_field(class_method* method, const char* name, const char* sig);
@@ -59,3 +52,5 @@ void* get_field_byhash(unsigned int hash);
 unsigned int make_bytearray(unsigned char* data, int size);
 unsigned int make_intarray(int a, int b);
 unsigned int make_stringarray(const char* s1, const char* s2);
+
+#endif

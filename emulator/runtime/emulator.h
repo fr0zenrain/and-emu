@@ -2,6 +2,7 @@
 #define __EMULATOR_H__
 
 #include "../linker.h"
+#include "../jvm/java.h"
 #include "../../include/unicorn/unicorn.h"
 #include <map>
 
@@ -92,6 +93,7 @@ public:
     void start_emulator(unsigned int pc, soinfo * si);
     static void build_proc_self_maps();
     int init_jvm();
+	int init_app();
     unsigned int get_jvm_jnienv(){ return JNIEnv;}
     unsigned int get_jvm(){ return JVM;}
     int save_signal_handler(int sig,void* handler);
@@ -105,10 +107,10 @@ public:
     static soinfo* get_fake_solist(){return fake_solist;}
     static int init_fake_soinfolist();
     unsigned int get_global_jnienv(){return JNIEnv;}
-	void* get_app_object(){return app_object;}
     static int dump_got(soinfo* si);
 	static unsigned int get_pkg_name(){ return pkg_name;}
 	static int is_data_printable(unsigned char*  buf, int size);
+    virtual_app* get_app_object(){ return app;}
 private:
     static emulator* instance;
     static uc_context* context;
@@ -117,7 +119,6 @@ private:
     static symbols_map* symbol_map;
     unsigned int JNIEnv;
 	unsigned int JVM;
-	void* app_object;
     int init_emulator();
     int init_vectors();
     int init_stack();
@@ -141,6 +142,7 @@ private:
 	static soinfo* fake_solist;
     unsigned int classes_dex;
 	static unsigned int pkg_name;
+    virtual_app* app;
 };
 
 #endif

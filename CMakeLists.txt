@@ -30,12 +30,12 @@ set(SOURCEFILES
         emulator/jvm/utfstring.cpp
         emulator/jvm/java.cpp
         emulator/jvm/jni.cpp
+        emulator/jvm/app.cpp
         emulator/hexdump.cpp
         )
 
 add_subdirectory(capstone)
 add_subdirectory(zlib)
-
 add_executable(emulator ${SOURCEFILES})
 target_link_libraries(emulator capstone)
 target_link_libraries(emulator zlib)
