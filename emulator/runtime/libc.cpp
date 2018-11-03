@@ -403,7 +403,7 @@ void* libc::s_gettimeofday(void*)
 
 	if(addr)
 	{
-		tv.tv_sec = time(0);
+		tv.tv_sec = 0x5bdbd3cc;
 		tv.tv_usec = 960256;
 
 		uc_mem_write(g_uc,addr,&tv,sizeof(s_timeval));
@@ -580,7 +580,8 @@ void* libc::s_open(void*)
 {
 	uc_err err;
 	char buf[256] ={0};
-	char cur_dir[1024] ={0};
+    char bak_path[256] = {0};
+	char cur_dir[512] ={0};
 	int value = 1;
 
     unsigned int addr = emulator::get_r0();
@@ -599,18 +600,30 @@ void* libc::s_open(void*)
 #ifdef _MSC_VER
 	GetCurrentDirectory(1024,cur_dir);
 #else
-	getcwd(cur_dir,1024);
+	getcwd(cur_dir,512);
 #endif
+    strcpy(bak_path,buf);
 	if (strncmp(buf,"/proc", 5) == 0)
 	{
 		strcat(cur_dir,buf);
 		value = (int)open(cur_dir,mode);
 	}
+    if (strncmp(buf, "/data/data", 10) == 0){
+        char tmp[256] ={0};
+        char* ch = strtok(buf, "/");
+        while (ch != NULL) {
+            strcpy(tmp, ch);
+            ch = strtok(NULL, "/");
+        }
+        strcpy(cur_dir,"/tmp/");
+        strcat(cur_dir,tmp);
+        value = (int)open(cur_dir,O_RDWR|O_CREAT, 0666);
+    }
 
 #ifdef _MSC_VER
-	printf("open(\"%s\", 0x%x)-> 0x%x\n",buf, mode, value);
+	printf("open(\"%s\", 0x%x)-> 0x%x\n",bak_path, mode, value);
 #else
-	printf(RED "open(\"%s\", 0x%x)-> 0x%x\n" RESET,buf,mode,value);
+	printf(RED "open(\"%s\", 0x%x)-> 0x%x\n" RESET,bak_path,mode,value);
 #endif
 
 	emulator::update_cpu_model();
@@ -652,37 +665,28 @@ void* libc::s_write(void*)
 {
     uc_err err;
     int value = 0;
-    char buf[512] ={0};
+    unsigned char buf[1024] ={0};
     int fd = emulator::get_r0();
-    int size = emulator::get_r1();
-	unsigned int addr = emulator::get_r2();
+    int addr = emulator::get_r1();
+	unsigned int size = emulator::get_r2();
 
-	if (fd == 1)
-	{
-		if (addr)
-		{
-			for (int i = 0; i < 256; i++)
-			{
-				err = uc_mem_read(g_uc, addr + i, &buf[i], 1);
-				if (buf[i] == 0)
-					break;
-			}
-		}
+    if (addr)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            err = uc_mem_read(g_uc, addr + i, &buf[i], 1);
+            if (buf[i] == 0)
+                break;
+        }
+        value = write(fd, buf, size);
+    }
 		
 #ifdef _MSC_VER
 		printf("write(0x%x,%s,0x%x)-> 0x%x\n", fd, buf, size, value);
 #else
 		printf(RED "write(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd, addr, size, value);
 #endif
-	}
-	else 
-	{
-#ifdef _MSC_VER
-		printf("write(0x%x,0x%x,0x%x)-> 0x%x\n", fd, addr, size, value);
-#else
-		printf(RED "write(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd, addr, size, value);
-#endif
-	}
+    print_hex_dump_bytes(buf,0x10);
 
     emulator::update_cpu_model();
 
@@ -696,7 +700,7 @@ void* libc::s_close(void*)
     int value = 0;
     unsigned int fd = emulator::get_r0();
 
-    //close(fd);
+	value = close(fd);
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
@@ -1177,6 +1181,7 @@ void* libc::s_lseek(void*)
     int fd = emulator::get_r0();
     unsigned int offset = emulator::get_r1();
     int whence = emulator::get_r2();
+    value = lseek(fd, offset, whence);
 
 #ifdef _MSC_VER
     printf("lseek(0x%x,0x%x,0x%x)-> 0x%x\n", fd, offset, whence, value);
@@ -1780,11 +1785,15 @@ void* libc::s_pthread_create(void*)
 {
     uc_err err;
     int value = 0;
+    unsigned int tid = emulator::get_r0();
+    unsigned int attr = emulator::get_r1();
+    unsigned int func = emulator::get_r2();
+    unsigned int arg = emulator::get_r3();
 
 #ifdef _MSC_VER
-    printf("pthread_create()-> 0x%x\n",  value);
+    printf("pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",tid,attr,func,arg, value);
 #else
-    printf(RED "pthread_create()-> 0x%x\n" RESET, value);
+    printf(RED "pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, tid,attr,func,arg,value);
 #endif
 
     emulator::update_cpu_model();
@@ -2467,16 +2476,18 @@ void* libc::s_strtol(void*)
 void* libc::s_getenv(void*)
 {
     uc_err err;
-    char var[1024] = {0};
+    char var[256] = {0};
+    char buf[256] = {0};
     unsigned int addr = emulator::get_r0();
-    err = uc_mem_read(g_uc, addr, var, 1024);
-    unsigned int value = (unsigned int)sys_malloc(4);
-    err = uc_mem_write(g_uc, value, "0\x00\x00", 4);
+    err = uc_mem_read(g_uc, addr, var, 256);
+    int len = get_var(var, buf);
+    unsigned int value = (unsigned int)sys_malloc(len+1);
+    err = uc_mem_write(g_uc, value, buf, len);
 
 #ifdef _MSC_VER
-    printf("getenv(\"%s\")-> 0x%x\n", var, value);
+    printf("getenv(\"%s\")-> \"%s\"\n", var, buf);
 #else
-    printf(RED "getenv(\"%s\")-> 0x%x\n" RESET, var, value);
+    printf(RED "getenv(\"%s\")-> \"%s\"\n" RESET, var, buf);
 #endif
 
     emulator::update_cpu_model();
@@ -2850,11 +2861,18 @@ void* libc::s_fcntl(void*)
 {
     uc_err err;
     int value = 0;
+    struct flock fl;
 
     unsigned int fd = emulator::get_r0();
     unsigned int cmd = emulator::get_r1();
     unsigned int arg = emulator::get_r2();
-    value = fd+1;
+    if (cmd == 3)
+    {
+        value = fcntl(fd, cmd);
+    }
+    else if(cmd == 6 || cmd == 7){
+
+    }
 
 #ifdef _MSC_VER
     printf("fcntl(0x%x,0x%x,0x%x)-> 0x%x\n", fd,cmd, arg,value);
@@ -2872,10 +2890,20 @@ void* libc::s_fstat(void*)
 {
     uc_err err;
     int value = 0;
+    struct stat st;
+	android_stat ast;
 
     unsigned int fd = emulator::get_r0();
     unsigned int st_addr = emulator::get_r1();
+    value = fstat(fd, &st);
+    ast.st_dev = st.st_dev;
+    ast.st_mode = st.st_mode;
+    ast.st_blksize = st.st_blksize;
+    ast.st_uid = st.st_uid;
+    ast.st_size = st.st_size;
+    ast.st_ino = st.st_ino;
 
+	err = uc_mem_write(g_uc, st_addr, &ast, sizeof(struct android_stat));
 #ifdef _MSC_VER
     printf("fstat(0x%x,0x%x)-> 0x%x\n", fd,st_addr,value);
 #else
@@ -2895,6 +2923,7 @@ void* libc::s_ftruncate(void*)
 
     unsigned int fd = emulator::get_r0();
     unsigned int length = emulator::get_r1();
+    //value = ftruncate(fd, length);
 
 #ifdef _MSC_VER
     printf("ftruncate(0x%x,0x%x)-> 0x%x\n", fd,length,value);
@@ -2914,6 +2943,7 @@ void* libc::s_fsync(void*)
     int value = 0;
 
     unsigned int fd = emulator::get_r0();
+    value = fsync(fd);
 
 #ifdef _MSC_VER
     printf("fsync(0x%x)-> 0x%x\n", fd,value);

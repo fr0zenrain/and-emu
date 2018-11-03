@@ -170,6 +170,7 @@ public:
 
 
 int get_prop(char* name,char* value);
+int get_var(char* name,char* value);
 extern "C" void* sys_malloc(size_t size);
 extern "C" void sys_free(void* ptr);
 

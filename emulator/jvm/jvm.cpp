@@ -342,14 +342,15 @@ int PopLocalFrame()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+
 
 #ifdef _MSC_VER
 	printf("PopLocalFrame(\"%s\")\n",buffer);
 #else
 	printf(RED "PopLocalFrame(\"%s\")\n" RESET, buffer); 
-#endif 
+#endif
+
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -516,16 +517,19 @@ int NewObject()
 }
 int NewObjectV() 
 {
-	int ret = 0;
+	int ret = 1;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+	unsigned int env = emulator::get_r0();
+    unsigned int clz = emulator::get_r1();
+    unsigned int mid = emulator::get_r2();
+    unsigned int arg = emulator::get_r3();
 	unsigned int lr = emulator::get_lr(); 
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("NewObjectV(\"%s\")\n",buffer);
+	printf("NewObjectV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env,clz,mid,arg,ret);
 #else
-	printf(RED "NewObjectV(\"%s\")\n" RESET, buffer); 
+	printf(RED "NewObjectV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,clz,mid,arg,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -755,7 +759,7 @@ int CallBooleanMethod()
 }
 int CallBooleanMethodV() 
 {
-	int ret = 0;
+	int ret = 1;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
@@ -994,7 +998,7 @@ int CallIntMethod()
 }
 int CallIntMethodV() 
 {
-	int ret = 1;
+	int ret = 0;
 	unsigned int env = emulator::get_r0();
     unsigned int obj = emulator::get_r1();
     unsigned int mid = emulator::get_r2();
@@ -2888,7 +2892,7 @@ int CallStaticVoidMethod()
 }
 int CallStaticVoidMethodV() 
 {
-	int ret = 0;
+	int ret = 1;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0();
     unsigned int obj = emulator::get_r1();
@@ -3657,15 +3661,17 @@ int NewBooleanArray()
 int NewByteArray() 
 {
 	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
+	unsigned char buffer[1024]={0};
+	unsigned int env = emulator::get_r0();
+    unsigned int size = emulator::get_r1();
+    unsigned int lr = emulator::get_lr();
+    ret = make_bytearray(buffer, size);
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-	printf("NewByteArray(\"%s\")\n",buffer);
+	printf("NewByteArray(0x%x,0x%x) ->0x%x \n",env,size,ret);
 #else
-	printf(RED "NewByteArray(\"%s\")\n" RESET, buffer); 
+	printf(RED "NewByteArray(0x%x,0x%x) ->0x%x \n" RESET, env,size,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
