@@ -105,6 +105,7 @@ public:
     static void* s_stat(void*);
     static void* s_munmap(void*);
     static void* s_pthread_create(void*);
+	static void* s_pthread_join(void*);
 	static void* s_pthread_key_create(void*);
 	static void* s_pthread_key_delete(void*);
 	static void* s_pthread_getspecific(void*);

@@ -1789,7 +1789,10 @@ void* libc::s_pthread_create(void*)
     unsigned int attr = emulator::get_r1();
     unsigned int func = emulator::get_r2();
     unsigned int arg = emulator::get_r3();
-
+    unsigned int thread_info = (unsigned int)sys_malloc(8);
+    uc_mem_write(g_uc,thread_info,&func,4);
+    uc_mem_write(g_uc,thread_info+4,&arg,4);
+    uc_mem_write(g_uc,tid,&thread_info,4);
 #ifdef _MSC_VER
     printf("pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",tid,attr,func,arg, value);
 #else
@@ -2541,13 +2544,15 @@ void* libc::s_fwrite(void*)
     unsigned int buf_addr = emulator::get_r0();
     unsigned int count = emulator::get_r1();
     unsigned int size = emulator::get_r2();
-
+    unsigned int fd = emulator::get_r3();
+    uc_mem_read(g_uc, buf_addr, var, 1024);
+    //int value = fwrite(var, count, size, (FILE*)fd);
 #ifdef _MSC_VER
-    printf("fwrite(\"%s\")-> 0x%x\n", var, size);
+    printf("fwrite(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n", buf_addr,count,size,fd, size);
 #else
-    printf(RED "fwrite(\"%s\")-> 0x%x\n" RESET, var, size);
+    printf(RED "fwrite(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, buf_addr,count,size,fd,size);
 #endif
-
+    print_hex_dump_bytes(var,0x10);
     emulator::update_cpu_model();
 
     err = uc_reg_write(g_uc, UC_ARM_REG_R0, &size);
@@ -2818,6 +2823,7 @@ void* libc::s_adler32(void*)
     unsigned int old = emulator::get_r0();
     unsigned int buf_addr = emulator::get_r1();
     unsigned int len = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
     printf("adler32(0x%x,0x%x,0x%x) -> 0x%x\n", old,buf_addr,len, value);
@@ -2899,8 +2905,9 @@ void* libc::s_fstat(void*)
     ast.st_dev = st.st_dev;
     ast.st_mode = st.st_mode;
     ast.st_blksize = st.st_blksize;
+    ast.st_blocks = st.st_blocks;
     ast.st_uid = st.st_uid;
-    ast.st_size = st.st_size;
+    ast.st_size = 0x0000002000000020;
     ast.st_ino = st.st_ino;
 
 	err = uc_mem_write(g_uc, st_addr, &ast, sizeof(struct android_stat));
@@ -2909,7 +2916,7 @@ void* libc::s_fstat(void*)
 #else
     printf(RED "fstat(0x%x,0x%x)-> 0x%x\n" RESET, fd,st_addr, value);
 #endif
-
+    print_hex_dump_bytes(&ast, sizeof(struct android_stat));
     emulator::update_cpu_model();
 
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -2974,6 +2981,29 @@ void* libc::s_flock(void*)
     emulator::update_cpu_model();
 
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_join(void*){
+    uc_err err;
+    int value = 0;
+
+    unsigned int tid = emulator::get_r0();
+    unsigned int data = emulator::get_r1();
+    unsigned int func = 0;
+    unsigned int arg = 0;
+    uc_mem_read(g_uc, tid, &func, 4);
+    uc_mem_read(g_uc, tid+4, &arg, 4);
+
+#ifdef _MSC_VER
+    printf("pthread_join(0x%x,0x%x)-> 0x%x\n", tid,data,value);
+#else
+    printf(RED "pthread_join(0x%x,0x%x)-> 0x%x\n" RESET, tid, data,value);
+#endif
+    err = uc_reg_write(g_uc,UC_ARM_REG_LR,&func);
+    emulator::update_cpu_model();
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&arg);
+    //err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
 }
 
@@ -3096,7 +3126,7 @@ symbols g_syms[] =
     {0x4b5d70ec,"uncompress",(void*)libc::s_uncompress,0,1},
 	{0x183bc090,"adler32",(void*)libc::s_adler32,0,1},
 	{0xa95113d1,"strtoull",(void*)libc::s_adler32,0,1},
-	{0x98c8322e,"pthread_join",(void*)libc::s_adler32,0,1},
+	{0x98c8322e,"pthread_join",(void*)libc::s_pthread_join,0,1},
 	{0xdd3f5f96,"fsync",(void*)libc::s_fsync,0,1},
 	{0x769b31e2,"flock",(void*)libc::s_flock,0,1},
 	{0xad65d22c,"waitpid",(void*)libc::s_adler32,0,1},

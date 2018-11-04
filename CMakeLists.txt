@@ -24,6 +24,7 @@ set(SOURCEFILES
         emulator/runtime/malloc.cpp
         emulator/runtime/system.cpp
         emulator/runtime/opendir.cpp
+        emulator/runtime/unpack.cpp
         emulator/jvm/jvm.cpp
         emulator/jvm/func.cpp
         emulator/jvm/alloc.cpp

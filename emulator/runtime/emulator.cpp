@@ -2,11 +2,11 @@
 #include "../crc32.h"
 #include "../../capstone/include/capstone.h"
 #include "string.h"
-//#include "dlfcn.h"
 #include "../engine.h"
 #include "../jvm/jvm.h"
 #include "runtime.h"
 #include "../dlfcn.h"
+#include "unpack.h"
 #include <map>
 using namespace std;
 
@@ -425,11 +425,23 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }
 
-    if(!g_show_ins)
-    {
-        return ;
+    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    qihoo_jiagu_patch(address);
+    if (!g_show_ins){
+        return;
     }
-
+    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
     csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
@@ -456,24 +468,6 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         }
         cs_close(&handle);
     }
-    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
-    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
-    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
-    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
-    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
-    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
-    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
-    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
-    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
-    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
-    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
-    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
-    if (pc == 0x404b0eb4){
-        char buf[0x200] = {0};
-        uc_mem_read(g_uc, 0xbeefeee0+0x40, buf, 0x200);
-        print_hex_dump_bytes(buf, 0x200);
-    }
-    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
 }
 
 void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)

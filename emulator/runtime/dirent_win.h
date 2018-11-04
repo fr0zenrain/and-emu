@@ -71,7 +71,7 @@ struct android_stat {
 	unsigned long       st_ctime;
 	unsigned long       st_ctime_nsec;
 	unsigned long long  st_ino;
-};
+}__attribute__ ((aligned (8)));
 
 
 DIRX *opendir_ (const char *name);
