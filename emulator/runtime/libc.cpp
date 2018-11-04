@@ -1789,15 +1789,18 @@ void* libc::s_pthread_create(void*)
     unsigned int attr = emulator::get_r1();
     unsigned int func = emulator::get_r2();
     unsigned int arg = emulator::get_r3();
-    unsigned int thread_info = (unsigned int)sys_malloc(8);
+    unsigned int thread_info = (unsigned int)sys_malloc(12);
+    unsigned int thread_sp = (unsigned int)sys_malloc(0x1000);
     uc_mem_write(g_uc,thread_info,&func,4);
     uc_mem_write(g_uc,thread_info+4,&arg,4);
+    uc_mem_write(g_uc,thread_info+8,&thread_sp,4);
     uc_mem_write(g_uc,tid,&thread_info,4);
 #ifdef _MSC_VER
     printf("pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",tid,attr,func,arg, value);
 #else
     printf(RED "pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, tid,attr,func,arg,value);
 #endif
+    printf("func=0x%x arg=0x%x tsp=0x%x\n", func, arg, thread_sp);
 
     emulator::update_cpu_model();
 
@@ -2992,17 +2995,24 @@ void* libc::s_pthread_join(void*){
     unsigned int data = emulator::get_r1();
     unsigned int func = 0;
     unsigned int arg = 0;
+    unsigned int tsp = 0;
     uc_mem_read(g_uc, tid, &func, 4);
     uc_mem_read(g_uc, tid+4, &arg, 4);
+    uc_mem_read(g_uc, tid+8, &tsp, 4);
 
 #ifdef _MSC_VER
     printf("pthread_join(0x%x,0x%x)-> 0x%x\n", tid,data,value);
 #else
     printf(RED "pthread_join(0x%x,0x%x)-> 0x%x\n" RESET, tid, data,value);
 #endif
+    emulator::get_emulator()->save_register();
+    printf("func=0x%x arg=0x%x tsp=0x%x\n", func, arg, tsp);
     err = uc_reg_write(g_uc,UC_ARM_REG_LR,&func);
-    emulator::update_cpu_model();
+    err = uc_reg_write(g_uc,UC_ARM_REG_SP,&tsp);
+
+    emulator::get_emulator()->set_thread_mode(1);
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&arg);
+    emulator::update_cpu_model();
     //err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
 }

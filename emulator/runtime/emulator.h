@@ -49,6 +49,9 @@ public:
     static Elf32_Sym* get_symbols(const char* name);
     static int dispatch();
     static emulator* get_emulator(uc_mode mode = UC_MODE_THUMB);
+	void dump_register();
+    int save_register();
+    int restore_register();
 	int dispose();
 
 private:
@@ -83,8 +86,12 @@ public:
     static unsigned int get_pc(){return v_pc;}
     static unsigned int get_lr(){return v_lr;}
     static unsigned int get_sp(){return v_sp;}
+    static unsigned int get_cpsr(){return v_cpsr;}
     static int show_disasm;
     static int update_cpu_model();
+    void set_thread_mode(int mode){this->mode = mode;}
+    static int is_thread_mode(){ return mode;}
+    static int get_next_mode(){ return next_mode;}
 
 public:
     static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
@@ -136,6 +143,8 @@ private:
     uc_hook trace_code;
     uc_hook trace_inter;
     uc_hook trace_unmap;
+    static int mode;
+    static int next_mode;
 	libc* c;
 	static int main_pid;
 	static soinfo* module_info;
@@ -143,6 +152,7 @@ private:
     unsigned int classes_dex;
 	static unsigned int pkg_name;
     virtual_app* app;
+    unsigned int gen_register[20];
 };
 
 #endif

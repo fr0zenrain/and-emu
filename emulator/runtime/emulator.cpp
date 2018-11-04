@@ -38,6 +38,8 @@ soinfo* emulator::module_info = 0;
 soinfo* emulator::fake_solist = 0;
 
 int emulator::main_pid = 0;
+int emulator::mode = 0;
+int emulator::next_mode = 0;
 unsigned int emulator::pkg_name = 0;
 
 unsigned int emulator::v_pc =0;
@@ -407,25 +409,8 @@ int emulator::dispatch()
     return 0;
 }
 
-void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-    unsigned char buf[8] = {0};
-    soinfo* si = (soinfo*)user_data;
-    if (uc_mem_read(uc, address, buf, 4) != UC_ERR_OK) {
-        printf("not ok - uc_mem_read fail during hook_code callback, addr: 0x%llx\n", address);
-        if (uc_emu_stop(uc) != UC_ERR_OK) {
-            printf("not ok - uc_emu_stop fail during hook_code callback, addr: 0x%llx\n", address);
-            _exit(-1);
-        }
-    }
-
-    if(*(unsigned int*)buf == 0)
-    {
-        uc_emu_stop(uc);
-        return ;
-    }
-
-    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+void emulator::dump_register(){
+    int r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,pc,lr,sp;
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
     err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
@@ -437,11 +422,52 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
     err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &r8);
+    err=uc_reg_read(uc, UC_ARM_REG_R9, &r9);
+    printf("pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x\n",
+           pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9);
+   /* int size = 0x455030;
+    void* buf = malloc(size);
+    if (buf){
+        uc_mem_read(g_uc, r3, buf, size);
+        FILE* fw = fopen("dump.dex","wb");
+        fwrite(buf,1,size,fw);
+        fclose(fw);
+        printf("dumped\n");
+    }*/
+}
+
+void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+    unsigned char buf[8] = {0};
+    soinfo* si = (soinfo*)user_data;
+    if (uc_mem_read(uc, address, buf, 4) != UC_ERR_OK) {
+        printf("not ok - uc_mem_read fail during hook_code callback, addr: 0x%llx\n", address);
+        if (uc_emu_stop(uc) != UC_ERR_OK) {
+            printf("not ok - uc_emu_stop fail during hook_code callback, addr: 0x%llx\n", address);
+            _exit(-1);
+        }
+    }
+    next_mode = size == 2? 1 : 0;
+    if(*(unsigned int*)buf == 0)
+    {
+        uc_emu_stop(uc);
+        return ;
+    }
+
+    if (is_thread_mode()){
+        if (address == v_pc){
+            get_emulator()->restore_register();
+            emulator::update_cpu_model();
+            get_emulator()->set_thread_mode(0);
+            printf("end thread working\n");
+        }
+    }
     qihoo_jiagu_patch(address);
     if (!g_show_ins){
         return;
     }
-    //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
+    //
     csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
@@ -972,5 +998,56 @@ int emulator::is_data_printable(unsigned char* buf, int size)
 int emulator::init_app(){
     virtual_app* app = new virtual_app();
     app->init(this);
+    return 1;
+}
+
+int emulator::save_register(){
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_R0, &gen_register[0]);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &gen_register[1]);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &gen_register[2]);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &gen_register[3]);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &gen_register[4]);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &gen_register[5]);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &gen_register[6]);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &gen_register[7]);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &gen_register[8]);
+    err=uc_reg_read(uc, UC_ARM_REG_R9, &gen_register[9]);
+    err=uc_reg_read(uc, UC_ARM_REG_R10, &gen_register[10]);
+    err=uc_reg_read(uc, UC_ARM_REG_R11, &gen_register[11]);
+    err=uc_reg_read(uc, UC_ARM_REG_PC, &gen_register[12]);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &gen_register[13]);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &gen_register[14]);
+    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &gen_register[15]);
+    printf("save pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x cpsr=%x\n",
+           gen_register[12],gen_register[13],gen_register[14],gen_register[0],
+           gen_register[1],gen_register[2],gen_register[3],gen_register[4],
+           gen_register[5],gen_register[6],gen_register[7],gen_register[8],
+           gen_register[9],gen_register[10],gen_register[11],gen_register[15]);
+    return 1;
+}
+
+int emulator::restore_register(){
+
+    uc_err err=uc_reg_write(uc, UC_ARM_REG_R0, &gen_register[0]);
+    err=uc_reg_write(uc, UC_ARM_REG_R1, &gen_register[1]);
+    err=uc_reg_write(uc, UC_ARM_REG_R2, &gen_register[2]);
+    err=uc_reg_write(uc, UC_ARM_REG_R3, &gen_register[3]);
+    err=uc_reg_write(uc, UC_ARM_REG_R4, &gen_register[4]);
+    err=uc_reg_write(uc, UC_ARM_REG_R5, &gen_register[5]);
+    err=uc_reg_write(uc, UC_ARM_REG_R6, &gen_register[6]);
+    err=uc_reg_write(uc, UC_ARM_REG_R7, &gen_register[7]);
+    err=uc_reg_write(uc, UC_ARM_REG_R8, &gen_register[8]);
+    err=uc_reg_write(uc, UC_ARM_REG_R9, &gen_register[9]);
+    err=uc_reg_write(uc, UC_ARM_REG_R10, &gen_register[10]);
+    err=uc_reg_write(uc, UC_ARM_REG_R11, &gen_register[11]);
+    err=uc_reg_write(uc, UC_ARM_REG_PC, &gen_register[12]);
+    err=uc_reg_write(uc, UC_ARM_REG_LR, &gen_register[13]);
+    err=uc_reg_write(uc, UC_ARM_REG_SP, &gen_register[14]);
+    err=uc_reg_write(uc, UC_ARM_REG_CPSR, &gen_register[15]);
+    printf("restore pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x cpsr=%x\n",
+           gen_register[12],gen_register[13],gen_register[14],gen_register[0],
+           gen_register[1],gen_register[2],gen_register[3],gen_register[4],
+           gen_register[5],gen_register[6],gen_register[7],gen_register[8],
+           gen_register[9],gen_register[10],gen_register[11],gen_register[15]);
     return 1;
 }
