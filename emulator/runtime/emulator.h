@@ -89,7 +89,7 @@ public:
     static unsigned int get_cpsr(){return v_cpsr;}
     static int show_disasm;
     static int update_cpu_model();
-    void set_thread_mode(int mode){this->mode = mode;}
+    void set_thread_info(int mode, unsigned int tsp, unsigned int tpc);
     static int is_thread_mode(){ return mode;}
     static int get_next_mode(){ return next_mode;}
 
@@ -144,6 +144,8 @@ private:
     uc_hook trace_inter;
     uc_hook trace_unmap;
     static int mode;
+	static int tsp;
+    static int texc;
     static int next_mode;
 	libc* c;
 	static int main_pid;

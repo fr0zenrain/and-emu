@@ -7,6 +7,7 @@
 #include "runtime.h"
 #include "../dlfcn.h"
 #include "unpack.h"
+#include "math.h"
 #include <map>
 using namespace std;
 
@@ -39,6 +40,8 @@ soinfo* emulator::fake_solist = 0;
 
 int emulator::main_pid = 0;
 int emulator::mode = 0;
+int emulator::tsp = 0;
+int emulator::texc = 0;
 int emulator::next_mode = 0;
 unsigned int emulator::pkg_name = 0;
 
@@ -455,16 +458,21 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         return ;
     }
 
-    if (is_thread_mode()){
-        if (address == v_pc){
-            get_emulator()->restore_register();
-            emulator::update_cpu_model();
-            get_emulator()->set_thread_mode(0);
-            printf("end thread working\n");
+    if (is_thread_mode() && tsp){
+        texc += size;
+        if (texc > 10){
+            uc_reg_read(g_uc, ARM_REG_SP, &v_sp);
+            if (tsp == v_sp){
+                get_emulator()->restore_register();
+                emulator::update_cpu_model();
+                get_emulator()->set_thread_info(0, 0, 0);
+                printf("end thread working\n");
+            }
         }
+
     }
-    qihoo_jiagu_patch(address);
-    if (!g_show_ins){
+    qihoo_jiagu_1375_patch(address);
+    if (address <= 0x40611f00 || address >= 0x40630000){
         return;
     }
     //
@@ -1014,15 +1022,16 @@ int emulator::save_register(){
     err=uc_reg_read(uc, UC_ARM_REG_R9, &gen_register[9]);
     err=uc_reg_read(uc, UC_ARM_REG_R10, &gen_register[10]);
     err=uc_reg_read(uc, UC_ARM_REG_R11, &gen_register[11]);
-    err=uc_reg_read(uc, UC_ARM_REG_PC, &gen_register[12]);
-    err=uc_reg_read(uc, UC_ARM_REG_LR, &gen_register[13]);
-    err=uc_reg_read(uc, UC_ARM_REG_SP, &gen_register[14]);
-    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &gen_register[15]);
-    printf("save pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x cpsr=%x\n",
-           gen_register[12],gen_register[13],gen_register[14],gen_register[0],
+    err=uc_reg_read(uc, UC_ARM_REG_R12, &gen_register[12]);
+    err=uc_reg_read(uc, UC_ARM_REG_PC, &gen_register[13]);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &gen_register[14]);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &gen_register[15]);
+    err=uc_reg_read(uc, UC_ARM_REG_CPSR, &gen_register[16]);
+    printf("save pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x r12=%x cpsr=%x\n",
+           gen_register[13],gen_register[14],gen_register[15],gen_register[0],
            gen_register[1],gen_register[2],gen_register[3],gen_register[4],
            gen_register[5],gen_register[6],gen_register[7],gen_register[8],
-           gen_register[9],gen_register[10],gen_register[11],gen_register[15]);
+           gen_register[9],gen_register[10],gen_register[11],gen_register[12],gen_register[16]);
     return 1;
 }
 
@@ -1040,14 +1049,22 @@ int emulator::restore_register(){
     err=uc_reg_write(uc, UC_ARM_REG_R9, &gen_register[9]);
     err=uc_reg_write(uc, UC_ARM_REG_R10, &gen_register[10]);
     err=uc_reg_write(uc, UC_ARM_REG_R11, &gen_register[11]);
-    err=uc_reg_write(uc, UC_ARM_REG_PC, &gen_register[12]);
-    err=uc_reg_write(uc, UC_ARM_REG_LR, &gen_register[13]);
-    err=uc_reg_write(uc, UC_ARM_REG_SP, &gen_register[14]);
-    err=uc_reg_write(uc, UC_ARM_REG_CPSR, &gen_register[15]);
-    printf("restore pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x cpsr=%x\n",
-           gen_register[12],gen_register[13],gen_register[14],gen_register[0],
+    err=uc_reg_write(uc, UC_ARM_REG_R12, &gen_register[12]);
+    err=uc_reg_write(uc, UC_ARM_REG_PC, &gen_register[13]);
+    err=uc_reg_write(uc, UC_ARM_REG_LR, &gen_register[14]);
+    err=uc_reg_write(uc, UC_ARM_REG_SP, &gen_register[15]);
+    err=uc_reg_write(uc, UC_ARM_REG_CPSR, &gen_register[16]);
+    printf("restore pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x r12=%x cpsr=%x\n",
+           gen_register[13],gen_register[14],gen_register[15],gen_register[0],
            gen_register[1],gen_register[2],gen_register[3],gen_register[4],
            gen_register[5],gen_register[6],gen_register[7],gen_register[8],
-           gen_register[9],gen_register[10],gen_register[11],gen_register[15]);
+           gen_register[9],gen_register[10],gen_register[11],gen_register[12],gen_register[16]);
     return 1;
+}
+
+void emulator::set_thread_info(int mode, unsigned int tsp, unsigned int texc)
+{
+    this->mode = mode;
+    this->tsp = tsp;
+    this->texc = texc;
 }

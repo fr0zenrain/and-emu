@@ -46,7 +46,7 @@ void* libc::s_malloc(void*)
 #ifdef _MSC_VER
     printf("malloc(0x%x) ->0x%x\n",size,addr);
 #else
-    printf(RED "malloc(0x%x) ->0x%p\n" RESET,size,addr);
+    printf(RED "malloc(0x%x) ->0x%x\n" RESET,size,addr);
 #endif
 
     uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
@@ -64,7 +64,7 @@ void* libc::s_calloc(void*)
 #ifdef _MSC_VER
     printf("calloc(0x%x, 0x%x) ->0x%x\n", count, size,addr);
 #else
-    printf(RED "calloc(0x%x, 0x%x) ->0x%p\n" RESET,count, size,addr);
+    printf(RED "calloc(0x%x, 0x%x) ->0x%x\n" RESET,count, size,addr);
 #endif
 
     uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
@@ -1800,7 +1800,7 @@ void* libc::s_pthread_create(void*)
 #else
     printf(RED "pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, tid,attr,func,arg,value);
 #endif
-    printf("func=0x%x arg=0x%x tsp=0x%x\n", func, arg, thread_sp);
+    printf("thread=0x%x func=0x%x arg=0x%x tsp=0x%x\n", thread_info, func, arg, thread_sp);
 
     emulator::update_cpu_model();
 
@@ -2991,11 +2991,12 @@ void* libc::s_pthread_join(void*){
     uc_err err;
     int value = 0;
 
-    unsigned int tid = emulator::get_r0();
-    unsigned int data = emulator::get_r1();
     unsigned int func = 0;
     unsigned int arg = 0;
     unsigned int tsp = 0;
+    unsigned int tid = emulator::get_r0();
+    unsigned int data = emulator::get_r1();
+
     uc_mem_read(g_uc, tid, &func, 4);
     uc_mem_read(g_uc, tid+4, &arg, 4);
     uc_mem_read(g_uc, tid+8, &tsp, 4);
@@ -3006,13 +3007,13 @@ void* libc::s_pthread_join(void*){
     printf(RED "pthread_join(0x%x,0x%x)-> 0x%x\n" RESET, tid, data,value);
 #endif
     emulator::get_emulator()->save_register();
-    printf("func=0x%x arg=0x%x tsp=0x%x\n", func, arg, tsp);
-    err = uc_reg_write(g_uc,UC_ARM_REG_LR,&func);
+    printf("thread=0x%x func=0x%x arg=0x%x tsp=0x%x\n", tid, func, arg, tsp);
+    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&func);
     err = uc_reg_write(g_uc,UC_ARM_REG_SP,&tsp);
 
-    emulator::get_emulator()->set_thread_mode(1);
+    emulator::get_emulator()->set_thread_info(1, tsp, 0);
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&arg);
-    emulator::update_cpu_model();
+    //emulator::update_cpu_model();
     //err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
 }
