@@ -467,7 +467,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
 
     }
     qihoo_jiagu_1375_patch(address);
-    if (!g_show_ins){
+    if (address <= 0x40612000 || address >= 0x40639000){
         return;
     }
     //
@@ -614,6 +614,15 @@ int emulator::init_vectors()
     }
     err = uc_mem_write(uc, atomic_addr, atomic_code, sizeof(atomic_code));
     return 1;
+}
+
+unsigned int emulator::alloc_thread_stack(){
+
+    unsigned int stack_bottom = (unsigned int)sys_malloc(0x1000);
+    unsigned int thread_sp = stack_bottom+0x1000-0x800;
+    printf("alloc thread stack=%x\n",thread_sp);
+
+    return thread_sp;
 }
 
 int emulator::init_stack()

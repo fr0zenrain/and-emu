@@ -93,6 +93,7 @@ public:
     static int is_thread_mode(){ return mode;}
     static int get_next_mode(){ return next_mode;}
 	void dump_memory(const char* name, unsigned int vaddr, unsigned int size);
+    unsigned int alloc_thread_stack();
 
 public:
     static void hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);

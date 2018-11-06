@@ -1789,7 +1789,7 @@ void* libc::s_pthread_create(void*)
     unsigned int func = emulator::get_r2();
     unsigned int arg = emulator::get_r3();
     unsigned int thread_info = (unsigned int)sys_malloc(16);
-    unsigned int thread_sp = (unsigned int)sys_malloc(0x1000);
+    unsigned int thread_sp = emulator::get_emulator()->alloc_thread_stack();
     uc_mem_write(g_uc,thread_info,&func,4);
     uc_mem_write(g_uc,thread_info+4,&arg,4);
     uc_mem_write(g_uc,thread_info+8,&thread_sp,4);
