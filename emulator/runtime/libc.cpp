@@ -48,7 +48,6 @@ void* libc::s_malloc(void*)
 #else
     printf(RED "malloc(0x%x) ->0x%x\n" RESET,size,addr);
 #endif
-
     uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
 	return 0;
 }
@@ -1789,7 +1788,7 @@ void* libc::s_pthread_create(void*)
     unsigned int attr = emulator::get_r1();
     unsigned int func = emulator::get_r2();
     unsigned int arg = emulator::get_r3();
-    unsigned int thread_info = (unsigned int)sys_malloc(12);
+    unsigned int thread_info = (unsigned int)sys_malloc(16);
     unsigned int thread_sp = (unsigned int)sys_malloc(0x1000);
     uc_mem_write(g_uc,thread_info,&func,4);
     uc_mem_write(g_uc,thread_info+4,&arg,4);
@@ -3006,6 +3005,7 @@ void* libc::s_pthread_join(void*){
 #else
     printf(RED "pthread_join(0x%x,0x%x)-> 0x%x\n" RESET, tid, data,value);
 #endif
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     emulator::get_emulator()->save_register();
     printf("thread=0x%x func=0x%x arg=0x%x tsp=0x%x\n", tid, func, arg, tsp);
     err = uc_reg_write(g_uc,UC_ARM_REG_PC,&func);
@@ -3014,7 +3014,6 @@ void* libc::s_pthread_join(void*){
     emulator::get_emulator()->set_thread_info(1, tsp, 0);
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&arg);
     //emulator::update_cpu_model();
-    //err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
 }
 

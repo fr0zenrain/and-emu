@@ -429,15 +429,6 @@ void emulator::dump_register(){
     err=uc_reg_read(uc, UC_ARM_REG_R9, &r9);
     printf("pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x\n",
            pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9);
-   /* int size = 0x455030;
-    void* buf = malloc(size);
-    if (buf){
-        uc_mem_read(g_uc, r3, buf, size);
-        FILE* fw = fopen("dump.dex","wb");
-        fwrite(buf,1,size,fw);
-        fclose(fw);
-        printf("dumped\n");
-    }*/
 }
 
 void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -463,16 +454,20 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         if (texc > 10){
             uc_reg_read(g_uc, ARM_REG_SP, &v_sp);
             if (tsp == v_sp){
+                /*get_emulator()->dump_register();
+                int r1;
+                uc_reg_read(g_uc,ARM_REG_R1,&r1);
+                get_emulator()->dump_memory("/tmp/qhdump.dex",r1,0x7131b0);*/
                 get_emulator()->restore_register();
                 emulator::update_cpu_model();
                 get_emulator()->set_thread_info(0, 0, 0);
-                printf("end thread working\n");
+                printf("end thread working \n");
             }
         }
 
     }
     qihoo_jiagu_1375_patch(address);
-    if (address <= 0x40611f00 || address >= 0x40630000){
+    if (!g_show_ins){
         return;
     }
     //
@@ -1067,4 +1062,26 @@ void emulator::set_thread_info(int mode, unsigned int tsp, unsigned int texc)
     this->mode = mode;
     this->tsp = tsp;
     this->texc = texc;
+}
+
+void emulator::dump_memory(const char* name, unsigned int vaddr, unsigned int size){
+    uc_err err;
+    void* buf = malloc(size);
+    if (buf == NULL) {
+        printf("malloc dump memory fail\n");
+        return;
+    }
+    err = uc_mem_read(g_uc, vaddr, buf, size);
+    FILE* fd = fopen(name, "wb");
+    if (fd == NULL){
+        printf("open %s fail\n", name);
+        free(buf);
+        return;
+    }
+    fwrite(buf, 1, size, fd);
+    fclose(fd);
+    free(buf);
+    printf("dump %s done\n", name);
+
+    return;
 }
