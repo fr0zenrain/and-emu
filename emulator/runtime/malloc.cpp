@@ -4045,8 +4045,14 @@ static void add_segment(mstate m, char* tbase, size_t tsize, flag_t mmapped) {
 
   /* Set up segment record */
   assert(is_aligned(ss));
-  set_size_and_pinuse_of_inuse_chunk(m, sp, ssize);
-  *ss = m->seg; /* Push current record */
+  //set_size_and_pinuse_of_inuse_chunk(m, sp, ssize);
+  unsigned int addr = (int)p + offsetof(malloc_chunk,head);
+  unsigned int value = (ssize|PINUSE_BIT|CINUSE_BIT);
+  uc_mem_write(g_uc,addr,&value,4);
+
+  //*ss = m->seg; /* Push current record */
+  addr = (unsigned int)ss;
+  uc_mem_write(g_uc,addr,&m->seg, sizeof(malloc_segment));
   m->seg.base = tbase;
   m->seg.size = tsize;
   m->seg.sflags = mmapped;
@@ -4055,12 +4061,21 @@ static void add_segment(mstate m, char* tbase, size_t tsize, flag_t mmapped) {
   /* Insert trailing fenceposts */
   for (;;) {
     mchunkptr nextp = chunk_plus_offset(p, SIZE_T_SIZE);
-    p->head = FENCEPOST_HEAD;
+    //p->head = FENCEPOST_HEAD;
+    value = FENCEPOST_HEAD;
+    addr = (unsigned int)p + offsetof(malloc_chunk, head);
+    uc_mem_write(g_uc,addr,&value,4);
     ++nfences;
-    if ((char*)(&(nextp->head)) < old_end)
-      p = nextp;
-    else
-      break;
+      /*if ((char*)(&(nextp->head)) < old_end)
+          p = nextp;
+      else
+          break;*/
+    addr = (unsigned int)nextp + offsetof(malloc_chunk, head);
+    uc_mem_read(g_uc,addr,&value,4);
+      if ((char*)value < old_end)
+          p = nextp;
+      else
+          break;
   }
   assert(nfences >= 2);
 
@@ -4069,8 +4084,133 @@ static void add_segment(mstate m, char* tbase, size_t tsize, flag_t mmapped) {
     mchunkptr q = (mchunkptr)old_top;
     size_t psize = csp - old_top;
     mchunkptr tn = chunk_plus_offset(q, psize);
-    set_free_with_pinuse(q, psize, tn);
-    insert_chunk(m, q, psize);
+    //set_free_with_pinuse(q, psize, tn);
+    unsigned int  value;
+    unsigned int  addr = (int)tn + offsetof(malloc_chunk,head);
+    uc_err err = uc_mem_read(g_uc,addr,&value,4);
+    value &= (~PINUSE_BIT);
+    uc_mem_write(g_uc,addr,&value,4);
+      addr = (int)q + offsetof(malloc_chunk,head);
+      err = uc_mem_read(g_uc,addr,&value,4);
+      value = (psize|PINUSE_BIT);
+      uc_mem_write(g_uc,addr,&value,4);
+
+      addr = (int)q + psize + offsetof(malloc_chunk,prev_foot);
+      value = psize;
+      err = uc_mem_write(g_uc,addr,&value,4);
+
+      //insert_chunk(m, q, psize);
+      if (is_small(psize))
+      {
+          //insert_small_chunk(m, q, psize)
+          unsigned int value1;
+          bindex_t I  = small_index(psize);
+          mchunkptr B = smallbin_at(m, I);
+          mchunkptr F = B;
+          assert(psize >= MIN_CHUNK_SIZE);
+          if (!smallmap_is_marked(m, I))
+              mark_smallmap(m, I);
+          else if (RTCHECK(ok_address(m, B->fd)))
+              F = B->fd;
+          else
+          {
+              CORRUPTION_ERROR_ACTION(fm);
+          }
+          if((unsigned int)B > EMULATOR_MEMORY_START )
+          {
+              addr = (int)B  + offsetof(malloc_chunk,fd);
+              value1 = (unsigned int)q;
+              err = uc_mem_write(g_uc,addr,&value1,4);
+          }
+          else
+          {
+              B->fd = q;
+          }
+
+          if((unsigned int)F > EMULATOR_MEMORY_START)
+          {
+              addr = (int)F  + offsetof(malloc_chunk,bk);
+              value1 = (unsigned int)q;
+              err = uc_mem_write(g_uc,addr,&value1,4);
+          }
+          else
+          {
+              F->bk = q;
+          }
+          addr = (int)q  + offsetof(malloc_chunk,fd);
+          value1 = (unsigned int)F;
+          err = uc_mem_write(g_uc,addr,&value1,4);
+          addr = (int)q  + offsetof(malloc_chunk,bk);
+          value1 = (unsigned int)B;
+          err = uc_mem_write(g_uc,addr,&value1,4);
+      }
+      else
+      {
+
+          tchunkptr TP = (tchunkptr)(p);
+          //insert_large_chunk(M, TP, S);
+          tbinptr* H;
+          bindex_t I;
+          compute_tree_index(psize, I);
+          H = treebin_at(m, I);
+          //TP->index = I;
+          //TP->child[0] = TP->child[1] = 0;
+          addr = (int)TP + offsetof(malloc_tree_chunk, index);
+          uc_mem_write(g_uc, addr, &I, 4);
+          addr = (int)TP + offsetof(malloc_tree_chunk, child);
+          value = 0;
+          uc_mem_write(g_uc, addr, &value, 4);
+          addr += 4;
+          uc_mem_write(g_uc, addr, &value, 4);
+          if (!treemap_is_marked(m, I)) {
+            mark_treemap(m, I);
+            *H = TP;
+            //TP->parent = (tchunkptr)H;
+            //TP->fd = TP->bk = TP;
+              addr = (int)TP + offsetof(malloc_tree_chunk, parent);
+              uc_mem_write(g_uc, addr, &H, 4);
+              addr = (int)TP + offsetof(malloc_tree_chunk, bk);
+              uc_mem_write(g_uc, addr, &TP, 4);
+              addr = (int)TP + offsetof(malloc_tree_chunk, fd);
+              uc_mem_write(g_uc, addr, &TP, 4);
+          }
+          else {
+            tchunkptr T = *H;
+            size_t K = psize << leftshift_for_tree_index(I);
+            for (;;) {
+              if (chunksize(T) != psize) {
+                tchunkptr* C = &(T->child[(K >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1]);
+                K <<= 1;
+                if (*C != 0)
+                  T = *C;
+                else if (RTCHECK(ok_address(m, C))) {
+                  *C = TP;
+                  TP->parent = T;
+                  TP->fd = TP->bk = TP;
+                  break;
+                }
+                else {
+                  CORRUPTION_ERROR_ACTION(m);
+                  break;
+                }
+              }
+              else {
+                tchunkptr F = T->fd;
+                if (RTCHECK(ok_address(m, T) && ok_address(m, F))) {
+                  T->fd = F->bk = TP;
+                  TP->fd = F;
+                  TP->bk = T;
+                  TP->parent = 0;
+                  break;
+                }
+                else {
+                  CORRUPTION_ERROR_ACTION(M);
+                  break;
+                }
+              }
+            }
+          }
+      }
   }
 
   check_top_chunk(m, m->top);
@@ -4570,21 +4710,121 @@ static void* tmalloc_small(mstate m, size_t nb) {
   binmap_t leastbit = least_bit(m->treemap);
   compute_bit2idx(leastbit, i);
   v = t = *treebin_at(m, i);
-  rsize = chunksize(t) - nb;
-
-  while ((t = leftmost_child(t)) != 0) {
-    size_t trem = chunksize(t) - nb;
+  //rsize = chunksize(t) - nb;
+    unsigned int value;
+    unsigned int addr = (int)t + offsetof(malloc_chunk,head);
+    uc_mem_read(g_uc,addr,&value,4);
+    value &= ~(FLAG_BITS);
+    rsize = value - nb;
+    //while ((t = leftmost_child(t)) != 0) {
+    addr = (int)t + offsetof(malloc_tree_chunk,child);
+    uc_mem_read(g_uc,addr,&value,4);
+    addr +=4;
+    unsigned int value1;
+    uc_mem_read(g_uc,addr,&value1,4);
+    t=  (tchunkptr)(value != 0? value : value1) ;
+  while (t != 0) {
+    //size_t trem = chunksize(t) - nb;
+      addr = (int)t + offsetof(malloc_chunk,head);
+      uc_mem_read(g_uc,addr,&value,4);
+      value &= ~(FLAG_BITS);
+      size_t trem = value - nb;
     if (trem < rsize) {
       rsize = trem;
       v = t;
     }
+      addr = (int)t + offsetof(malloc_tree_chunk,child);
+      uc_mem_read(g_uc,addr,&value,4);
+      addr +=4;
+      unsigned int value1;
+      uc_mem_read(g_uc,addr,&value1,4);
+      t=  (tchunkptr)(value != 0? value : value1) ;
   }
 
   if (RTCHECK(ok_address(m, v))) {
     mchunkptr r = chunk_plus_offset(v, nb);
     assert(chunksize(v) == rsize + nb);
     if (RTCHECK(ok_next(v, r))) {
-      unlink_large_chunk(m, v);
+      //unlink_large_chunk(m, v);
+        //tchunkptr XP = v->parent;
+        addr = (int)v + offsetof(malloc_tree_chunk,parent);
+        uc_mem_read(g_uc,addr,&value,4);
+        addr = (int)v + offsetof(malloc_tree_chunk,bk);
+        uc_mem_read(g_uc,addr,&value1,4);
+        tchunkptr XP = (tchunkptr)value;
+  tchunkptr R;
+  //if (v->bk != v) {
+    if(value1 != (unsigned int)v){
+   // tchunkptr F = v->fd;
+   //R = v->bk;
+        addr = (int)v + offsetof(malloc_tree_chunk,fd);
+        uc_mem_read(g_uc,addr,&value,4);
+        tchunkptr F = (tchunkptr)value;
+        R = (tchunkptr)value1;
+
+    if (RTCHECK(ok_address(m, F) && F->bk == v && R->fd == v)) {
+      F->bk = R;
+      R->fd = F;
+    }
+    else {
+      CORRUPTION_ERROR_ACTION(M);
+    }
+  }
+  else {
+    tchunkptr* RP;
+    if (((R = *(RP = &(v->child[1]))) != 0) ||
+        ((R = *(RP = &(v->child[0]))) != 0)) {
+      tchunkptr* CP;
+      while ((*(CP = &(R->child[1])) != 0) ||
+             (*(CP = &(R->child[0])) != 0)) {
+        R = *(RP = CP);
+      }
+      if (RTCHECK(ok_address(m, RP)))
+        *RP = 0;
+      else {
+        CORRUPTION_ERROR_ACTION(M);
+      }
+    }
+  }
+  if (XP != 0) {
+    tbinptr* H = treebin_at(m, v->index);
+    if (v == *H) {
+      if ((*H = R) == 0)
+        clear_treemap(m, v->index);
+    }
+    else if (RTCHECK(ok_address(m, XP))) {
+      if (XP->child[0] == v)
+        XP->child[0] = R;
+      else
+        XP->child[1] = R;
+    }
+    else
+      CORRUPTION_ERROR_ACTION(m);
+    if (R != 0) {
+      if (RTCHECK(ok_address(m, R))) {
+        tchunkptr C0, C1;
+        R->parent = XP;
+        if ((C0 = v->child[0]) != 0) {
+          if (RTCHECK(ok_address(m, C0))) {
+            R->child[0] = C0;
+            C0->parent = R;
+          }
+          else
+            CORRUPTION_ERROR_ACTION(M);
+        }
+        if ((C1 = v->child[1]) != 0) {
+          if (RTCHECK(ok_address(m, C1))) {
+            R->child[1] = C1;
+            C1->parent = R;
+          }
+          else
+            CORRUPTION_ERROR_ACTION(M);
+        }
+      }
+      else
+        CORRUPTION_ERROR_ACTION(M);
+    }
+  }
       if (rsize < MIN_CHUNK_SIZE)
         set_inuse_and_pinuse(m, v, (rsize + nb));
       else {
