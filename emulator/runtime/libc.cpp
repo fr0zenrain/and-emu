@@ -11,6 +11,7 @@
 #include "dirent_win.h"
 #include "zlib.h"
 #include <sys/stat.h>
+#include "math.h"
 
 #ifdef _MSC_VER
 #include "io.h"
@@ -602,11 +603,6 @@ void* libc::s_open(void*)
 	getcwd(cur_dir,512);
 #endif
     strcpy(bak_path,buf);
-	if (strncmp(buf,"/proc", 5) == 0)
-	{
-		strcat(cur_dir,buf);
-		value = (int)open(cur_dir,mode);
-	}
     if (strncmp(buf, "/data/data", 10) == 0){
         char tmp[256] ={0};
         char* ch = strtok(buf, "/");
@@ -618,13 +614,17 @@ void* libc::s_open(void*)
         strcat(cur_dir,tmp);
         value = (int)open(cur_dir,O_RDWR|O_CREAT, 0666);
     }
+    if (strncmp(buf, "/", 1) == 0){
+        strcat(cur_dir,buf);
+        value = (int)open(cur_dir,mode);
+    }
 
 #ifdef _MSC_VER
 	printf("open(\"%s\", 0x%x)-> 0x%x\n",bak_path, mode, value);
 #else
 	printf(RED "open(\"%s\", 0x%x)-> 0x%x\n" RESET,bak_path,mode,value);
 #endif
-
+    printf("redirect to %s\n", cur_dir);
 	emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
@@ -3017,6 +3017,107 @@ void* libc::s_pthread_join(void*){
     return 0;
 }
 
+void* libc::s_pow(void*){
+    uc_err err;
+    int value = 0;
+
+    unsigned int x = emulator::get_r0();
+    unsigned int y = emulator::get_r1();
+    value = pow(x,y);
+
+#ifdef _MSC_VER
+    printf("pow(0x%x,0x%x)-> 0x%x\n", x,y,value);
+#else
+    printf(RED "pow(0x%x,0x%x)-> 0x%x\n" RESET, x, y, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_memchr(void*){
+    uc_err err;
+    unsigned int value = 0;
+    char buf[2048] = {0};
+    unsigned int addr = emulator::get_r0();
+    unsigned int ch = emulator::get_r1();
+    int size = emulator::get_r2();
+    int new_size = size;
+    if (new_size > 2048)
+    {
+        new_size = 2048;
+    }
+    uc_mem_read(g_uc, addr, buf, new_size);
+    value = (unsigned int)memchr(buf, ch, new_size);
+
+#ifdef _MSC_VER
+    printf("memchr(0x%x,0x%x,0x%x)-> 0x%x\n", buf,ch,size,value);
+#else
+    printf(RED "memchr(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, buf, ch,size, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_mutexattr_init(void*){
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int addr = emulator::get_r0();
+
+#ifdef _MSC_VER
+    printf("pthread_mutexattr_init(0x%x)-> 0x%x\n", addr,value);
+#else
+    printf(RED "pthread_mutexattr_init(0x%x)-> 0x%x\n" RESET, addr, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_mutexattr_settype(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int addr = emulator::get_r0();
+    unsigned int type = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("pthread_mutexattr_settype(0x%x,0x%x)-> 0x%x\n", addr,type,value);
+#else
+    printf(RED "pthread_mutexattr_settype(0x%x,0x%x)-> 0x%x\n" RESET,  addr,type, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_mutexattr_destroy(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int addr = emulator::get_r0();
+
+#ifdef _MSC_VER
+    printf("pthread_mutexattr_destroy(0x%x)-> 0x%x\n", addr,value);
+#else
+    printf(RED "pthread_mutexattr_destroy(0x%x)-> 0x%x\n" RESET, addr, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
 symbols g_syms[] = 
 {
 	{0x46c5242d,"__cxa_finalize",(void*)libc::s__cxa_finalize,0,1},
@@ -3040,9 +3141,9 @@ symbols g_syms[] =
 	{0x025d112d,"strlen",(void*)libc::s_strlen,0,1},
 	{0x4273782f,"strncmp",(void*)libc::s_strncmp,0,1},
 	{0xa47083a4,"open",(void*)libc::s_open,0,1,0x5},
-	{0x98574167,"read",(void*)libc::s_read,0,1},
+	{0x98574167,"read",(void*)libc::s_read,0,1,3},
     {0x7d6b7a5f,"write",(void*)libc::s_write,0,1},
-    {0x130181c4,"close",(void*)libc::s_close,0,1},
+    {0x130181c4,"close",(void*)libc::s_close,0,1,6},
 	{0x2cd5453f,"mprotect",(void*)libc::sys_mprotect,0,1,0x7d},
 	{0xbd2f3f6d,"sscanf",(void*)libc::s_sscanf,0,1,},
 	{0xa8ae7412,"strchr",(void*)libc::s_strchr,0,1,},
@@ -3061,7 +3162,7 @@ symbols g_syms[] =
 	{0x93f54eea,"pthread_mutex_init",(void*)libc::s_pthread_mutex_init,0,1},
     {0xd20e3190,"pthread_mutex_lock",(void*)libc::s_pthread_mutex_lock,0,1},
     {0xb325080c,"pthread_mutex_unlock",(void*)libc::s_pthread_mutex_unlock,0,1},
-    {0x6f9c4cda,"lseek",(void*)libc::s_lseek,0,1},
+    {0x6f9c4cda,"lseek",(void*)libc::s_lseek,0,1,19},
     //{0xffa1e6f0,"snprintf",(void*)libc::s_snprintf,1},
     {0x1f9a630e,"pipe",(void*)libc::s_pipe,0,1},
     {0xbbeb587a,"fork",(void*)libc::s_fork,0,1},
@@ -3128,7 +3229,9 @@ symbols g_syms[] =
     {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,0,1,},
     {0x3094dbb5,"__aeabi_atexit",(void*)libc::s__aeabi_atexit,0,1,},
     {0x5747d5ed,"atol",(void*)libc::s_atoi,0,1,},
+    {0x5b0590f2,"__aeabi_memclr",(void*)libc::s__aeabi_memclr4,0,1,},
     {0xa05e8d98,"__aeabi_memclr4",(void*)libc::s__aeabi_memclr4,0,1,},
+	{0xa9e8c1b3,"__aeabi_memclr8",(void*)libc::s__aeabi_memclr4,0,1,},
     {0x6c845282,"__android_log_print",(void*)libc::s__android_log_print,0,1,},
     {0x01e88f3f,"__assert2",(void*)libc::s__assert2,0,1,},
     {0x46e76e7e,"___cxa_atexit",(void*)libc::s__cxa_exit,0,1},
@@ -3156,14 +3259,14 @@ symbols g_syms[] =
 	{0xbe45d62e,"floor",(void*)libc::s_adler32,0,1},
 	{0xffd7bcfd,"fmodf",(void*)libc::s_adler32,0,1},
 	{0xb6f073a7,"ceil",(void*)libc::s_adler32,0,1},
-	{0x87b422b5,"pow",(void*)libc::s_adler32,0,1},
+	{0x87b422b5,"pow",(void*)libc::s_pow,0,1},
 	{0xf17d3769,"ftruncate",(void*)libc::s_ftruncate,0,1},
 	{0xedcc388d,"lseek64",(void*)libc::s_adler32,0,1},
 	{0xf75d4228,"ftell",(void*)libc::s_adler32,0,1},
 	{0x6b5b291a,"_ctype_",(void*)libc::s_adler32,1,1},
 	{0xad0d2424,"_toupper_tab_",(void*)libc::s_adler32,1,1},
 	{0x0f0a0abf,"_tolower_tab_",(void*)libc::s_adler32,1,1},
-	{0xc488ee02,"memchr",(void*)libc::s_adler32,0,1},
+	{0xc488ee02,"memchr",(void*)libc::s_memchr,0,1},
 	{0xbc7554df,"strcasecmp",(void*)libc::s_adler32,0,1},
 	{0x9aedffe0,"strtok",(void*)libc::s_adler32,0,1},
 	{0xafabd35e,"crc32",(void*)libc::s_adler32,0,1},
@@ -3175,6 +3278,9 @@ symbols g_syms[] =
 	{0xfb8dfa93,"fnmatch",(void*)libc::s_adler32,0,1},
 	{0x85d3513b,"nanosleep",(void*)libc::s_adler32,0,1},
 	{0xea2b6159,"readlink",(void*)libc::s_adler32,0,1},
+    {0x189c2293,"pthread_mutexattr_init",(void*)libc::s_pthread_mutexattr_init,0,1},
+    {0x26c19962,"pthread_mutexattr_settype",(void*)libc::s_pthread_mutexattr_settype,0,1},
+    {0xe3965a02,"pthread_mutexattr_destroy",(void*)libc::s_pthread_mutexattr_destroy,0,1},
 };
 
 

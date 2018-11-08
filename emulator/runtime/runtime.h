@@ -166,7 +166,11 @@ public:
     static void* s_fsync(void*);
     static void* s_flock(void*);
     static void* s_ftruncate(void*);
-
+	static void* s_pow(void*);
+    static void* s_memchr(void*);
+	static void* s_pthread_mutexattr_init(void*);
+	static void* s_pthread_mutexattr_settype(void*);
+	static void* s_pthread_mutexattr_destroy(void*);
 };
 
 

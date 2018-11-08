@@ -776,6 +776,7 @@ const char* need_hook_function[] = {
     "__android_log_print",
     "sscanf",
     "uncompress",
+    "pow",
 };
 
 unsigned int hook_special_func(const char* name, unsigned int sym_addr){

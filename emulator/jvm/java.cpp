@@ -40,6 +40,7 @@ class_method java_lang_class_method[]= {
         {0xeaaa9dd2, "checkPermission(Ljava/lang/String;Ljava/lang/String;)I",(void*)java_class::java_lang_class_get_name},
         {0x7798befa, "currentActivityThread()Landroid/app/ActivityThread;",(void*)java_class::java_lang_class_get_name},
         {0x6b796368, "add(Ljava/lang/Object;)Z",(void*)java_class::java_lang_class_get_name},
+        {0xa8eb10e8, "getPackageInfo(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;",(void*)java_class::java_lang_class_get_name},
 };
 
 class_method android_os_Build_VERSION_method[] = {
@@ -51,6 +52,7 @@ class_method android_os_Build_VERSION_method[] = {
         {0x8450b515, "mBoundApplicationLandroid/app/ActivityThread$AppBindData;",(void*)virtual_app::get_sdk_int},
         {0x6cc7e40f, "mInitialApplicationLandroid/app/Application;",(void*)virtual_app::get_sdk_int},
         {0x2e44ada5, "mAllApplicationsLjava/util/ArrayList;",(void*)virtual_app::get_sdk_int},
+        {0x53dab22d, "signatures[Landroid/content/pm/Signature;",(void*)virtual_app::get_null},
 };
 
 class_method android_app_ActivityThread_method[]= {
