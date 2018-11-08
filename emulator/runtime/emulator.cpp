@@ -467,7 +467,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
 
     }
     qihoo_jiagu_1375_patch(address);
-    if (address <= 0x40612000 || address >= 0x40639000){
+    if (!g_show_ins){
         return;
     }
     //

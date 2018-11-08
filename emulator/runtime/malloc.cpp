@@ -4772,8 +4772,13 @@ static void* tmalloc_small(mstate m, size_t nb) {
   }
   else {
     tchunkptr* RP;
-    if (((R = *(RP = &(v->child[1]))) != 0) ||
-        ((R = *(RP = &(v->child[0]))) != 0)) {
+        addr = (int)v + offsetof(malloc_tree_chunk,child);
+        uc_mem_read(g_uc,addr,&value,4);
+        addr +=4;
+        uc_mem_read(g_uc,addr,&value1,4);
+
+    if ((R = (tchunkptr)value) != 0 || (R = (tchunkptr)value1) != 0)
+    {
       tchunkptr* CP;
       while ((*(CP = &(R->child[1])) != 0) ||
              (*(CP = &(R->child[0])) != 0)) {
@@ -4787,10 +4792,14 @@ static void* tmalloc_small(mstate m, size_t nb) {
     }
   }
   if (XP != 0) {
-    tbinptr* H = treebin_at(m, v->index);
+    //tbinptr* H = treebin_at(m, v->index);
+      addr = (int)v + offsetof(malloc_tree_chunk,index);
+      uc_mem_read(g_uc,addr,&value,4);
+      tbinptr* H = treebin_at(m, value);
     if (v == *H) {
       if ((*H = R) == 0)
-        clear_treemap(m, v->index);
+        //clear_treemap(m, v->index);
+          clear_treemap(m, value);
     }
     else if (RTCHECK(ok_address(m, XP))) {
       if (XP->child[0] == v)
@@ -4828,8 +4837,19 @@ static void* tmalloc_small(mstate m, size_t nb) {
       if (rsize < MIN_CHUNK_SIZE)
         set_inuse_and_pinuse(m, v, (rsize + nb));
       else {
-        set_size_and_pinuse_of_inuse_chunk(m, v, nb);
-        set_size_and_pinuse_of_free_chunk(r, rsize);
+        //set_size_and_pinuse_of_inuse_chunk(m, v, nb);
+          addr = (unsigned int)v  + offsetof(malloc_chunk,head);
+          value = (nb|PINUSE_BIT|CINUSE_BIT);
+          uc_mem_write(g_uc,addr,&value,4);
+        //set_size_and_pinuse_of_free_chunk(r, rsize);
+          addr = (unsigned int)r  + offsetof(malloc_chunk,head);
+          value = (rsize|PINUSE_BIT);
+          uc_mem_write(g_uc,addr,&value,4);
+
+          addr = (unsigned int)r + rsize + offsetof(malloc_chunk,prev_foot);
+          value = rsize;
+          uc_mem_write(g_uc,addr,&value,4);
+
         replace_dv(m, r, rsize);
       }
       return chunk2mem(v);
