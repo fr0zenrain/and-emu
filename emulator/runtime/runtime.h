@@ -171,6 +171,17 @@ public:
 	static void* s_pthread_mutexattr_init(void*);
 	static void* s_pthread_mutexattr_settype(void*);
 	static void* s_pthread_mutexattr_destroy(void*);
+	static void* s_tolower(void*);
+    static void* s_waitpid(void*);
+    static void* s_popen(void*);
+    static void* s_pclose(void*);
+    static void* s_gethostbyname(void*);
+    static void* s_sigaction(void*);
+    static void* s_setsockopt(void*);
+	static void* s_socket(void*);
+    static void* s_connect(void*);
+    static void* s_sendto(void*);
+    static void* s_recvfrom(void*);
 };
 
 

@@ -413,7 +413,7 @@ int emulator::dispatch()
 }
 
 void emulator::dump_register(){
-    int r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,pc,lr,sp;
+    int r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,pc,lr,sp;
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
     err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
@@ -427,8 +427,11 @@ void emulator::dump_register(){
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
     err=uc_reg_read(uc, UC_ARM_REG_R8, &r8);
     err=uc_reg_read(uc, UC_ARM_REG_R9, &r9);
-    printf("pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x\n",
-           pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9);
+    err=uc_reg_read(uc, UC_ARM_REG_R10, &r10);
+    err=uc_reg_read(uc, UC_ARM_REG_R11, &r11);
+    err=uc_reg_read(uc, UC_ARM_REG_R12, &r12);
+    printf("pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x r12=%x\n",
+           pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12);
 }
 
 void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -466,6 +469,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
         }
 
     }
+
     qihoo_jiagu_1375_patch(address);
     if (!g_show_ins){
         return;
@@ -645,6 +649,9 @@ int emulator::init_stack()
     }
 
     printf("mmap stack ,base %x size %dM\n",stack_base,(sp - stack_base)/(1024*1024));
+
+    unsigned int fp = sp + 0x20;
+    err=uc_reg_write(uc, UC_ARM_REG_R11, &fp);
 
     return 1;
 }

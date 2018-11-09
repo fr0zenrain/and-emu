@@ -381,14 +381,13 @@ int DeleteGlobalRef()
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
 	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
 
 #ifdef _MSC_VER
 	printf("DeleteGlobalRef(\"%s\")\n",buffer);
 #else
 	printf(RED "DeleteGlobalRef(\"%s\")\n" RESET, buffer); 
-#endif 
+#endif
+	emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 

@@ -21,6 +21,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
+#include "unistd.h"
+#include <netdb.h>
+#include "sys/socket.h"
 #endif
 
 extern uc_engine* g_uc;
@@ -138,7 +141,7 @@ void* libc::s__aeabi_memset(void*)
 void* libc::s__aeabi_memcpy(void*)
 {
     uc_err err;
-    int size = emulator::get_r2();
+	unsigned int size = emulator::get_r2();
     unsigned int src = emulator::get_r1();
     unsigned int dst = emulator::get_r0();
 
@@ -460,12 +463,12 @@ void* libc::s_strlen(void*)
 {
 	uc_err err;
 	int i = 0;
-	char buf[256] ={0};
+	char buf[512] ={0};
     unsigned int addr = emulator::get_r0();
 
 	if(addr)
 	{
-		for(i = 0; i < 256; i++)
+		for(i = 0; i < 512; i++)
 		{
 			err = uc_mem_read(g_uc,addr+i,&buf[i],1);
 			if(buf[i] == 0)
@@ -474,12 +477,22 @@ void* libc::s_strlen(void*)
 	}
 
     emulator::update_cpu_model();
-
+    int len = strlen(buf);
+    if (emulator::is_data_printable((unsigned char*)buf, len)) {
 #ifdef _MSC_VER
-	printf("strlen(\"%s\")-> 0x%x\n",buf,i);
+        printf("strlen(\"%s\")-> 0x%x\n",buf,i);
 #else
-	printf(RED "strlen(\"%s\")-> 0x%x\n" RESET,buf,i);
+        printf(RED "strlen(\"%s\")-> 0x%x\n" RESET, buf, i);
 #endif
+    }
+    else{
+#ifdef _MSC_VER
+        printf("strlen(0x%x)-> 0x%x\n",addr,i);
+#else
+        printf(RED "strlen(0x%x)-> 0x%x\n" RESET, addr, i);
+#endif
+        print_hex_dump_bytes(buf,0x10);
+    }
 
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&i);
 
@@ -1319,6 +1332,7 @@ void* libc::s_fork(void*)
 {
     uc_err err;
     int value = 0;
+    //value = fork();
 
 #ifdef _MSC_VER
     printf("fork()-> 0x%x\n",  value);
@@ -1489,8 +1503,17 @@ void* libc::s_fclose(void*)
 void* libc::s_time(void*)
 {
 	uc_err err;
-	long seed = emulator::get_r0();
-	int value = time((time_t*)seed);
+    int value = 0;
+    time_t lt;
+    long seed = emulator::get_r0();
+    if (seed){
+        value = time((time_t*)lt);
+        uc_mem_write(g_uc,seed, &lt, sizeof(time_t));
+    }
+	else
+    {
+        value = time((time_t*)seed);
+    }
 
 #ifdef _MSC_VER
 	printf("time(%x)-> 0x%x\n", seed, value);
@@ -1650,6 +1673,7 @@ void* libc::s_kill(void*)
     int value = 0;
     int pid = emulator::get_r0();
     int sig = emulator::get_r1();
+    //value = kill(pid, sig);
 
 #ifdef _MSC_VER
     printf("kill(0x%x, 0x%x)-> 0x%x\n", pid, sig, value);
@@ -1747,11 +1771,53 @@ void* libc::s_stat(void*)
 {
     uc_err err;
     int value = 0;
+    struct stat st;
+    android_stat ast;
+    char path[512] = {0};
+    char cur_dir[512] = {0};
+    char bak_path[512] = {0};
+    unsigned int path_addr = emulator::get_r0();
+    unsigned int st_addr = emulator::get_r1();
+    if (path_addr){
+        uc_mem_read(g_uc, path_addr, path, 512);
+    }
 
 #ifdef _MSC_VER
-    printf("stat()-> 0x%x\n",  value);
+    GetCurrentDirectory(1024,cur_dir);
 #else
-    printf(RED "stat()-> 0x%x\n" RESET, value);
+    getcwd(cur_dir,512);
+#endif
+    strcpy(bak_path,path);
+    if (strncmp(path, "/data/data", 10) == 0){
+        char tmp[256] ={0};
+        char* ch = strtok(path, "/");
+        while (ch != NULL) {
+            strcpy(tmp, ch);
+            ch = strtok(NULL, "/");
+        }
+        strcpy(cur_dir,"/tmp/");
+        strcat(cur_dir,tmp);
+        value = (int)stat(cur_dir,&st);
+    }
+    if (strncmp(path, "/", 1) == 0){
+        strcat(cur_dir,path);
+        value = (int)stat(cur_dir,&st);
+    }
+
+    ast.st_dev = st.st_dev;
+    ast.st_mode = st.st_mode;
+    ast.st_blksize = st.st_blksize;
+    ast.st_blocks = st.st_blocks;
+    ast.st_uid = st.st_uid;
+    ast.st_size = st.st_size;
+    ast.st_ino = st.st_ino;
+
+    err = uc_mem_write(g_uc, st_addr, &ast, sizeof(struct android_stat));
+
+#ifdef _MSC_VER
+    printf("stat(\"%s\",0x%x)-> 0x%x\n", path, st_addr, value);
+#else
+    printf(RED "stat(\"%s\",0x%x)-> 0x%x\n" RESET, path, st_addr, value);
 #endif
 
     emulator::update_cpu_model();
@@ -2096,8 +2162,8 @@ void* libc::s_strncpy(void*)
     uc_err err;
     int value = 0;
 
-    char buf[512] ={0};
-    char buf1[512] ={0};
+    char buf[2048] ={0};
+    char buf1[2048] ={0};
 
     unsigned int dst = emulator::get_r0();
     unsigned int src = emulator::get_r1();
@@ -2105,7 +2171,7 @@ void* libc::s_strncpy(void*)
 
     if(src)
     {
-        for(int i = 0; i < 512; i++)
+        for(int i = 0; i < 2048; i++)
         {
             err = uc_mem_read(g_uc,src+i,&buf1[i],1);
             if(buf1[i] == 0)
@@ -3040,7 +3106,7 @@ void* libc::s_pow(void*){
 void* libc::s_memchr(void*){
     uc_err err;
     unsigned int value = 0;
-    char buf[2048] = {0};
+    unsigned char buf[2048] = {0};
     unsigned int addr = emulator::get_r0();
     unsigned int ch = emulator::get_r1();
     int size = emulator::get_r2();
@@ -3051,6 +3117,10 @@ void* libc::s_memchr(void*){
     }
     uc_mem_read(g_uc, addr, buf, new_size);
     value = (unsigned int)memchr(buf, ch, new_size);
+	if (value){
+        value -= (unsigned int)buf;
+        value = addr + value;
+	}
 
 #ifdef _MSC_VER
     printf("memchr(0x%x,0x%x,0x%x)-> 0x%x\n", buf,ch,size,value);
@@ -3117,6 +3187,253 @@ void* libc::s_pthread_mutexattr_destroy(void*)
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     return 0;
 }
+
+void* libc::s_tolower(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int ch = emulator::get_r0();
+    value = tolower(ch);
+
+#ifdef _MSC_VER
+    printf("tolower(0x%x)-> 0x%x\n", ch,value);
+#else
+    printf(RED "tolower(0x%x)-> 0x%x\n" RESET, ch, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_waitpid(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int pid = emulator::get_r0();
+    unsigned int st = emulator::get_r1();
+    unsigned int opt = emulator::get_r2();
+
+#ifdef _MSC_VER
+    printf("waitpid(0x%x,0x%x,0x%x)-> 0x%x\n", pid,st,opt,value);
+#else
+    printf(RED "waitpid(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, pid,st,opt,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_popen(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    char cmd[256] = {0};
+    char mode[8] = {0};
+    unsigned int cmd_addr = emulator::get_r0();
+    unsigned int mode_addr = emulator::get_r1();
+    uc_mem_read(g_uc, cmd_addr, cmd, 256);
+    uc_mem_read(g_uc, mode_addr, mode, 8);
+
+#ifdef _MSC_VER
+    printf("popen(\"%s\",\"%s\")-> 0x%x\n", cmd, mode,value);
+#else
+    printf(RED "popen(\"%s\",\"%s\")-> 0x%x\n" RESET, cmd, mode, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pclose(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int fp = emulator::get_r0();
+    //fclose(fp);
+
+#ifdef _MSC_VER
+    printf("pclose(0x%x)-> 0x%x\n", pid,value);
+#else
+    printf(RED "pclose(0x%x)-> 0x%x\n" RESET, fp,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_gethostbyname(void*)
+{
+    uc_err err;
+    unsigned int value = 1;
+    char buf[256] = {0};
+    unsigned int name_addr = emulator::get_r0();
+    uc_mem_read(g_uc, name_addr, buf, 256);
+    struct hostent* ht, *aht;
+	unsigned int addr_list = (unsigned int)sys_malloc(4);
+    aht = (hostent*)sys_malloc(sizeof(hostent));
+    ht = gethostbyname(buf);
+
+    uc_mem_write(g_uc, (unsigned int)aht, &ht, sizeof(hostent));
+    unsigned int ip = *(unsigned int*)ht->h_addr_list[0];
+    unsigned int addr = (unsigned int)aht + offsetof(hostent, h_addrtype);
+    uc_mem_write(g_uc, addr, &ht->h_addrtype, 4);
+    ht->h_length = 4;
+    uc_mem_write(g_uc, addr+4, &ht->h_length, 4);
+
+    unsigned int addr_list_ptr = (unsigned int)sys_malloc(4);
+    addr = (unsigned int)aht + offsetof(hostent, h_addr_list);
+    uc_mem_write(g_uc, addr_list, &ip, 4);
+    uc_mem_write(g_uc, addr_list_ptr, &addr_list, 4);
+    uc_mem_write(g_uc, addr, &addr_list_ptr, 4);
+
+	value = (unsigned int)aht;
+#ifdef _MSC_VER
+    printf("gethostbyname(\"%s\")-> 0x%x\n", buf,value);
+#else
+    printf(RED "gethostbyname(\"%s\")-> 0x%x\n" RESET, buf,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_sigaction(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int sig = emulator::get_r0();
+    unsigned int act = emulator::get_r1();
+    unsigned int old = emulator::get_r2();
+
+#ifdef _MSC_VER
+    printf("sigaction(0x%x,0x%x,0x%x)-> 0x%x\n", sig,act,old,value);
+#else
+    printf(RED "sigaction(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, sig,act,old,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_setsockopt(void*)
+{
+    uc_err err;
+    unsigned int value = 0;
+    unsigned int sock = emulator::get_r0();
+    unsigned int level = emulator::get_r1();
+    unsigned int name = emulator::get_r2();
+    unsigned int opt_value = emulator::get_r3();
+    unsigned int len = 0;
+    uc_mem_read(g_uc, emulator::get_sp(), &len, 4);
+
+#ifdef _MSC_VER
+    printf("setsockopt(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n", sock,level,name,opt_value,len,value);
+#else
+    printf(RED "setsockopt(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET, sock,level,name,opt_value,len,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_socket(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int domain = emulator::get_r0();
+    unsigned int type = emulator::get_r1();
+    unsigned int proto = emulator::get_r2();
+    value = socket(domain,type,proto);
+
+#ifdef _MSC_VER
+    printf("socket(0x%x,0x%x,0x%x)-> 0x%x\n", domain,type,proto,value);
+#else
+    printf(RED "socket(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, domain,type,proto,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_connect(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int sk = emulator::get_r0();
+    unsigned int addr = emulator::get_r1();
+    unsigned int len = emulator::get_r2();
+    //value = connect(sk,addr,len);
+
+#ifdef _MSC_VER
+    printf("connect(0x%x,0x%x,0x%x)-> 0x%x\n", sk,addr,len,value);
+#else
+    printf(RED "connect(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, sk,addr,len,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_sendto(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int sk = emulator::get_r0();
+    unsigned int addr = emulator::get_r1();
+    unsigned int len = emulator::get_r2();
+    value = len;
+
+#ifdef _MSC_VER
+    printf("sendto(0x%x,0x%x,0x%x)-> 0x%x\n", sk,addr,len,value);
+#else
+    printf(RED "sendto(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, sk,addr,len,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_recvfrom(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int sk = emulator::get_r0();
+    unsigned int addr = emulator::get_r1();
+    unsigned int len = emulator::get_r2();
+    value = len;
+
+#ifdef _MSC_VER
+    printf("recvfrom(0x%x,0x%x,0x%x)-> 0x%x\n", sk,addr,len,value);
+#else
+    printf(RED "recvfrom(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, sk,addr,len,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
 
 symbols g_syms[] = 
 {
@@ -3210,6 +3527,7 @@ symbols g_syms[] =
 	{0x9a1e494f,"puts",(void*)libc::s_puts,0,1,},
 	{0x86e389a9,"pread",(void*)libc::s_pread,0,1,},
 	{0x80ec372a,"memmove",(void*)libc::s_memmove,0,1,},
+    {0x3ac7e094,"__aeabi_memmove",(void*)libc::s_memmove,0,1,},
 	{0x85ff8ad1,"setenv",(void*)libc::s_setenv,0,1,},
 	{0x2a601179,"getopt",(void*)libc::s_getopt,0,1,},
     {0xd21739f1,"printf",(void*)libc::s_printf,0,1,0xff},
@@ -3242,17 +3560,21 @@ symbols g_syms[] =
 	{0x98c8322e,"pthread_join",(void*)libc::s_pthread_join,0,1},
 	{0xdd3f5f96,"fsync",(void*)libc::s_fsync,0,1},
 	{0x769b31e2,"flock",(void*)libc::s_flock,0,1},
-	{0xad65d22c,"waitpid",(void*)libc::s_adler32,0,1},
+	{0xad65d22c,"waitpid",(void*)libc::s_waitpid,0,1},
 	{0xb4dd5ab6,"fcntl",(void*)libc::s_fcntl,0,1},
 	{0xd1ac55cd,"fstat",(void*)libc::s_fstat,0,1},
-	{0x05e568bb,"socket",(void*)libc::s_adler32,0,1},
+	{0x05e568bb,"socket",(void*)libc::s_socket,0,1,0x119},
 	{0xccc0c5b8,"setpgid",(void*)libc::s_adler32,0,1},
 	{0xbc14749f,"execve",(void*)libc::s_adler32,0,1},
 	{0x228dadab,"creat",(void*)libc::s_adler32,0,1},
-	{0x74cff91f,"connect",(void*)libc::s_adler32,0,1},
+	{0x74cff91f,"connect",(void*)libc::s_connect,0,1,0x11b},
 	{0xa7733acd,"send",(void*)libc::s_adler32,0,1},
 	{0x59d852ad,"recv",(void*)libc::s_adler32,0,1},
-	{0x377545a2,"gethostbyname",(void*)libc::s_adler32,0,1},
+    {0x6fdf0506,"sendto",(void*)libc::s_sendto,0,1,0x122},
+    {0x32753c31,"recvfrom",(void*)libc::s_recvfrom,0,1,0x124},
+    {0x46ccf353,"bind",(void*)libc::s_adler32,0,1,0x11a},
+    {0xed514704,"setsockopt",(void*)libc::s_setsockopt,0,1},
+	{0x377545a2,"gethostbyname",(void*)libc::s_gethostbyname,0,1},
 	{0x887739b8,"uname",(void*)libc::s_adler32,0,1},
 	{0x0e97af36,"chmod",(void*)libc::s_chmod,0,1},
 	{0xd7bcfd99,"fmod",(void*)libc::s_adler32,0,1},
@@ -3281,6 +3603,11 @@ symbols g_syms[] =
     {0x189c2293,"pthread_mutexattr_init",(void*)libc::s_pthread_mutexattr_init,0,1},
     {0x26c19962,"pthread_mutexattr_settype",(void*)libc::s_pthread_mutexattr_settype,0,1},
     {0xe3965a02,"pthread_mutexattr_destroy",(void*)libc::s_pthread_mutexattr_destroy,0,1},
+    {0xb4511af7,"tolower",(void*)libc::s_tolower,0,1},
+    {0xbac44b6a,"popen",(void*)libc::s_popen,0,1},
+    {0x6fc3dabb,"pclose",(void*)libc::s_pclose,0,1},
+    {0x589c0f74,"sigaction",(void*)libc::s_sigaction,0,1},
+    {0x4d998ede,"ptrace",(void*)libc::s_adler32,0,1},
 };
 
 
