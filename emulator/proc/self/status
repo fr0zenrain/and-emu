@@ -1,0 +1,37 @@
+Name:   com.baidu.search
+State:  R (running)
+Tgid:   7910
+Pid:    1234
+PPid:   510
+TracerPid:      0
+Uid:    2000    2000    2000    2000
+Gid:    2000    2000    2000    2000
+FDSize: 32
+Groups: 1004 1007 1011 1015 1028 3001 3002 3003 3006
+VmPeak:     3240 kB
+VmSize:     3240 kB
+VmLck:         0 kB
+VmPin:         0 kB
+VmHWM:      1268 kB
+VmRSS:      1268 kB
+VmData:     1152 kB
+VmStk:       136 kB
+VmExe:       160 kB
+VmLib:      1412 kB
+VmPTE:         6 kB
+VmSwap:        0 kB
+Threads:        1
+SigQ:   0/11693
+SigPnd: 0000000000000000
+ShdPnd: 0000000000000000
+SigBlk: 0000000000000000
+SigIgn: 0000000000380000
+SigCgt: 000000000801f4ff
+CapInh: 0000000000000000
+CapPrm: 0000000000000000
+CapEff: 0000000000000000
+CapBnd: fffffff0000000c0
+Cpus_allowed:   f
+Cpus_allowed_list:      0-3
+voluntary_ctxt_switches:        36
+nonvoluntary_ctxt_switches:     13

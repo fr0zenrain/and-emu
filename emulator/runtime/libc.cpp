@@ -627,7 +627,7 @@ void* libc::s_open(void*)
         strcat(cur_dir,tmp);
         value = (int)open(cur_dir,O_RDWR|O_CREAT, 0666);
     }
-    if (strncmp(buf, "/", 1) == 0){
+    else if (strncmp(buf, "/", 1) == 0){
         strcat(cur_dir,buf);
         value = (int)open(cur_dir,mode);
     }
@@ -1799,7 +1799,7 @@ void* libc::s_stat(void*)
         strcat(cur_dir,tmp);
         value = (int)stat(cur_dir,&st);
     }
-    if (strncmp(path, "/", 1) == 0){
+    else if (strncmp(path, "/", 1) == 0){
         strcat(cur_dir,path);
         value = (int)stat(cur_dir,&st);
     }

@@ -510,7 +510,7 @@ void emulator::hook_inter(uc_engine *uc, uint64_t address, uint32_t size, void *
 
 void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
-    int r0,r1,r2,r3,r4,r5,r6,r7,pc,lr,sp;
+    int r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,pc,lr,sp;
     uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
     err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
     err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
@@ -522,8 +522,13 @@ void emulator::hook_unmap(uc_engine *uc, uint64_t address, uint32_t size, void *
     err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
     err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
     err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &r8);
+    err=uc_reg_read(uc, UC_ARM_REG_R9, &r9);
+    err=uc_reg_read(uc, UC_ARM_REG_R10, &r10);
+    err=uc_reg_read(uc, UC_ARM_REG_R11, &r11);
     printf(">>> Tracing unmap at 0x%llx, block size = 0x%x\n", address, size);
-    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x\n",pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7);
+    printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r4 %x r5 %x r6 %x r7 %x r8 %x r9 %x r10 %x r11 %x\n",
+           pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11);
 }
 
 
