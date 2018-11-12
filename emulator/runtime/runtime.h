@@ -182,6 +182,10 @@ public:
     static void* s_connect(void*);
     static void* s_sendto(void*);
     static void* s_recvfrom(void*);
+	static void* s_nanosleep(void*);
+	static void* s_pthread_self(void*);
+	static void* s_pthread_detach(void*);
+    static void* s_strcasecmp(void*);
 };
 
 

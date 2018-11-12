@@ -3434,6 +3434,92 @@ void* libc::s_recvfrom(void*)
     return 0;
 }
 
+void* libc::s_nanosleep(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int t1 = emulator::get_r0();
+    unsigned int t2 = emulator::get_r1();
+
+#ifdef _MSC_VER
+    printf("nanosleep(0x%x,0x%x)-> 0x%x\n", t1,t2,value);
+#else
+    printf(RED "nanosleep(0x%x,0x%x)-> 0x%x\n" RESET, t1,t2,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_self(void*)
+{
+    uc_err err;
+    int value = 1;
+
+#ifdef _MSC_VER
+    printf("pthread_self()-> 0x%x\n", ,value);
+#else
+    printf(RED "pthread_self()-> 0x%x\n" RESET, value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_pthread_detach(void*)
+{
+    uc_err err;
+    int value = 0;
+    unsigned int tid = emulator::get_r0();
+
+#ifdef _MSC_VER
+    printf("pthread_detach(0x%x)-> 0x%x\n", tid,value);
+#else
+    printf(RED "pthread_detach(0x%x)-> 0x%x\n" RESET, tid,value);
+#endif
+
+    emulator::update_cpu_model();
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    return 0;
+}
+
+void* libc::s_strcasecmp(void*){
+	uc_err err;
+	int value = 0;
+	char buf[1024];
+	char buf1[1024];
+
+	unsigned int s1 = emulator::get_r0();
+	unsigned int s2 = emulator::get_r1();
+	for(int i = 0; i < 1024; i++)
+	{
+		err = uc_mem_read(g_uc,s1+i,&buf[i],1);
+		if(buf[i] == 0)
+			break;
+	}
+	for(int i = 0; i < 1024; i++)
+	{
+		err = uc_mem_read(g_uc,s2+i,&buf1[i],1);
+		if(buf1[i] == 0)
+			break;
+	}
+
+#ifdef _MSC_VER
+	printf("strcasecmp(\"%s\",\"%s\")-> 0x%x\n", buf,buf1,value);
+#else
+	printf(RED "strcasecmp(\"%s\",\"%s\")-> 0x%x\n" RESET, buf,buf1,value);
+#endif
+
+	emulator::update_cpu_model();
+
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	return 0;
+}
 
 symbols g_syms[] = 
 {
@@ -3539,9 +3625,10 @@ symbols g_syms[] =
     {0x1db8ca5c,"getenv",(void*)libc::s_getenv,0,1,},
     {0xca3b2c4d,"pthread_cond_broadcast",(void*)libc::s_pthread_cond_broadcast,0,1,},
     {0xeaa33ee8,"pthread_cond_wait",(void*)libc::s_pthread_cond_wait,0,1,},
-	{0xcbe2d39a,"pthread_self",(void*)libc::s_adler32,1},
-	{0x5625b23b,"pthread_detach",(void*)libc::s_adler32,1},
+	{0xcbe2d39a,"pthread_self",(void*)libc::s_pthread_self,1},
+	{0x5625b23b,"pthread_detach",(void*)libc::s_pthread_detach,1},
 	{0xc3e99929,"pthread_once",(void*)libc::s_adler32,0,1},
+	{0x98c8322e,"pthread_join",(void*)libc::s_pthread_join,0,1},
     {0xd426c0a6,"fwrite",(void*)libc::s_fwrite,0,1,},
     {0xcbc50561,"strrchr",(void*)libc::s_strrchr,0,1,},
     {0x57f17b6b,"memcmp",(void*)libc::s_memcmp,0,1,},
@@ -3557,7 +3644,6 @@ symbols g_syms[] =
     {0x4b5d70ec,"uncompress",(void*)libc::s_uncompress,0,1},
 	{0x183bc090,"adler32",(void*)libc::s_adler32,0,1},
 	{0xa95113d1,"strtoull",(void*)libc::s_adler32,0,1},
-	{0x98c8322e,"pthread_join",(void*)libc::s_pthread_join,0,1},
 	{0xdd3f5f96,"fsync",(void*)libc::s_fsync,0,1},
 	{0x769b31e2,"flock",(void*)libc::s_flock,0,1},
 	{0xad65d22c,"waitpid",(void*)libc::s_waitpid,0,1},
@@ -3589,7 +3675,7 @@ symbols g_syms[] =
 	{0xad0d2424,"_toupper_tab_",(void*)libc::s_adler32,1,1},
 	{0x0f0a0abf,"_tolower_tab_",(void*)libc::s_adler32,1,1},
 	{0xc488ee02,"memchr",(void*)libc::s_memchr,0,1},
-	{0xbc7554df,"strcasecmp",(void*)libc::s_adler32,0,1},
+	{0xbc7554df,"strcasecmp",(void*)libc::s_strcasecmp,0,1},
 	{0x9aedffe0,"strtok",(void*)libc::s_adler32,0,1},
 	{0xafabd35e,"crc32",(void*)libc::s_adler32,0,1},
 	{0xe2b06b05,"deflate",(void*)libc::s_adler32,0,1},
@@ -3598,7 +3684,7 @@ symbols g_syms[] =
 	{0xe91ec2be,"deflateBound",(void*)libc::s_adler32,0,1},
 	{0x7312b6b8,"deflateEnd",(void*)libc::s_adler32,0,1},
 	{0xfb8dfa93,"fnmatch",(void*)libc::s_adler32,0,1},
-	{0x85d3513b,"nanosleep",(void*)libc::s_adler32,0,1},
+	{0x85d3513b,"nanosleep",(void*)libc::s_nanosleep,0,1},
 	{0xea2b6159,"readlink",(void*)libc::s_adler32,0,1},
     {0x189c2293,"pthread_mutexattr_init",(void*)libc::s_pthread_mutexattr_init,0,1},
     {0x26c19962,"pthread_mutexattr_settype",(void*)libc::s_pthread_mutexattr_settype,0,1},
