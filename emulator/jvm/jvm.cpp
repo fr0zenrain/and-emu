@@ -3569,15 +3569,14 @@ int NewObjectArray()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
 	printf("NewObjectArray(\"%s\")\n",buffer);
 #else
 	printf(RED "NewObjectArray(\"%s\")\n" RESET, buffer); 
-#endif 
+#endif
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -3622,15 +3621,14 @@ int SetObjectArrayElement()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
 
 #ifdef _MSC_VER
 	printf("SetObjectArrayElement(\"%s\")\n",buffer);
 #else
 	printf(RED "SetObjectArrayElement(\"%s\")\n" RESET, buffer); 
-#endif 
+#endif
+    emulator::update_cpu_model();
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 

@@ -777,6 +777,7 @@ const char* need_hook_function[] = {
     "sscanf",
     "uncompress",
     "pow",
+    "dlerror",
 };
 
 unsigned int hook_special_func(const char* name, unsigned int sym_addr){

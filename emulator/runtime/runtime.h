@@ -186,6 +186,14 @@ public:
 	static void* s_pthread_self(void*);
 	static void* s_pthread_detach(void*);
     static void* s_strcasecmp(void*);
+    static void* s_readlink(void*);
+    static void* s_strtoull(void*);
+    static void* s_fscanf(void*);
+	static void* s_fputs(void*);
+    static void* s_pthread_once(void*);
+    static void* s_getauxval(void*);
+    static void* s_memmem(void*);
+    static void* s_dlerror(void*);
 };
 
 
