@@ -2025,9 +2025,8 @@ int GetIntField()
 	int ret = 0;
 	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
+    emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetIntField(\"%s\")\n",buffer);

@@ -165,6 +165,7 @@ int emulator::dispose()
 
 int emulator::init_emulator()
 {
+    enable_vfp();
     init_vectors();
     init_stack();
     load_library();
@@ -474,7 +475,19 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     if (!g_show_ins){
         return;
     }
-    //
+    get_emulator()->dump_register();
+    if (address == 0x4051e844){
+        printf("xx");
+    }
+    if (address == 0x404b1d26){
+        char buf[0x100] = {0};
+        int vv = 1;
+        uc_reg_read(g_uc, ARM_REG_R6, &vv);
+        //uc_reg_write(g_uc, ARM_REG_R0, &vv);
+        uc_mem_read(g_uc,v_sp,buf,0x100);
+        print_hex_dump_bytes(buf,0x100);
+    }
+
     csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
@@ -632,6 +645,28 @@ unsigned int emulator::alloc_thread_stack(){
     printf("alloc thread stack=%x\n",thread_sp);
 
     return thread_sp;
+}
+
+int emulator::enable_vfp() {
+    uint64_t tmp_val;
+    uc_err err = uc_reg_read(g_uc, UC_ARM_REG_C1_C0_2, &tmp_val);
+    if (err) {
+        printf("reg write error\n");
+        return 0;
+    }
+    tmp_val = tmp_val | (0xf << 20);
+    err = uc_reg_write(g_uc, UC_ARM_REG_C1_C0_2, &tmp_val);
+    if (err) {
+        printf("reg write error\n");
+        return 0;
+    }
+    size_t enable_vfp = 0x40000000;
+    err = uc_reg_write(g_uc, UC_ARM_REG_FPEXC, &enable_vfp);
+    if (err) {
+        return 0;
+    }
+    printf("cpu enable VFP support\n");
+    return 1;
 }
 
 int emulator::init_stack()

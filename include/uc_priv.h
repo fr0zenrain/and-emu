@@ -4,7 +4,7 @@
 #ifndef UC_PRIV_H
 #define UC_PRIV_H
 
-#include <stdint.h>
+#include "unicorn/platform.h"
 #include <stdio.h>
 
 #include "qemu.h"
@@ -13,7 +13,7 @@
 
 // These are masks of supported modes for each cpu/arch.
 // They should be updated when changes are made to the uc_mode enum typedef.
-#define UC_MODE_ARM_MASK    (UC_MODE_ARM|UC_MODE_THUMB|UC_MODE_LITTLE_ENDIAN)
+#define UC_MODE_ARM_MASK    (UC_MODE_ARM|UC_MODE_THUMB|UC_MODE_LITTLE_ENDIAN|UC_MODE_MCLASS|UC_MODE_BIG_ENDIAN)
 #define UC_MODE_MIPS_MASK   (UC_MODE_MIPS32|UC_MODE_MIPS64|UC_MODE_LITTLE_ENDIAN|UC_MODE_BIG_ENDIAN)
 #define UC_MODE_X86_MASK    (UC_MODE_16|UC_MODE_32|UC_MODE_64|UC_MODE_LITTLE_ENDIAN)
 #define UC_MODE_PPC_MASK    (UC_MODE_PPC64|UC_MODE_BIG_ENDIAN)
@@ -27,7 +27,7 @@
 #define READ_WORD(x) (x & 0xffff)
 #define READ_BYTE_H(x) ((x & 0xffff) >> 8)
 #define READ_BYTE_L(x) (x & 0xff)
-#define WRITE_DWORD(x, w) (x = (x & ~0xffffffff) | (w & 0xffffffff))
+#define WRITE_DWORD(x, w) (x = (x & ~0xffffffffLL) | (w & 0xffffffff))
 #define WRITE_WORD(x, w) (x = (x & ~0xffff) | (w & 0xffff))
 #define WRITE_BYTE_H(x, b) (x = (x & ~0xff00) | ((b & 0xff) << 8))
 #define WRITE_BYTE_L(x, b) (x = (x & ~0xff) | (b & 0xff))
@@ -60,8 +60,6 @@ typedef int (*uc_args_int_uc_t)(struct uc_struct*);
 
 typedef bool (*uc_args_tcg_enable_t)(struct uc_struct*);
 
-typedef void (*uc_minit_t)(struct uc_struct*, ram_addr_t);
-
 typedef void (*uc_args_uc_long_t)(struct uc_struct*, unsigned long);
 
 typedef void (*uc_args_uc_u64_t)(struct uc_struct *, uint64_t addr);
@@ -79,6 +77,9 @@ typedef bool (*uc_args_int_t)(int intno);
 
 // some architecture redirect virtual memory to physical memory like Mips
 typedef uint64_t (*uc_mem_redirect_t)(uint64_t address);
+
+// validate if Unicorn supports hooking a given instruction
+typedef bool(*uc_insn_hook_validate)(uint32_t insn_enum);
 
 struct hook {
     int type;            // UC_HOOK_*
@@ -110,9 +111,11 @@ enum uc_hook_idx {
     UC_HOOK_MAX,
 };
 
+#define HOOK_FOREACH_VAR_DECLARE                          \
+    struct list_item *cur
+
 // for loop macro to loop over hook lists
 #define HOOK_FOREACH(uc, hh, idx)                         \
-    struct list_item *cur;                                \
     for (                                                 \
         cur = (uc)->hook[idx##_IDX].head;                 \
         cur != NULL && ((hh) = (struct hook *)cur->data)  \
@@ -144,9 +147,6 @@ static inline bool _hook_exists_bounded(struct list_item *cur, uint64_t addr)
 struct uc_struct {
     uc_arch arch;
     uc_mode mode;
-    QemuMutex qemu_global_mutex; // qemu/cpus.c
-    QemuCond qemu_cpu_cond; // qemu/cpus.c
-    QemuCond *tcg_halt_cond; // qemu/cpus.c
     uc_err errnum;  // qemu/cpu-exec.c
     AddressSpace as;
     query_t query;
@@ -172,6 +172,8 @@ struct uc_struct {
     // TODO: remove current_cpu, as it's a flag for something else ("cpu running"?)
     CPUState *cpu, *current_cpu;
 
+    uc_insn_hook_validate insn_hook_validate;
+
     MemoryRegion *system_memory;    // qemu/exec.c
     MemoryRegion io_mem_rom;    // qemu/exec.c
     MemoryRegion io_mem_notdirty;   // qemu/exec.c
@@ -180,7 +182,6 @@ struct uc_struct {
     RAMList ram_list;   // qemu/exec.c
     BounceBuffer bounce;    // qemu/cpu-exec.c
     volatile sig_atomic_t exit_request; // qemu/cpu-exec.c
-    spinlock_t x86_global_cpu_lock; // for X86 arch only
     bool global_dirty_log;  // qemu/memory.c
     /* This is a multi-level map on the virtual address space.
        The bottom level has pointers to PageDesc.  */
@@ -192,7 +193,6 @@ struct uc_struct {
     unsigned memory_region_transaction_depth;
     bool memory_region_update_pending;
     bool ioeventfd_update_pending;
-    QemuMutex flat_view_mutex;
     QTAILQ_HEAD(memory_listeners, MemoryListener) memory_listeners;
     QTAILQ_HEAD(, AddressSpace) address_spaces;
     MachineState *machine_state;
@@ -244,6 +244,7 @@ struct uc_struct {
     uint32_t target_page_size;
     uint32_t target_page_align;
     uint64_t next_pc;   // save next PC for some special cases
+    bool hook_insert;	// insert new hook at begin of the hook list (append by default)
 };
 
 // Metadata stub for the variable-size cpu context used with uc_context_*()
@@ -256,3 +257,4 @@ struct uc_context {
 MemoryRegion *memory_mapping(struct uc_struct* uc, uint64_t address);
 
 #endif
+/* vim: set ts=4 noet:  */
