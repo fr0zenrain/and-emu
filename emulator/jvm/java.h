@@ -19,6 +19,7 @@ public:
     static unsigned int java_lang_class_get_name(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
     static unsigned int java_lang_class_get_Property(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
     static unsigned int java_lang_class_get_Bytes(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
+    static unsigned int get_jiagu_soname(unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg);
 };
 
 class virtual_app{
