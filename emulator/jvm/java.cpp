@@ -41,6 +41,8 @@ class_method java_lang_class_method[]= {
         {0x7798befa, "currentActivityThread()Landroid/app/ActivityThread;",(void*)java_class::java_lang_class_get_name},
         {0x6b796368, "add(Ljava/lang/Object;)Z",(void*)java_class::java_lang_class_get_name},
         {0xa8eb10e8, "getPackageInfo(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;",(void*)java_class::java_lang_class_get_name},
+        {0xf7c85eb2, "getJiaguSoName()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
+        {0xd96d432e, "getDir()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
 };
 
 class_method android_os_Build_VERSION_method[] = {
@@ -85,6 +87,11 @@ java_class_type java_method[]= {
 unsigned int java_class::java_lang_class_get_name
         (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg){
     return 1;
+}
+
+unsigned int java_class::get_jiagu_soname
+        (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg){
+    return make_string_object("libjiagu.so");
 }
 
 unsigned int java_class::java_lang_class_get_Property
