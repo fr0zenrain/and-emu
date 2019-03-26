@@ -39,7 +39,7 @@ int GetEnv()
 	return JNI_OK;
 }
 
-int GetVersion()
+int _GetVersion()
 {
 	return JNI_OK;
 }
@@ -1911,9 +1911,9 @@ int GetFieldID()
 	emulator::update_cpu_model();
 
 #ifdef _MSC_VER
-    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n" env,clz,name,sig,ret);
+    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n", env,clz,name,sig,ret);
 #else
-    printf(RED "GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n" RESET, env,clz,name,sig,ret);
+    printf(RED "GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n", RESET, env,clz,name,sig,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -4906,7 +4906,7 @@ func_info g_native_func[] ={
 	0,
 	0,
 
-	GetVersion,
+	_GetVersion,
 
 	DefineClass,
 	FindClass,//6

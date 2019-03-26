@@ -71,7 +71,11 @@ struct android_stat {
 	unsigned long       st_ctime;
 	unsigned long       st_ctime_nsec;
 	unsigned long long  st_ino;
+#ifdef _MSC_VER
+};
+#else
 }__attribute__ ((aligned (8)));
+#endif
 
 
 DIRX *opendir_ (const char *name);

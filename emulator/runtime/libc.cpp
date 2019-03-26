@@ -9,7 +9,7 @@
 #include "time.h"
 #include "ctype.h"
 #include "dirent_win.h"
-#include "zlib.h"
+#include "../../zlib/zlib.h"
 #include <sys/stat.h>
 #include "math.h"
 
@@ -29,6 +29,39 @@
 extern uc_engine* g_uc;
 soinfo* libc::si =0;
 extern void* s_dlsym(void* handle, const char* symbol);
+
+#ifdef _MSC_VER
+void *memmem(const void *haystack, size_t n, const void *needle, size_t m)
+{
+	if (m > n || !m || !n)
+		return NULL;
+	if (m > 1) {
+		const unsigned char*  y = (const unsigned char*)haystack;
+		const unsigned char*  x = (const unsigned char*)needle;
+		size_t                j = 0;
+		size_t                k = 1, l = 2;
+		if (x[0] == x[1]) {
+			k = 2;
+			l = 1;
+		}
+		while (j <= n - m) {
+			if (x[1] != y[j + 1]) {
+				j += k;
+			}
+			else {
+				if (!memcmp(x + 2, y + j + 2, m - 2) && x[0] == y[j])
+					return (void*)&y[j];
+				j += l;
+			}
+		}
+	}
+	else {
+		/* degenerate case */
+		return (void*)memchr(haystack, ((unsigned char*)needle)[0], n);
+	}
+	return NULL;
+}
+#endif
 
 void libc::init(emulator* emu)
 {
@@ -1818,8 +1851,10 @@ void* libc::s_stat(void*)
 
     ast.st_dev = st.st_dev;
     ast.st_mode = st.st_mode;
+#ifndef _MSC_VER
     ast.st_blksize = st.st_blksize;
     ast.st_blocks = st.st_blocks;
+#endif
     ast.st_uid = st.st_uid;
     ast.st_size = st.st_size;
     ast.st_ino = st.st_ino;
@@ -2947,22 +2982,22 @@ void* libc::s_fcntl(void*)
 {
     uc_err err;
     int value = 0;
-    struct flock fl;
-
+    
     unsigned int fd = emulator::get_r0();
     unsigned int cmd = emulator::get_r1();
     unsigned int arg = emulator::get_r2();
-    if (cmd == 3)
-    {
-        value = fcntl(fd, cmd);
-    }
-    else if(cmd == 6 || cmd == 7){
-
-    }
+   
 
 #ifdef _MSC_VER
     printf("fcntl(0x%x,0x%x,0x%x)-> 0x%x\n", fd,cmd, arg,value);
 #else
+	if (cmd == 3)
+	{
+		value = fcntl(fd, cmd);
+	}
+	else if (cmd == 6 || cmd == 7) {
+
+	}
     printf(RED "fcntl(0x%x,0x%x,0x%x)-> 0x%x\n" RESET, fd,cmd, arg, value);
 #endif
 
@@ -2984,8 +3019,10 @@ void* libc::s_fstat(void*)
     value = fstat(fd, &st);
     ast.st_dev = st.st_dev;
     ast.st_mode = st.st_mode;
+#ifndef _MSC_VER
     ast.st_blksize = st.st_blksize;
     ast.st_blocks = st.st_blocks;
+#endif
     ast.st_uid = st.st_uid;
     ast.st_size = 0x0000002000000020;
     ast.st_ino = st.st_ino;
@@ -3030,11 +3067,11 @@ void* libc::s_fsync(void*)
     int value = 0;
 
     unsigned int fd = emulator::get_r0();
-    value = fsync(fd);
-
+    
 #ifdef _MSC_VER
     printf("fsync(0x%x)-> 0x%x\n", fd,value);
 #else
+	value = fsync(fd);
     printf(RED "fsync(0x%x)-> 0x%x\n" RESET, fd, value);
 #endif
 
@@ -3267,6 +3304,7 @@ void* libc::s_pclose(void*)
     uc_err err;
     unsigned int value = 0;
     unsigned int fp = emulator::get_r0();
+	int pid = 0;
     //fclose(fp);
 
 #ifdef _MSC_VER
@@ -3471,7 +3509,7 @@ void* libc::s_pthread_self(void*)
     int value = 1;
 
 #ifdef _MSC_VER
-    printf("pthread_self()-> 0x%x\n", ,value);
+    printf("pthread_self()-> 0x%x\n", value);
 #else
     printf(RED "pthread_self()-> 0x%x\n" RESET, value);
 #endif
@@ -3645,6 +3683,7 @@ void* libc::s_pthread_once(void*)
 {
     uc_err err;
     int value = 0;
+	int tid = 0;
     unsigned int once = emulator::get_r0();
     unsigned int routine = emulator::get_r1();
 
