@@ -41,13 +41,15 @@ typedef unsigned long SIZE_T;
 typedef void* LPVOID;
 typedef const char *LPCSTR;
 
+/*
 typedef struct _SECURITY_ATTRIBUTES {
 	DWORD nLength;
 	LPVOID lpSecurityDescriptor;
 	BOOL bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+*/
 
-extern "C" DWORD WINAPI UnmapViewOfFile(const void* lpBaseAddress);
+/*extern "C" DWORD WINAPI UnmapViewOfFile(const void* lpBaseAddress);
 extern "C" DWORD WINAPI GetLastError(void);
 extern "C" BOOL WINAPI CloseHandle(HANDLE hObject);
 extern "C" HANDLE WINAPI CreateFileMappingA( HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes,
@@ -57,7 +59,7 @@ extern "C" LPVOID WINAPI MapViewOfFile( HANDLE hFileMappingObject,DWORD dwDesire
 extern "C" BOOL WINAPI VirtualProtect( LPVOID lpAddress,  SIZE_T dwSize,  DWORD flNewProtect, DWORD* lpflOldProtect );
 extern "C" BOOL WINAPI VirtualFree( LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
 extern "C" LPVOID WINAPI VirtualAlloc( LPVOID lpAddress,SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-
+*/
 
 
 #endif

@@ -169,7 +169,7 @@ struct JNINativeInterface {
     void*       reserved2;
     void*       reserved3;
 
-    jint        (*GetVersion)(JNIEnv *);
+    jint        (*_GetVersion)(JNIEnv *);
 
     jclass      (*DefineClass)(JNIEnv*, const char*, jobject, const jbyte*,
                                jsize);
@@ -510,8 +510,8 @@ struct _JNIEnv {
 
 #if defined(__cplusplus)
 
-    jint GetVersion()
-    { return functions->GetVersion(this); }
+    jint _GetVersion()
+    { return functions->_GetVersion(this); }
 
     jclass DefineClass(const char *name, jobject loader, const jbyte* buf,
                        jsize bufLen)

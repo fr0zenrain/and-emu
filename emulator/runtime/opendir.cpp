@@ -1,5 +1,5 @@
 #ifdef _MSC_VER
-#include "windows.h"
+//#include "windows.h"
 #include "dirent_win.h"
 #include "stdlib.h"
 #include "stdio.h"
