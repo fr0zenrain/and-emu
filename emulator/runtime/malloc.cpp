@@ -825,7 +825,7 @@ extern "C" {
 #define dlfree                 sys_free
 #define dlmalloc               sys_malloc
 #define dlmemalign             c_memalign
-#define dlposix_memalign       posix_memalign
+//#define dlposix_memalign       posix_memalign
 #define dlrealloc			   c_realloc
 #define dlrealloc_in_place     realloc_in_place
 #define dlvalloc               c_valloc

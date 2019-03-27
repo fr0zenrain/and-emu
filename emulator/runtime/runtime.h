@@ -197,6 +197,11 @@ public:
 };
 
 
+#ifndef offsetof
+#define offsetof(a,b) ((int)(&(((a*)(0))->b)))
+#endif
+
+
 int get_prop(char* name,char* value);
 int get_var(char* name,char* value);
 extern "C" void* sys_malloc(size_t size);

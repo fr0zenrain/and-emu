@@ -3,7 +3,7 @@
 #include "emulator.h"
 #include "string.h"
 #include "stdlib.h"
-#include "../type.h"
+//#include "../type.h"
 #include "../engine.h"
 #include "../../capstone/include/capstone.h"
 #include "time.h"

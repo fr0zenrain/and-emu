@@ -12,9 +12,14 @@
 #ifdef _MSC_VER
 #include "io.h"
 #else
+
 #include <sys/mman.h>
 #endif
 #include "../include/unicorn/unicorn.h"
+
+#undef offsetof
+#define offsetof(a,b) ((int)(&(((a*)(0))->b)))
+
 extern uc_engine* g_uc;
 /**
  TECHNICAL NOTE ON ELF LOADING.

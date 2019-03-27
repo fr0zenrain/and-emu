@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include "jvm.h"
+#include "string.h"
 #include "../runtime/runtime.h"
 #include "../crc32.h"
 

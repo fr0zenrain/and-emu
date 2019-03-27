@@ -1,5 +1,6 @@
 #include "jvm.h"
 #include "../runtime/emulator.h"
+#include "string.h"
 #include "../../include/unicorn/unicorn.h"
 #include "jni.h"
 #include "java.h"

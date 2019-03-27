@@ -35,11 +35,12 @@ typedef unsigned short ino_t;
 
 typedef unsigned int uid_t;
 typedef unsigned int gid_t;
+#ifdef _MSC_VER
 #define _SOCKLEN_T
 typedef int socklen_t;
 
 typedef long pthread_t;
-
+#endif
 
 
 #ifdef _MSC_VER
@@ -47,6 +48,7 @@ typedef long pthread_t;
 #else
 #define __defaultcall 
 #endif
+
 
 
 typedef void ( *sighandler_t)(int);
