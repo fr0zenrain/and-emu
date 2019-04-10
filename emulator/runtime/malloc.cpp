@@ -1653,7 +1653,7 @@ unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 #endif /* MAP_ANON */
 #ifdef MAP_ANONYMOUS
 #define MMAP_FLAGS           (MAP_PRIVATE|MAP_ANONYMOUS)
-#define MMAP_DEFAULT(s)       s_mmap(0, (s), PROT_NONE, 0, -1, 0)
+#define MMAP_DEFAULT(s)       uc_mmap(0, (s), PROT_NONE, 0, -1, 0)
 #else /* MAP_ANONYMOUS */
 /*
    Nearly all versions of mmap support MAP_ANONYMOUS, so the following
@@ -1675,7 +1675,7 @@ static int dev_zero_fd = -1; /* Cached file descriptor for /dev/zero. */
 static FORCEINLINE void* win32mmap(size_t size) {
   //void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
   //return (ptr != 0)? ptr: MFAIL;
-   void* ptr = s_mmap(0,size,PROT_NONE,0,-1,0);
+   void* ptr = uc_mmap(0,size,PROT_NONE,0,-1,0);
    return (ptr != 0)? ptr: MFAIL;
 }
 
@@ -1683,7 +1683,7 @@ static FORCEINLINE void* win32mmap(size_t size) {
 static FORCEINLINE void* win32direct_mmap(size_t size) {
   //void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT|MEM_TOP_DOWN, PAGE_READWRITE);
   //return (ptr != 0)? ptr: MFAIL;
-   void* ptr = s_mmap(0,size,PROT_NONE,0,-1,0);
+   void* ptr = uc_mmap(0,size,PROT_NONE,0,-1,0);
    return (ptr != 0)? ptr: MFAIL;
 }
 
@@ -4743,7 +4743,7 @@ static void* tmalloc_small(mstate m, size_t nb) {
 
   if (RTCHECK(ok_address(m, v))) {
     mchunkptr r = chunk_plus_offset(v, nb);
-    assert(chunksize(v) == rsize + nb);
+    //assert(chunksize(v) == rsize + nb);
     if (RTCHECK(ok_next(v, r))) {
       //unlink_large_chunk(m, v);
         //tchunkptr XP = v->parent;
@@ -4944,7 +4944,7 @@ void* dlmalloc(size_t bytes) {
 		  
 		  assert(p != b);
 		  assert(p != F);
-		  assert(chunksize(p) == small_index2size(I));
+		  //assert(chunksize(p) == small_index2size(I));
 		  if((unsigned int)F > EMULATOR_MEMORY_START)
 		  {
 			  addr = (int)F  + offsetof(malloc_chunk,bk);

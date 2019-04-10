@@ -1883,6 +1883,7 @@ int GetFieldID()
     uc_err err;
     char name[256] = {0};
 	char sig[256]={0};
+	unsigned int lr = emulator::get_lr();
 	unsigned int env = emulator::get_r0();
     unsigned int clz = emulator::get_r1();
     unsigned int name_addr = emulator::get_r2();
@@ -1907,15 +1908,13 @@ int GetFieldID()
                 break;
         }
     }
-	ret = get_field((class_method*)clz, name, sig);
-    unsigned int lr = emulator::get_lr();
-	emulator::update_cpu_model();
-
+    ret = get_field((class_method*)clz, name, sig);
+    emulator::update_cpu_model();
 #ifdef _MSC_VER
     printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n", env,clz,name,sig,ret);
 #else
-    printf(RED "GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n", RESET, env,clz,name,sig,ret);
-#endif 
+    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n",  env,clz,name,sig,ret);
+#endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
 	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
@@ -1924,16 +1923,20 @@ int GetFieldID()
 }
 int GetObjectField() 
 {
-	int ret = 1;
-	char buffer[256]={0}; 
+	int ret = 0;
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	emulator::update_cpu_model();
+	unsigned int lr = emulator::get_lr();
+    unsigned int obj = emulator::get_r1();
+    unsigned int fid = emulator::get_r2();
 
+    call_field func = (call_field)get_field_byhash(fid);
+    ret = func();
+
+    emulator::update_cpu_model();
 #ifdef _MSC_VER
-	printf("GetObjectField(\"%s\")\n",buffer);
+	printf("GetObjectField(0x%x,0x%x, 0x%x) ->0x%x \n",env, obj, fid, ret);
 #else
-	printf(RED "GetObjectField(\"%s\")\n" RESET, buffer); 
+	printf( "GetObjectField(0x%x, 0x%x, 0x%x) ->0x%x \n" ,env, obj, fid, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -2411,21 +2414,22 @@ int CallStaticBooleanMethod()
 }
 int CallStaticBooleanMethodV() 
 {
-	int ret = 0;
-	char buffer[256]={0}; 
 	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int lr = emulator::get_lr();
+    unsigned int clz = emulator::get_r1();
+    unsigned int mid = emulator::get_r2();
+    unsigned int arg = emulator::get_r3();
 
+    fCallObjectMethodV func = (fCallObjectMethodV)get_method_byhash(mid);
+    int ret = func(env, clz, mid, arg);
 #ifdef _MSC_VER
-	printf("CallStaticBooleanMethodV(\"%s\")\n",buffer);
+	printf("CallStaticBooleanMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env, clz, mid, arg, ret);
 #else
-	printf(RED "CallStaticBooleanMethodV(\"%s\")\n" RESET, buffer); 
+	printf(RED "CallStaticBooleanMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env, clz, mid, arg, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&func);
 
 	return JNI_OK; 
 }
@@ -2998,21 +3002,20 @@ int GetStaticObjectField()
 }
 int GetStaticBooleanField() 
 {
-	int ret = 0;
-	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
-	unsigned int lr = emulator::get_lr(); 
-	if(lr &1) 
-		lr -= 1; 
+	unsigned int env = emulator::get_r0();
+    unsigned int clz = emulator::get_r1();
+    unsigned int fid = emulator::get_r2();
+    unsigned int lr = emulator::get_lr();
 
+    fCallObjectMethodV func = (fCallObjectMethodV)get_method_byhash(fid);
 #ifdef _MSC_VER
-	printf("GetStaticBooleanField(\"%s\")\n",buffer);
+	printf("GetStaticBooleanField(0x%x,0x%x,0x%x) -> 0x%x\n",env, clz,fid, func);
 #else
-	printf(RED "GetStaticBooleanField(\"%s\")\n" RESET, buffer); 
-#endif 
-
+	printf(RED "GetStaticBooleanField(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env, clz,fid, func);
+#endif
+    emulator::update_cpu_model();
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
-	uc_reg_write(g_uc,UC_ARM_REG_R0,&ret); 
+	uc_reg_write(g_uc,UC_ARM_REG_R0,&func);
 
 	return JNI_OK; 
 }

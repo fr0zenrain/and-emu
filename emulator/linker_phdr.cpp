@@ -217,7 +217,7 @@ bool ElfReader::ReadProgramHeader() {
 
 	void* mmap_result;
 
-	mmap_result = s_mmap(NULL, phdr_size_, PROT_READ, MAP_PRIVATE, fd_,
+	mmap_result = uc_mmap(NULL, phdr_size_, PROT_READ, MAP_PRIVATE, fd_,
 					page_min);
 	if (mmap_result == MAP_FAILED) {
 		debug_printf("\"%s\" phdr mmap failed: %s", name_,strerror(errno));
@@ -299,7 +299,7 @@ bool ElfReader::ReserveAddressSpace() {
 
 	void* start;
 
-	start = s_mmap(addr, load_size_, PROT_NONE, mmap_flags, -1,
+	start = uc_mmap(addr, load_size_, PROT_NONE, mmap_flags, -1,
 					0);
 	if (start == MAP_FAILED) {
 		debug_printf("couldn't reserve %d bytes of address space for \"%s\"\n",
@@ -342,7 +342,7 @@ bool ElfReader::LoadSegments() {
 		Elf32_Addr file_length = file_end - file_page_start;
 
 		if (file_length != 0) {
-			void* seg_addr = s_mmap((void*) seg_page_start, file_length,
+			void* seg_addr = uc_mmap((void*) seg_page_start, file_length,
 				PFLAGS_TO_PROT(phdr->p_flags),
 				MAP_FIXED | MAP_PRIVATE, fd_, file_page_start);
 			if (seg_addr == MAP_FAILED) {
@@ -366,7 +366,7 @@ bool ElfReader::LoadSegments() {
 		// between them. This is done by using a private anonymous
 		// map for all extra pages.
 		if (seg_page_end > seg_file_end) {
-			void* zeromap = s_mmap((void*) seg_file_end,
+			void* zeromap = uc_mmap((void*) seg_file_end,
 				seg_page_end - seg_file_end,
 				PFLAGS_TO_PROT(phdr->p_flags),
 				MAP_FIXED | MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);

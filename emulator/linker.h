@@ -251,7 +251,7 @@ soinfo* soinfo_alloc(const char* name);
 bool soinfo_link_image(soinfo* si, bool breloc, ElfReader* reader);
 
 
-void *s_mmap(void *start, size_t length, int prot, int flags,int fd, int offset);
+void *uc_mmap(void *start, size_t length, int prot, int flags,int fd, int offset);
 int s_mprotect( void *start, size_t len, int prot);
 int s_munmap(void *start, size_t length);
 

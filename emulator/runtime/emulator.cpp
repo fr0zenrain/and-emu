@@ -6,6 +6,7 @@
 #include "../jvm/jvm.h"
 #include "runtime.h"
 #include "../dlfcn.h"
+#include "rc4.h"
 #include "unpack.h"
 #include "math.h"
 #include <map>
@@ -104,7 +105,7 @@ emulator::emulator(uc_mode mode)
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
-    int mem_size = 4*1024*1024;
+    int mem_size = 16*1024*1024;
     g_uc = uc;
     //mmap svc stub
     err=uc_mem_map(uc,addr,mem_size,UC_PROT_ALL);
@@ -471,21 +472,9 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
 
     }
 
-    qihoo_jiagu_1375_patch(address);
+    //qihoo_jiagu_1375_patch(address);
     if (!g_show_ins){
         return;
-    }
-    get_emulator()->dump_register();
-    if (address == 0x4051e844){
-        printf("xx");
-    }
-    if (address == 0x404b1d26){
-        char buf[0x100] = {0};
-        int vv = 1;
-        uc_reg_read(g_uc, ARM_REG_R6, &vv);
-        //uc_reg_write(g_uc, ARM_REG_R0, &vv);
-        uc_mem_read(g_uc,v_sp,buf,0x100);
-        print_hex_dump_bytes(buf,0x100);
     }
 
     csh handle;
@@ -640,8 +629,8 @@ int emulator::init_vectors()
 
 unsigned int emulator::alloc_thread_stack(){
 
-    unsigned int stack_bottom = (unsigned int)sys_malloc(0x1000);
-    unsigned int thread_sp = stack_bottom+0x1000-0x800;
+    unsigned int stack_bottom = (unsigned int)sys_malloc(0x8000);
+    unsigned int thread_sp = stack_bottom+0x8000-0x800;
     printf("alloc thread stack=%x\n",thread_sp);
 
     return thread_sp;
@@ -806,12 +795,12 @@ int emulator::init_jvm()
         return 1;
 
     //alloc javavm
-    JNIEnvExt* jvm= (JNIEnvExt*)s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+    JNIEnvExt* jvm= (JNIEnvExt*)uc_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(jvm == 0)
     {
         return 0;
     }
-    void* invoke_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+    void* invoke_interface = uc_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(invoke_interface == 0)
     {
         return 0;
@@ -820,13 +809,13 @@ int emulator::init_jvm()
     unsigned int addr = (int)jvm + offsetof(JavaVMExt,funcTable);
     uc_mem_write(uc,addr,&invoke_interface,4);
     //jnienv
-    void* env = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+    void* env = uc_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(env == 0)
     {
         return 0;
     }
     printf("JNIENV 0x%p\n", env);
-    void* native_interface = s_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
+    void* native_interface = uc_mmap(0,0x1000,PROT_NONE,MAP_PRIVATE,-1,0);
     if(native_interface == 0)
     {
         return 0;

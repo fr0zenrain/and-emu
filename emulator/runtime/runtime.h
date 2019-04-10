@@ -194,6 +194,7 @@ public:
     static void* s_getauxval(void*);
     static void* s_memmem(void*);
     static void* s_dlerror(void*);
+	static void* s_mmap(int type);
 };
 
 

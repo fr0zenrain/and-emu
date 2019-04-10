@@ -122,7 +122,17 @@ void* libc::s_free(void*)
 #else
 	printf(RED "free(0x%x)\n" RESET,ptr);
 #endif
+    if(ptr == 0x4004a160){
+        emulator::dump_memory("d1.dex",0x41ca7000,0x6362e8);
 
+        emulator::dump_memory("d2.dex",0x422de000,0x5d3068);
+
+        emulator::dump_memory("d3.dex",0x428b2000,0x56bc0c);
+
+        emulator::dump_memory("d4.dex",0x42e1e000,0x605b94);
+
+        emulator::dump_memory("d5.dex",0x43424000,0x35cd94);
+    }
 	return 0;
 }
 
@@ -211,9 +221,57 @@ void* libc::s__aeabi_memcpy(void*)
 	return 0;
 }
 
+void* libc::s_mmap(int type)
+{
+    uc_err err;
+    unsigned int addr = emulator::get_r0();
+    unsigned int sp = emulator::get_sp();
+    int fd = 0;
+    int offset = 0;
+    int size = emulator::get_r1();
+    int prot = emulator::get_r2();
+    int flags = emulator::get_r3();
+    uc_mem_read(g_uc,sp,&fd,4);
+    uc_mem_read(g_uc,sp+4,&offset,4);
+
+#ifdef _MSC_VER
+    printf("s_mmap(0x%x,0x%x,0x%x,0x%x,0x%x,0x%x)\n",addr,size,prot,flags,fd,offset);
+#else
+    printf(RED "s_mmap(0x%x,0x%x,0x%x,0x%x,0x%x,0x%x)\n" RESET,addr,size,prot,flags,fd,offset);
+#endif
+    if(addr == 0)
+    {
+        if (fd){
+            flags = MAP_FIXED;
+        }
+        addr = (unsigned int)uc_mmap(NULL,size,PROT_NONE,flags, fd, offset);
+        if (addr == -1){
+            printf("mmap failed %s\n", strerror(errno));
+        }
+    }
+
+#ifdef _MSC_VER
+    printf("mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",addr,size,prot,fd,offset,addr);
+#else
+    printf(RED "mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,size,prot,fd,offset,addr);
+#endif
+
+    if(type == 0)
+    {
+        err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+        return 0;
+    }
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
+    emulator::update_cpu_model();
+
+    return 0;
+}
+
 void* libc::sys_mmap(int type)
 {
     uc_err err;
+    unsigned int new_addr = 0;
     unsigned int addr = emulator::get_r0();
     int size = emulator::get_r1();
     int prot = emulator::get_r2();
@@ -221,33 +279,42 @@ void* libc::sys_mmap(int type)
     int fd = emulator::get_r4();
     int offset = emulator::get_r5();
 
-	if(addr == 0)
-	{
-        if (fd < -1){
+#ifdef _MSC_VER
+    printf("__mmap2(0x%x,0x%x,0x%x,0x%x,0x%x,0x%x)\n",addr,size,prot,flags,fd,offset);
+#else
+    printf(RED "__mmap2(0x%x,0x%x,0x%x,0x%x,0x%x,0x%x)\n" RESET,addr,size,prot,flags,fd,offset);
+#endif
+    if(addr == 0)
+    {
+        if (flags == 0x22 || flags == 2){
+            flags = MAP_FIXED;
+        }else{
             fd = -1;
+            offset=0;
+            flags = MAP_PRIVATE;
         }
-		addr = (unsigned int)s_mmap(NULL,size,PROT_NONE,MAP_PRIVATE, fd, offset);
-		if (addr == -1){
-			printf("mmap failed %s\n", strerror(errno));
-		}
-	}
+        new_addr = (unsigned int)uc_mmap(NULL,size,PROT_NONE, flags, fd, offset);
+        if (new_addr == -1){
+            printf("mmap failed %s\n", strerror(errno));
+        }
+    }
 
 #ifdef _MSC_VER
-	printf("mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",addr,size,prot,fd,offset,addr);
+    printf("mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",addr,size,prot,fd,offset,new_addr);
 #else
-	printf(RED "mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,size,prot,fd,offset,addr);
+    printf(RED "mmap(0x%x,0x%x,0x%x,0x%x,0x%x)-> 0x%x\n" RESET,addr,size,prot,fd,offset,new_addr);
 #endif
 
-	if(type == 0)
-	{
-		err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
-		return 0;
-	}
+    if(type == 0)
+    {
+        err = uc_reg_write(g_uc,UC_ARM_REG_R0,&new_addr);
+        return 0;
+    }
 
-	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&addr);
-	emulator::update_cpu_model();
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&new_addr);
+    emulator::update_cpu_model();
 
-	return 0;
+    return 0;
 }
 
 void* libc::sys_cacheflush(int type)
@@ -1906,6 +1973,7 @@ void* libc::s_pthread_create(void*)
     uc_mem_write(g_uc,thread_info,&func,4);
     uc_mem_write(g_uc,thread_info+4,&arg,4);
     uc_mem_write(g_uc,thread_info+8,&thread_sp,4);
+    uc_mem_write(g_uc,thread_info+12,&value,4);
     uc_mem_write(g_uc,tid,&thread_info,4);
 #ifdef _MSC_VER
     printf("pthread_create(0x%x,0x%x,0x%x,0x%x)-> 0x%x\n",tid,attr,func,arg, value);
@@ -2312,11 +2380,19 @@ void* libc::s_puts(void*)
 {
 	uc_err err;
 	int value = 0;
+    char buf[1024] = {0};
+    unsigned int buf_addr = emulator::get_r0();
 
+    for(int i = 0; i < 1024; i++)
+    {
+        err = uc_mem_read(g_uc,buf_addr+i,&buf[i],1);
+        if(buf[i] == 0)
+            break;
+    }
 #ifdef _MSC_VER
-	printf("puts()-> 0x%x\n",  value);
+	printf("puts(\"%s\")-> 0x%x\n", buf,value);
 #else
-	printf(RED "puts()-> 0x%x\n" RESET, value);
+	printf(RED "puts(\"%s\")-> 0x%x\n" RESET,buf, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -3110,11 +3186,13 @@ void* libc::s_pthread_join(void*){
     unsigned int tsp = 0;
     unsigned int tid = emulator::get_r0();
     unsigned int data = emulator::get_r1();
-
+    unsigned char arg_buf[32];
     uc_mem_read(g_uc, tid, &func, 4);
     uc_mem_read(g_uc, tid+4, &arg, 4);
     uc_mem_read(g_uc, tid+8, &tsp, 4);
-
+    if (tid < 0x1000000){
+        return 0;
+    }
 #ifdef _MSC_VER
     printf("pthread_join(0x%x,0x%x)-> 0x%x\n", tid,data,value);
 #else
@@ -3123,6 +3201,8 @@ void* libc::s_pthread_join(void*){
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
     emulator::get_emulator()->save_register();
     printf("thread=0x%x func=0x%x arg=0x%x tsp=0x%x\n", tid, func, arg, tsp);
+    uc_mem_read(g_uc, arg, arg_buf, 16);
+    print_hex_dump_bytes(arg_buf, 16);
     err = uc_reg_write(g_uc,UC_ARM_REG_PC,&func);
     err = uc_reg_write(g_uc,UC_ARM_REG_SP,&tsp);
 
@@ -3784,7 +3864,7 @@ symbols g_syms[] =
 	{0x4d2ec1c8,"free",(void*)libc::s_free,0,1},
 	{0x8463960a,"memset",(void*)libc::s_memset,0,0},
 	{0x7f822dfe,"__aeabi_memset",(void*)libc::s__aeabi_memset,0,1},
-	{0x84e4836b,"mmap",(void*)libc::sys_mmap,0,1,0xc0},
+	{0xb33ae941,"__mmap2",(void*)libc::sys_mmap,0,1,0xc0},
 	{0x5e85da63,"cacheflush",(void*)libc::sys_cacheflush,0,1,0xf0002},
 	{0x2aa01427,"__aeabi_memcpy",(void*)libc::s__aeabi_memcpy,0,1},
 	{0xfb512a1b,"dlopen",(void*)libc::sys_dlopen,0,1},
@@ -3952,6 +4032,9 @@ symbols g_syms[] =
     {0x4d998ede,"ptrace",(void*)libc::s_adler32,0,1},
     {0x6aa8fa60,"getauxval",(void*)libc::s_getauxval,0,1},
     {0xf6b0b0b0,"memmem",(void*)libc::s_memmem,0,1},
+    {0x56960e47,"__aeabi_memcpy4",(void*)libc::s__aeabi_memcpy,0,1},
+    {0x8b035dab,"putchar",(void*)libc::s_puts,0,1},
+    {0x84e4836b,"mmap",(void*)libc::s_mmap,0,1},
 };
 
 

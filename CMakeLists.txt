@@ -41,6 +41,7 @@ set(SOURCEFILES
         emulator/jvm/jni.cpp
         emulator/jvm/app.cpp
         emulator/hexdump.cpp
+        emulator/runtime/rc4.cpp
         )
 
 add_subdirectory(capstone)

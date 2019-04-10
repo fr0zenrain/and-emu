@@ -143,7 +143,7 @@ static bool ensure_free_list_non_empty() {
 	}
 
 	// Allocate a new pool.
-	soinfo_pool_t* pool = reinterpret_cast<soinfo_pool_t*>(s_mmap(NULL,
+	soinfo_pool_t* pool = reinterpret_cast<soinfo_pool_t*>(uc_mmap(NULL,
 			sizeof(*pool), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
 			0, 0));
 	if (pool == MAP_FAILED) {

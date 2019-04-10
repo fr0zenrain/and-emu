@@ -12,6 +12,7 @@ std::map<std::string, void*> g_class_map;
 const char* java_lang_class = "java/lang/Class";
 const char* java_lang_System = "java/lang/System";
 const char* java_lang_String = "java/lang/String";
+const char* dalvik_system_basedexclassloader = "dalvik/system/BaseDexClassLoader";
 const char* android_os_Build_VERSION = "android/os/Build$VERSION";
 const char* android_app_ActivityThread= "android/app/ActivityThread";
 const char* com_stub_StubApp = "com/stub/StubApp";
@@ -44,6 +45,9 @@ class_method java_lang_class_method[]= {
         {0xa8eb10e8, "getPackageInfo(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;",(void*)java_class::java_lang_class_get_name},
         {0xf7c85eb2, "getJiaguSoName()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
         {0xd96d432e, "getDir()Ljava/lang/String;",(void*)java_class::java_lang_class_get_name},
+        {0x33bd2829, "getSoPath2()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
+        {0x48a3aaca, "getSoPath1()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
+        {0x84b89095, "getClassLoader()Ljava/lang/ClassLoader;",(void*)virtual_app::get_app_context},
 };
 
 class_method android_os_Build_VERSION_method[] = {
@@ -52,24 +56,29 @@ class_method android_os_Build_VERSION_method[] = {
         {0xa3101789, "mPackageInfoLandroid/app/LoadedApk;",(void*)virtual_app::get_sdk_int},
         {0xbeda5d5d, "mOuterContextLandroid/content/Context;",(void*)virtual_app::get_sdk_int},
         {0x83849696, "mApplicationLandroid/app/Application;",(void*)virtual_app::get_sdk_int},
-        {0x8450b515, "mBoundApplicationLandroid/app/ActivityThread$AppBindData;",(void*)virtual_app::get_sdk_int},
         {0x6cc7e40f, "mInitialApplicationLandroid/app/Application;",(void*)virtual_app::get_sdk_int},
         {0x2e44ada5, "mAllApplicationsLjava/util/ArrayList;",(void*)virtual_app::get_sdk_int},
         {0x53dab22d, "signatures[Landroid/content/pm/Signature;",(void*)virtual_app::get_null},
+        {0x431769be, "pathListLdalvik/system/DexPathList;",(void*)virtual_app::get_app_context},
+        {0x3e4f1fe9, "appInfoLandroid/content/pm/ApplicationInfo;",(void*)virtual_app::get_app_context},
+        {0xac91b649, "dexElements[Ldalvik/system/DexPathList$Element;",(void*)virtual_app::get_app_context},
+        {0xc2e18d52, "needX86BridgeZ",(void*)virtual_app::get_null},
 };
 
 class_method android_app_ActivityThread_method[]= {
-
+        {0xb415f116, "mBoundApplicationLandroid/app/ActivityThread$AppBindData;",(void*)virtual_app::get_app_context},
 };
 
 class_method com_stub_StubApp_method[]= {
         {0xb7706e0b, "showDialog(Landroid/content/Context;Ljava/lang/String;)V",(void*)virtual_app::get_app_context},
+        {0xa8566aa7, "isX86Arch()Z",(void*)virtual_app::get_null},
 };
 
 java_class_type java_method[]= {
         {java_lang_class, java_lang_class_method},
         {java_lang_String, java_lang_class_method},
         {java_lang_System, java_lang_class_method},
+        {dalvik_system_basedexclassloader, java_lang_class_method},
         {com_taobao_wireless_security_adapter_JNICLibrary, java_lang_class_method},
         {com_taobao_wireless_security_adapter_datacollection_DeviceInfoCapturer, java_lang_class_method},
         {com_taobao_wireless_security_adapter_datareport_DataReportJniBridge, java_lang_class_method},
@@ -87,7 +96,7 @@ java_class_type java_method[]= {
 
 unsigned int java_class::java_lang_class_get_name
         (unsigned int env, unsigned int obj, unsigned int mid, unsigned int arg){
-    return 1;
+    return make_string_object("/tmp");
 }
 
 unsigned int java_class::get_jiagu_soname
@@ -118,7 +127,7 @@ unsigned int java_class::java_lang_class_get_Property
         }
     }
     if (strcmp(buf, "java.vm.version") == 0){
-        result = make_string_object("1.8.0_91");
+        result = make_string_object("2.8.0_91");
     }
 
     return result;
@@ -181,6 +190,11 @@ unsigned int get_field(class_method* method, const char* name, const char* sig){
             return hash;
         }
     }
+    for (int i = 0; i < sizeof(android_app_ActivityThread_method)/ sizeof(android_app_ActivityThread_method[i]); i++){
+        if (hash == android_app_ActivityThread_method[i].method_id){
+            return hash;
+        }
+    }
     return 0;
 }
 
@@ -221,14 +235,19 @@ void* get_method_byhash(unsigned int hash)
 
 void* get_field_byhash(unsigned int hash)
 {
-    void* func = (void*)1;
+    void* func = (void*)0;
     for (int i = 0; i < sizeof(android_os_Build_VERSION_method)/ sizeof(android_os_Build_VERSION_method[i]); i++){
         if (hash == android_os_Build_VERSION_method[i].method_id){
             func = android_os_Build_VERSION_method[i].fake_method;
             break;
         }
     }
-
+    for (int i = 0; i < sizeof(android_app_ActivityThread_method)/ sizeof(android_app_ActivityThread_method[i]); i++){
+        if (hash == android_app_ActivityThread_method[i].method_id){
+            func = android_app_ActivityThread_method[i].fake_method;
+            break;
+        }
+    }
     return func;
 }
 

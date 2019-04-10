@@ -11,7 +11,7 @@ sys_prop g_sys_prop[] =
 {
 	{"ro.build.version.release","4.4.4"},
 	{"ro.product.cpu.abi","armeabi"},
-	{"ro.build.version.sdk","22"},
+	{"ro.build.version.sdk","24"},
 	{"ro.product.brand","Nexus 5"},
 };
 
