@@ -61,6 +61,10 @@ unsigned int emulator::v_r5 =0;
 unsigned int emulator::v_r6 =0;
 unsigned int emulator::v_r7 =0;
 unsigned int emulator::v_r8 =0;
+unsigned int emulator::v_r9 =0;
+unsigned int emulator::v_r10 =0;
+unsigned int emulator::v_r11 =0;
+unsigned int emulator::v_r12 =0;
 
 emulator* emulator::instance = 0;
 
@@ -314,6 +318,10 @@ int emulator::dispatch()
     err=uc_reg_read(uc, UC_ARM_REG_R6, &v_r6);
     err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
     err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &v_r9);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &v_r10);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r11);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r12);
 
     //printf("pc %x lr %x sp %x r0 %x r1 %x r2 %x r3 %x r7 %x cpsr %x\n",v_pc,v_lr,v_sp,v_r0,v_r1,v_r2, v_r3,v_r7, v_cpsr);
 
@@ -415,25 +423,24 @@ int emulator::dispatch()
 }
 
 void emulator::dump_register(){
-    int r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,pc,lr,sp;
-    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &pc);
-    err=uc_reg_read(uc, UC_ARM_REG_LR, &lr);
-    err=uc_reg_read(uc, UC_ARM_REG_SP, &sp);
-    err=uc_reg_read(uc, UC_ARM_REG_R0, &r0);
-    err=uc_reg_read(uc, UC_ARM_REG_R1, &r1);
-    err=uc_reg_read(uc, UC_ARM_REG_R2, &r2);
-    err=uc_reg_read(uc, UC_ARM_REG_R3, &r3);
-    err=uc_reg_read(uc, UC_ARM_REG_R4, &r4);
-    err=uc_reg_read(uc, UC_ARM_REG_R5, &r5);
-    err=uc_reg_read(uc, UC_ARM_REG_R6, &r6);
-    err=uc_reg_read(uc, UC_ARM_REG_R7, &r7);
-    err=uc_reg_read(uc, UC_ARM_REG_R8, &r8);
-    err=uc_reg_read(uc, UC_ARM_REG_R9, &r9);
-    err=uc_reg_read(uc, UC_ARM_REG_R10, &r10);
-    err=uc_reg_read(uc, UC_ARM_REG_R11, &r11);
-    err=uc_reg_read(uc, UC_ARM_REG_R12, &r12);
+    uc_err err=uc_reg_read(uc, UC_ARM_REG_PC, &v_pc);
+    err=uc_reg_read(uc, UC_ARM_REG_LR, &v_lr);
+    err=uc_reg_read(uc, UC_ARM_REG_SP, &v_sp);
+    err=uc_reg_read(uc, UC_ARM_REG_R0, &v_r0);
+    err=uc_reg_read(uc, UC_ARM_REG_R1, &v_r1);
+    err=uc_reg_read(uc, UC_ARM_REG_R2, &v_r2);
+    err=uc_reg_read(uc, UC_ARM_REG_R3, &v_r3);
+    err=uc_reg_read(uc, UC_ARM_REG_R4, &v_r4);
+    err=uc_reg_read(uc, UC_ARM_REG_R5, &v_r5);
+    err=uc_reg_read(uc, UC_ARM_REG_R6, &v_r6);
+    err=uc_reg_read(uc, UC_ARM_REG_R7, &v_r7);
+    err=uc_reg_read(uc, UC_ARM_REG_R8, &v_r8);
+    err=uc_reg_read(uc, UC_ARM_REG_R9, &v_r9);
+    err=uc_reg_read(uc, UC_ARM_REG_R10, &v_r10);
+    err=uc_reg_read(uc, UC_ARM_REG_R11, &v_r11);
+    err=uc_reg_read(uc, UC_ARM_REG_R12, &v_r12);
     printf("pc=%x lr=%x sp=%x r0=%x r1=%x r2=%x r3=%x r4=%x r5=%x r6=%x r7=%x r8=%x r9=%x r10=%x r11=%x r12=%x\n",
-           pc,lr,sp,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12);
+           v_pc,v_lr,v_sp,v_r0,v_r1,v_r2,v_r3,v_r4,v_r5,v_r6,v_r7,v_r8,v_r9,v_r10,v_r11,v_r12);
 }
 
 void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)

@@ -1004,6 +1004,8 @@ int CallIntMethodV()
     unsigned int mid = emulator::get_r2();
     unsigned int arg = emulator::get_r3();
     unsigned int lr = emulator::get_lr();
+    fCallObjectMethodV get = (fCallObjectMethodV)get_method_byhash(mid);
+    ret = get(env, obj, mid, arg);
 
 #ifdef _MSC_VER
 	printf("CallIntMethodV(0x%x,0x%x,0x%x,0x%x) -> 0x%x\n",env, obj,mid, arg, ret);
@@ -1913,7 +1915,7 @@ int GetFieldID()
 #ifdef _MSC_VER
     printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n", env,clz,name,sig,ret);
 #else
-    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n",  env,clz,name,sig,ret);
+    printf("GetFieldID(0x%x,0x%x,\"%s\",\"%s\") -> 0x%x\n",env,clz,name,sig,ret);
 #endif
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);
@@ -1936,7 +1938,7 @@ int GetObjectField()
 #ifdef _MSC_VER
 	printf("GetObjectField(0x%x,0x%x, 0x%x) ->0x%x \n",env, obj, fid, ret);
 #else
-	printf( "GetObjectField(0x%x, 0x%x, 0x%x) ->0x%x \n" ,env, obj, fid, ret);
+	printf(RED "GetObjectField(0x%x, 0x%x, 0x%x) ->0x%x \n" ,RESET, env, obj, fid, ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);

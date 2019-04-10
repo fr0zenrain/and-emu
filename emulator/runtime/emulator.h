@@ -69,6 +69,10 @@ private:
     static unsigned int v_r6;
     static unsigned int v_r7;
     static unsigned int v_r8;
+    static unsigned int v_r9;
+    static unsigned int v_r10;
+    static unsigned int v_r11;
+    static unsigned int v_r12;
     static unsigned int v_cpsr;
     static unsigned int v_spsr;
 
