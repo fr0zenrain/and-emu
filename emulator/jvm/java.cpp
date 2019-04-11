@@ -48,6 +48,7 @@ class_method java_lang_class_method[]= {
         {0x33bd2829, "getSoPath2()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
         {0x48a3aaca, "getSoPath1()Ljava/lang/String;",(void*)java_class::get_jiagu_soname},
         {0x84b89095, "getClassLoader()Ljava/lang/ClassLoader;",(void*)virtual_app::get_app_context},
+        {0xb3b9cce9, "loadDex(Ljava/lang/String;Ljava/lang/String;I)Ldalvik/system/DexFile;",(void*)virtual_app::get_true},
 };
 
 class_method android_os_Build_VERSION_method[] = {
@@ -62,7 +63,10 @@ class_method android_os_Build_VERSION_method[] = {
         {0x431769be, "pathListLdalvik/system/DexPathList;",(void*)virtual_app::get_app_context},
         {0x3e4f1fe9, "appInfoLandroid/content/pm/ApplicationInfo;",(void*)virtual_app::get_app_context},
         {0xac91b649, "dexElements[Ldalvik/system/DexPathList$Element;",(void*)virtual_app::get_app_context},
-        {0xc2e18d52, "needX86BridgeZ",(void*)virtual_app::get_null},
+        {0xa5742415, "dexFileLdalvik/system/DexFile;",(void*)virtual_app::get_sdk_int},
+        {0x9c760fbe, "mCookieLjava/lang/Object;",(void*)virtual_app::get_sdk_int},
+        {0x5a7f2ef1, "mFileNameLjava/lang/String;",(void*)virtual_app::get_sdk_int},
+        {0xc2e18d52, "needX86BridgeZ",(void*)virtual_app::get_sdk_int},
 };
 
 class_method android_app_ActivityThread_method[]= {
@@ -127,7 +131,7 @@ unsigned int java_class::java_lang_class_get_Property
         }
     }
     if (strcmp(buf, "java.vm.version") == 0){
-        result = make_string_object("2.8.0_91");
+        result = make_string_object("1.8.0_91");
     }
 
     return result;

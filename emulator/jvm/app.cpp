@@ -55,6 +55,10 @@ unsigned int virtual_app::get_null(){
     return 0;
 }
 
+unsigned int virtual_app::get_true(){
+    return 1;
+}
+
 unsigned int virtual_app::get_pkg_name(){
     return emulator::get_pkg_name();
 }

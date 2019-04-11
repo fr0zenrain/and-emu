@@ -122,17 +122,6 @@ void* libc::s_free(void*)
 #else
 	printf(RED "free(0x%x)\n" RESET,ptr);
 #endif
-    if(ptr == 0x4004a160){
-        emulator::dump_memory("d1.dex",0x41ca7000,0x6362e8);
-
-        emulator::dump_memory("d2.dex",0x422de000,0x5d3068);
-
-        emulator::dump_memory("d3.dex",0x428b2000,0x56bc0c);
-
-        emulator::dump_memory("d4.dex",0x42e1e000,0x605b94);
-
-        emulator::dump_memory("d5.dex",0x43424000,0x35cd94);
-    }
 	return 0;
 }
 

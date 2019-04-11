@@ -37,6 +37,7 @@ public:
     static unsigned int get_pkg_info(void* p);
     static unsigned int get_app_context(void* p);
     static unsigned int get_null();
+    static unsigned int get_true();
 private:
     static unsigned int ctx;
     static unsigned int mgr;

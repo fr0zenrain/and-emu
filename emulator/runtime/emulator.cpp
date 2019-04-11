@@ -109,7 +109,7 @@ emulator::emulator(uc_mode mode)
     uint64_t addr = (uint64_t)FUNCTION_VIRTUAL_ADDRESS;
     uc_err  err = uc_open(UC_ARCH_ARM, mode, &uc);
     if(err != UC_ERR_OK) { printf("uc error %d\n",err);}
-    int mem_size = 16*1024*1024;
+    int mem_size = 32*1024*1024;
     g_uc = uc;
     //mmap svc stub
     err=uc_mem_map(uc,addr,mem_size,UC_PROT_ALL);
