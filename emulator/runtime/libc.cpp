@@ -29,6 +29,7 @@
 extern uc_engine* g_uc;
 soinfo* libc::si =0;
 extern void* s_dlsym(void* handle, const char* symbol);
+std::map<void*, void*> g_tls_map;
 
 #ifdef _MSC_VER
 void *memmem(const void *haystack, size_t n, const void *needle, size_t m)
@@ -1981,11 +1982,15 @@ void* libc::s_pthread_key_create(void*)
 {
 	uc_err err;
 	int value = 0;
-
+    unsigned int key = emulator::get_r0();
+    unsigned int func = emulator::get_r1();
+    void* pkey = sys_malloc(4);
+    g_tls_map.insert(make_pair(pkey,(void*)func));
+    uc_mem_write(g_uc,key,&pkey,4);
 #ifdef _MSC_VER
 	printf("pthread_key_create()-> 0x%x\n",  value);
 #else
-	printf(RED "pthread_key_create()-> 0x%x\n" RESET, value);
+	printf(RED "pthread_key_create(0x%x,0x%x)-> 0x%x\n" RESET, key, func, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -1998,11 +2003,16 @@ void* libc::s_pthread_key_delete(void*)
 {
 	uc_err err;
 	int value = 0;
-
+    unsigned int key = emulator::get_r0();
+    map<void*,void*>::iterator iter=g_tls_map.find((void*)key);
+    if(iter != g_tls_map.end())
+    {
+        g_tls_map.erase((void*)key);
+    }
 #ifdef _MSC_VER
 	printf("pthread_key_delete()-> 0x%x\n",  value);
 #else
-	printf(RED "pthread_key_delete()-> 0x%x\n" RESET, value);
+	printf(RED "pthread_key_delete(0x%x)-> 0x%x\n" RESET, key, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -2014,12 +2024,17 @@ void* libc::s_pthread_key_delete(void*)
 void* libc::s_pthread_getspecific(void*)
 {
 	uc_err err;
-	int value = 0;
-
+	unsigned int value = 0;
+    unsigned int key = emulator::get_r0();
+    map<void*,void*>::iterator iter=g_tls_map.find((void*)key);
+    if(iter != g_tls_map.end())
+    {
+        value = (unsigned int)iter->second;
+    }
 #ifdef _MSC_VER
 	printf("pthread_getspecific()-> 0x%x\n",  value);
 #else
-	printf(RED "pthread_getspecific()-> 0x%x\n" RESET, value);
+	printf(RED "pthread_getspecific(0x%x)-> 0x%x\n" RESET, key, value);
 #endif
 
 	emulator::update_cpu_model();
@@ -3755,17 +3770,23 @@ void* libc::s_pthread_once(void*)
 	int tid = 0;
     unsigned int once = emulator::get_r0();
     unsigned int routine = emulator::get_r1();
-
+    unsigned int tsp = emulator::get_emulator()->alloc_thread_stack();
 #ifdef _MSC_VER
     printf("pthread_once(0x%x, 0x%x)-> 0x%x\n", tid,routine,value);
 #else
     printf(RED "pthread_once(0x%x,0x%x)-> 0x%x\n" RESET, once,routine,value);
 #endif
 
-    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&routine);
-    //emulator::update_cpu_model();
-
     err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    emulator::get_emulator()->save_register();
+    printf("thread=0x%x func=0x%x tsp=0x%x\n", once, routine, tsp);
+
+    err = uc_reg_write(g_uc,UC_ARM_REG_PC,&routine);
+    err = uc_reg_write(g_uc,UC_ARM_REG_SP,&tsp);
+
+    emulator::get_emulator()->set_thread_info(1, tsp, 0);
+    err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+    //emulator::update_cpu_model();
     return 0;
 }
 
