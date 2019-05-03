@@ -16,6 +16,7 @@ const char* dalvik_system_basedexclassloader = "dalvik/system/BaseDexClassLoader
 const char* android_os_Build_VERSION = "android/os/Build$VERSION";
 const char* android_app_ActivityThread= "android/app/ActivityThread";
 const char* com_stub_StubApp = "com/stub/StubApp";
+const char* android_content_res_assetManager = "android/content/res/AssetManager";
 const char* android_content_Context = "android/content/Contex";
 const char* android_content_pm_PackageInfo = "android/content/pm/PackageInfo";
 const char* com_qihoo_util_QHDialog = "com/qihoo/util/QHDialog";
@@ -30,6 +31,8 @@ const char* com_taobao_wireless_security_adapter_common_HttpUtil =
         "com/taobao/wireless/security/adapter/common/HttpUtil";
 const char* com_taobao_wireless_security_adapter_common_SPUtility2 =
         "com/taobao/wireless/security/adapter/common/SPUtility2";
+const char* com_qgwapp_service_Native =
+        "com/qgwapp/service/Native";
 
 class_method java_lang_class_method[]= {
         {0x8c960769, "<init>([BLjava/lang/String;)V",(void*)java_class::java_lang_class_get_name},
@@ -67,6 +70,7 @@ class_method android_os_Build_VERSION_method[] = {
         {0x9c760fbe, "mCookieLjava/lang/Object;",(void*)virtual_app::get_sdk_int},
         {0x5a7f2ef1, "mFileNameLjava/lang/String;",(void*)virtual_app::get_sdk_int},
         {0xc2e18d52, "needX86BridgeZ",(void*)virtual_app::get_sdk_int},
+        {0x080b99a0, "mObjectI",(void*)virtual_app::get_app_context},
 };
 
 class_method android_app_ActivityThread_method[]= {
@@ -94,7 +98,10 @@ java_class_type java_method[]= {
         {android_os_Build_VERSION, android_os_Build_VERSION_method},
         {com_qihoo_util_QHDialog, java_lang_class_method},
         {android_content_Context,java_lang_class_method},
-        {android_content_pm_PackageInfo, java_lang_class_method}
+        {android_content_pm_PackageInfo, java_lang_class_method},
+        {android_content_res_assetManager, java_lang_class_method},
+        {android_content_res_assetManager, android_os_Build_VERSION_method},
+        {com_qgwapp_service_Native, java_lang_class_method}
 };
 
 

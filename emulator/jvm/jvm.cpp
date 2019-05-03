@@ -2030,14 +2030,16 @@ int GetIntField()
 {
 	int ret = 0;
 	char buffer[256]={0}; 
-	unsigned int env = emulator::get_r0(); 
+	unsigned int env = emulator::get_r0();
+	unsigned int clz = emulator::get_r1();
+	unsigned int fid = emulator::get_r2();
 	unsigned int lr = emulator::get_lr();
     emulator::update_cpu_model();
 
 #ifdef _MSC_VER
 	printf("GetIntField(\"%s\")\n",buffer);
 #else
-	printf(RED "GetIntField(\"%s\")\n" RESET, buffer); 
+	printf(RED "GetIntField(0x%x,0x%x,0x%x) -> 0x%x\n" RESET, env,clz,fid,ret);
 #endif 
 
 	uc_reg_write(g_uc,UC_ARM_REG_PC,&lr);

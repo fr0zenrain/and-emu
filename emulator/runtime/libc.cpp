@@ -2029,7 +2029,7 @@ void* libc::s_pthread_getspecific(void*)
     map<void*,void*>::iterator iter=g_tls_map.find((void*)key);
     if(iter != g_tls_map.end())
     {
-        value = (unsigned int)iter->second;
+        value = 0;//(unsigned int)iter->second;
     }
 #ifdef _MSC_VER
 	printf("pthread_getspecific()-> 0x%x\n",  value);
@@ -2046,17 +2046,19 @@ void* libc::s_pthread_getspecific(void*)
 void* libc::s_pthread_setspecific(void*)
 {
 	uc_err err;
-	int value = 0;
+    unsigned int key = emulator::get_r0();
+    void* v1 = (void*)emulator::get_r1();
+    g_tls_map.insert(make_pair((void*)key,v1));
 
 #ifdef _MSC_VER
-	printf("pthread_setspecific()-> 0x%x\n",  value);
+	printf("pthread_setspecific()-> 0x%x\n",  v1);
 #else
-	printf(RED "pthread_setspecific()-> 0x%x\n" RESET, value);
+	printf(RED "pthread_setspecific(0x%x,0x%x)-> 0x%x\n" RESET, key,v1,v1);
 #endif
 
 	emulator::update_cpu_model();
 
-	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&value);
+	err = uc_reg_write(g_uc,UC_ARM_REG_R0,&v1);
 	return 0;
 }
 

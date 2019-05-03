@@ -483,7 +483,7 @@ void emulator::hook_code(uc_engine *uc, uint64_t address, uint32_t size, void *u
     if (!g_show_ins){
         return;
     }
-
+    //get_emulator()->dump_register();
     csh handle;
     cs_insn *insn;
     cs_mode mode = size == 2? CS_MODE_THUMB:CS_MODE_ARM;
@@ -598,7 +598,7 @@ void emulator::start_emulator(unsigned int pc, soinfo * si)
     err = uc_emu_start(uc,(uint64_t)pc,pc+0xfffff,0,0);
     if(err != UC_ERR_OK)
     {
-        printf("Failed on uc_emu_start() with error returned: %u\n", err);
+        printf("Failed on uc_emu_start() with error returned: %s\n", uc_strerror(err));
     }
 }
 
